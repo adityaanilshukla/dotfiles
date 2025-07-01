@@ -24,5 +24,7 @@ if type zsh-syntax-highlighting &>/dev/null; then
   source $(dirname $(which zsh-syntax-highlighting))/zsh-syntax-highlighting.zsh
 fi
 
+fastfetch
+
 # Source user scripts
 [ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
