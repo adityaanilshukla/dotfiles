@@ -9,6 +9,10 @@ DOTFILES_DIR="$HOME/dotfiles"
 declare -A files=(
   ["zsh/.zshrc"]="$HOME/.zshrc"
   ["tmux/.tmux.conf"]="$HOME/.tmux.conf"
+  ["x/.Xresources"]="$HOME/.Xresources"
+  ["x/.xprofile"]="$HOME/.xprofile"
+  ["gtk/.config/gtk-3.0/settings.ini"]="$HOME/.config/gtk-3.0/settings.ini"
+  ["gtk/.config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
 )
 
 for src in "${!files[@]}"; do
