@@ -15,6 +15,7 @@ declare -A files=(
   ["gtk/.config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
   ["dunst/dunstrc"]="$HOME/.config/dunst/dunstrc"
   ["desktop/shutdown.desktop"]="$HOME/.local/share/applications/shutdown.desktop"
+  ["desktop/reboot.desktop"]="$HOME/.local/share/applications/reboot.desktop"
 )
 
 for src in "${!files[@]}"; do
