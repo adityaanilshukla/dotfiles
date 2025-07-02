@@ -14,6 +14,7 @@ declare -A files=(
   ["gtk/.config/gtk-3.0/settings.ini"]="$HOME/.config/gtk-3.0/settings.ini"
   ["gtk/.config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
   ["dunst/dunstrc"]="$HOME/.config/dunst/dunstrc"
+  ["desktop/shutdown.desktop"]="$HOME/.local/share/applications/shutdown.desktop"
 )
 
 for src in "${!files[@]}"; do
@@ -26,7 +27,10 @@ for src in "${!files[@]}"; do
     echo "Backed up $dest to $dest.backup"
   fi
 
+  # Ensure parent directory exists
+  mkdir -p "$(dirname "$dest")"
+
+  # Create symlink
   ln -sf "$src_path" "$dest"
   echo "Linked $src_path -> $dest"
 done
-
