@@ -11,6 +11,7 @@ setopt share_history
 PROMPT='%F{cyan}%n@%m%f %F{yellow}%~%f %# '
 
 # Aliases
+alias f='fastfetch'
 alias n='nvim'
 alias c='clear'
 alias rr='ranger'
