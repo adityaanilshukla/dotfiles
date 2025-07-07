@@ -14,6 +14,7 @@ PROMPT='%F{cyan}%n@%m%f %F{yellow}%~%f %# '
 alias n='nvim'
 alias c='clear'
 alias rr='ranger'
+alias f='fastfetch'
 
 # Enable completion
 autoload -Uz compinit
