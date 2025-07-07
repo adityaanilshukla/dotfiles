@@ -1,0 +1,23 @@
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "ctrl+m",
+        "command": "notebook.cell.insertMarkdownCellBelow",
+        "when": "config.notebook.globalToolbarShowLabel && notebookEditable && config.notebook.globalToolbarShowLabel != 'never' && config.notebook.insertToolbarLocation != 'betweenCells' && config.notebook.insertToolbarLocation != 'hidden'"
+    },
+    {
+        "key": "ctrl+/",
+        "command": "notebook.cell.insertCodeCellBelow",
+        "when": "notebookEditable && config.notebook.insertToolbarLocation != 'betweenCells' && config.notebook.insertToolbarLocation != 'hidden'"
+    },
+    {
+        "key": "ctrl+shift+c",
+        "command": "notebook.clearAllCellsOutputs",
+        "when": "config.notebook.globalToolbar && notebookKernelCount > 0 || config.notebook.globalToolbar && notebookKernelSourceCount > 0"
+    },
+    {
+        "key": "ctrl+shift+r",
+        "command": "notebook.execute",
+        "when": "config.notebook.globalToolbar && !notebookHasSomethingRunning || config.notebook.globalToolbar && notebookInterruptibleKernel && !notebookHasSomethingRunning || config.notebook.globalToolbar && !notebookHasSomethingRunning && !notebookInterruptibleKernel"
+    }
+]
