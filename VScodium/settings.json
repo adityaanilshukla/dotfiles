@@ -1,0 +1,7 @@
+{
+    "workbench.colorTheme": "Gnome Dark (GitHub)",
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+    "vim.useSystemClipboard": true,
+}
