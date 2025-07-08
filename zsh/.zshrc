@@ -27,5 +27,7 @@ fi
 
 fastfetch
 
+compdef _python java
+
 # Source user scripts
-[ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
+# [ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
