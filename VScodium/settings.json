@@ -4,4 +4,5 @@
         "asvetliakov.vscode-neovim": 1
     },
     "vim.useSystemClipboard": true,
+    "notebook.lineNumbers": "on",
 }
