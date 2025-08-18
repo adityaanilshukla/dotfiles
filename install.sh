@@ -18,6 +18,7 @@ declare -A files=(
 	["desktop/reboot.desktop"]="$HOME/.local/share/applications/reboot.desktop"
 	["VScodium/settings.json"]="$HOME/.config/VSCodium/User/settings.json"
 	["VScodium/keybindings.json"]="$HOME/.config/VSCodium/User/keybindings.json"
+	["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
 )
 
 for src in "${!files[@]}"; do
