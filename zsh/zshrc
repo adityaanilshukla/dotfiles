@@ -1,57 +1,51 @@
-# Path to your Oh My Zsh installation.
+# --------------------
+# Oh My Zsh basics
+# --------------------
 export ZSH="$HOME/.oh-my-zsh"
-
 ZSH_THEME="agnoster"
 
-
-# Uncomment the following line to use case-sensitive completion.
-CASE_SENSITIVE="true"
-
-# Uncomment one of the following lines to change the auto-update behavior
-zstyle ':omz:update' mode reminder  # just remind me to update when it's time
-
-# Uncomment the following line to enable command auto-correction.
+# Completion behavior: use case-insensitive matching via zstyle (preferred)
+# If you want strict case-sensitive completion instead, set CASE_SENSITIVE="true" and remove the matcher-list below.
+# CASE_SENSITIVE="false"
+zstyle ':omz:update' mode reminder
 ENABLE_CORRECTION="true"
 
+# Only load oh-my-zsh-managed plugins here
+plugins=(git)
 
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-# plugins=(git)
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions)
+# --------------------
+# Arch package integration (set fpath BEFORE omz so compinit sees it)
+# --------------------
+fpath+=(/usr/share/zsh/site-functions)
 
-# zsh completions needs to be sourced separately
-fpath+=("${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions/src")
-autoload -Uz compinit && compinit
+# --------------------
+# Initialize oh-my-zsh (runs compinit once)
+# --------------------
+source "$ZSH/oh-my-zsh.sh"
 
-source $ZSH/oh-my-zsh.sh
+# --------------------
+# zsh-autosuggestions (from Arch package)
+# --------------------
+if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+  ZSH_AUTOSUGGEST_USE_ASYNC=true
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# User configuration
+  bindkey '^ ' autosuggest-accept      # Ctrl+Space accepts suggestion
+  # bindkey '^[[C' autosuggest-accept  # Uncomment to use Right Arrow for accepting suggestions
+fi
 
-# export MANPATH="/usr/local/man:$MANPATH"
+# --------------------
+# zsh-syntax-highlighting (from Arch package) — MUST be last
+# --------------------
+if [ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
 
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
+# --------------------
+# Aliases and environment
+# --------------------
 alias n='nvim'
 alias c='clear'
 alias rr='ranger'
@@ -67,32 +61,25 @@ alias la="ls -A"
 alias ll="ls -alF"
 alias l="ls -CF"
 
+# --------------------
+# Keybinds (non-autosuggest)
+# --------------------
+bindkey '^[[1;5C' forward-word   # Ctrl+Right
+bindkey '^[[1;5D' backward-word  # Ctrl+Left
 
-# Enable Ctrl+arrow key bindings for word jumping
-bindkey '^[[1;5C' forward-word     # Ctrl+right arrow
-bindkey '^[[1;5D' backward-word    # Ctrl+left arrow
-
-# add python auto path completion to Java
-compdef _python java
-
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
-
-# Use Ctrl+Space to accept autosuggestion
-bindkey '^ ' autosuggest-accept
-
-# Use right arrow to accept
-bindkey '^[[C' autosuggest-accept
-
-# Speed up suggestion fetching
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-
-ZSH_AUTOSUGGEST_USE_ASYNC=true
-
-setopt CORRECT
-
+# --------------------
+# History
+# --------------------
 HISTSIZE=10000
 SAVEHIST=10000
-HISTFILE=~/.zsh_history
+HISTFILE="$HOME/.zsh_history"
 
-# Make autosuggestions a visible color
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+# --------------------
+# Completion settings
+# --------------------
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# --------------------
+# Extra compdefs
+# --------------------
+compdef _python java
