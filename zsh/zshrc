@@ -83,3 +83,9 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 # Extra compdefs
 # --------------------
 compdef _python java
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /home/aditya/.dart-cli-completion/zsh-config.zsh ]] && . /home/aditya/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+
