@@ -32,7 +32,7 @@ if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; th
   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-  bindkey '^ ' autosuggest-accept      # Ctrl+Space accepts suggestion
+  bindkey '^ ' autosuggest-accept # Ctrl+Space accepts suggestion
   # bindkey '^[[C' autosuggest-accept  # Uncomment to use Right Arrow for accepting suggestions
 fi
 
@@ -64,9 +64,15 @@ alias l="ls -CF"
 # --------------------
 # Keybinds (non-autosuggest)
 # --------------------
-bindkey '^[[1;5C' forward-word   # Ctrl+Right
-bindkey '^[[1;5D' backward-word  # Ctrl+Left
-
+bindkey '^[[1;5C' forward-word  # Ctrl+Right
+bindkey '^[[1;5D' backward-word # Ctrl+Left
+# --------------------
+# Custom functions
+# --------------------
+nosleep() {
+  local dur="${1:-1h}" # can take arguments like 20m 5h. Default 1h if no argument
+  systemd-inhibit --what=handle-lid-switch:sleep --why='Manual inhibit' bash -c "sleep $dur"
+}
 # --------------------
 # History
 # --------------------
@@ -88,4 +94,3 @@ compdef _python java
 ## Completion scripts setup. Remove the following line to uninstall
 [[ -f /home/aditya/.dart-cli-completion/zsh-config.zsh ]] && . /home/aditya/.dart-cli-completion/zsh-config.zsh || true
 ## [/Completion]
-
