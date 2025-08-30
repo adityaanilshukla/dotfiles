@@ -2,7 +2,8 @@
 # Oh My Zsh basics
 # --------------------
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="agnoster"
+# ZSH_THEME="agnoster"
+ZSH_THEME="arrow"
 
 # Completion behavior: use case-insensitive matching via zstyle (preferred)
 # If you want strict case-sensitive completion instead, set CASE_SENSITIVE="true" and remove the matcher-list below.

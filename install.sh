@@ -7,18 +7,19 @@ DOTFILES_DIR="$HOME/dotfiles"
 
 # List of dotfiles to symlink: [source relative to dotfiles] [target full path]
 declare -A files=(
-	["zsh/zshrc"]="$HOME/.zshrc"
-	["tmux/tmux.conf"]="$HOME/.tmux.conf"
-	["x/Xresources"]="$HOME/.Xresources"
-	["x/xprofile"]="$HOME/.xprofile"
-	["gtk/config/gtk-3.0/settings.ini"]="$HOME/.config/gtk-3.0/settings.ini"
-	["gtk/config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
-	["dunst/dunstrc"]="$HOME/.config/dunst/dunstrc"
-	["desktop/shutdown.desktop"]="$HOME/.local/share/applications/shutdown.desktop"
-	["desktop/reboot.desktop"]="$HOME/.local/share/applications/reboot.desktop"
-	["VScodium/settings.json"]="$HOME/.config/VSCodium/User/settings.json"
-	["VScodium/keybindings.json"]="$HOME/.config/VSCodium/User/keybindings.json"
-	["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
+  ["zsh/zshrc"]="$HOME/.zshrc"
+  ["tmux/tmux.conf"]="$HOME/.tmux.conf"
+  ["x/Xresources"]="$HOME/.Xresources"
+  ["x/xprofile"]="$HOME/.xprofile"
+  ["gtk/config/gtk-3.0/settings.ini"]="$HOME/.config/gtk-3.0/settings.ini"
+  ["gtk/config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
+  ["dunst/dunstrc"]="$HOME/.config/dunst/dunstrc"
+  ["desktop/shutdown.desktop"]="$HOME/.local/share/applications/shutdown.desktop"
+  ["desktop/reboot.desktop"]="$HOME/.local/share/applications/reboot.desktop"
+  ["VScodium/settings.json"]="$HOME/.config/VSCodium/User/settings.json"
+  ["VScodium/keybindings.json"]="$HOME/.config/VSCodium/User/keybindings.json"
+  ["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
+  ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch/config.jsonc"
 )
 
 for src in "${!files[@]}"; do
