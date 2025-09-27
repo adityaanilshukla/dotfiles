@@ -5,4 +5,5 @@
     },
     "vim.useSystemClipboard": true,
     "notebook.lineNumbers": "on",
+    "editor.minimap.enabled": false,
 }
