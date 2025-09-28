@@ -20,6 +20,7 @@ declare -A files=(
   ["VScodium/keybindings.json"]="$HOME/.config/VSCodium/User/keybindings.json"
   ["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
   ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch/config.jsonc"
+  ["koreader/profiles.lua"]="$HOME/.config/koreader/settings/profiles.lua"
 )
 
 for src in "${!files[@]}"; do
