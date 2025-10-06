@@ -62,6 +62,9 @@ alias la="ls -A"
 alias ll="ls -alF"
 alias l="ls -CF"
 
+alias sleepmode='redshift -P -O 1500 -b 0.3'
+alias normalmode='redshift -x && xrandr --output eDP-1 --brightness 1.0'
+
 # --------------------
 # Keybinds (non-autosuggest)
 # --------------------
