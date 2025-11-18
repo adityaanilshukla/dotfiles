@@ -65,6 +65,17 @@ alias l="ls -CF"
 alias sleepmode='redshift -P -O 1500 -b 0.3'
 alias normalmode='redshift -x && xrandr --output eDP-1 --brightness 1.0'
 
+# custom function that helps you quit ranger and moves you into the directory you closed ranger in
+rw() {
+  tempfile="$(mktemp)"
+  ranger --choosedir="$tempfile" "$@"
+  if [ -f "$tempfile" ]; then
+    dir="$(cat "$tempfile")"
+    rm -f "$tempfile"
+    [ -d "$dir" ] && cd "$dir"
+  fi
+}
+
 # --------------------
 # Keybinds (non-autosuggest)
 # --------------------
