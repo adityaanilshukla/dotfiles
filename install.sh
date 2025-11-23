@@ -21,6 +21,7 @@ declare -A files=(
   ["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
   ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch/config.jsonc"
   ["koreader/profiles.lua"]="$HOME/.config/koreader/settings/profiles.lua"
+  ["rofi/config.rasi"]="$HOME/.config/rofi/config.rasi"
 )
 
 for src in "${!files[@]}"; do
