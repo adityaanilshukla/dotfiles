@@ -7,4 +7,10 @@
     "notebook.lineNumbers": "on",
     "editor.minimap.enabled": false,
     "workbench.activityBar.location": "hidden",
+
+    "zenMode.fullScreen": false,
+    "zenMode.centerLayout": true,
+    "zenMode.hideActivityBar": true,
+    "zenMode.hideStatusBar": true,
+    "zenMode.hideLineNumbers": false
 }
