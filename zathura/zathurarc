@@ -1,0 +1,21 @@
+# Background (around the page)
+set default-bg "#1e1e1e"
+
+# Page background and text
+set recolor "true"
+set recolor-lightcolor "#1e1e1e"   # page background
+set recolor-darkcolor  "#dcdcdc"   # text color
+
+# Statusbar, inputbar, etc.
+set statusbar-bg "#2a2a2a"
+set statusbar-fg "#eeeeee"
+
+set inputbar-bg "#2a2a2a"
+set inputbar-fg "#eeeeee"
+
+set notification-bg "#2a2a2a"
+set notification-fg "#eeeeee"
+
+# Highlighting (search results, links)
+set highlight-color "#444444"
+set highlight-active-color "#888888"
