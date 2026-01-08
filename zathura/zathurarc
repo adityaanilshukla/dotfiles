@@ -19,3 +19,4 @@ set notification-fg "#eeeeee"
 # Highlighting (search results, links)
 set highlight-color "#444444"
 set highlight-active-color "#888888"
+set selection-clipboard clipboard
