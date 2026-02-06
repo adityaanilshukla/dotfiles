@@ -1,127 +1,161 @@
-alacritty
-arandr
-base
-base-devel
-bash-language-server
-biber
-blueman
-bluez
-bluez-utils
-catch2
-clang
-cmake
-dkms
-dmenu
-dunst
-dysk
-efibootmgr
-eslint_d
-fastfetch
-feh
-firefox
-gdb
-gimp
-git
-grub
-gst-plugin-pipewire
-htop
-i3-wm
-i3blocks
-i3status
-intel-ucode
-inxi
-iw
-iwd
-jre-openjdk
-ksnip
-lazygit
-lib32-nvidia-utils
-libpulse
-libva-nvidia-driver
-lightdm
-lightdm-gtk-greeter
-linux
-linux-firmware
-linux-headers
-linux-lts
-linux-lts-headers
-lldb
-lua-language-server
-luacheck
-man-db
-marksman
-mpv
-nautilus
-networkmanager
-npm
-nvidia-open-dkms
-nvidia-settings
-openssh
-pavucontrol
-picom
-pipewire
-pipewire-alsa
-pipewire-jack
-pipewire-pulse
-polybar
-pyright
-python-black
-python-debugpy
-python-isort
-python-pynvim
-python-weasyprint
-qt5ct
-qutebrowser
-ranger
-redshift
-reflector
-ripgrep
-rofi
-rofi-calc
-rsync
-ruff
-sddm
-shellcheck
-shfmt
-smartmontools
-sof-firmware
-stylua
-syncthing
-taplo-cli
-tectonic
-telegram-desktop
-texlive-basic
-texlive-bibtexextra
-texlive-bin
-texlive-binextra
-texlive-fontsextra
-texlive-latex
-texlive-latexextra
-texlive-latexrecommended
-texlive-pictures
-tldr
-tmux
-tree
-typescript-language-server
-usb_modeswitch
-vim
-wget
-wireless_tools
-wireplumber
-wpa_supplicant
-xclip
-xdg-utils
-xorg-xinit
-xorg-xkill
-xournalpp
-xsettingsd
-xss-lock
-yamllint
-zathura
-zathura-pdf-mupdf
-zenity
-zip
-zram-generator
-zsh
-zsh-autosuggestions
-zsh-syntax-highlighting
+adwaita-dark 1.0-1
+alacritty 0.16.1-1
+android-file-transfer 4.5-2
+anki-bin 25.09.2-2
+arandr 0.1.11-6
+base 3-2
+base-devel 1-2
+bash-language-server 5.6.0-1
+bat 0.26.1-1
+betterlockscreen 4.4.0-1
+bibata-cursor-theme 2.0.7-1
+biber 1:2.21-3
+blueman 2.4.6-2
+bluez 5.85-1
+bluez-utils 5.85-1
+catch2 3.12.0-1
+clang 21.1.6-3
+cmake 4.2.3-1
+cuda 13.1.1-1
+cudnn 9.19.0.56-1
+dkms 3.3.0-1
+dmenu 5.4-1
+dunst 1.13.0-1
+dysk 3.6.0-1
+efibootmgr 18-3
+eslint_d 14.3.0-1
+fastfetch 2.58.0-1
+feh 3.11.2-2
+firefox 147.0.3-1
+gdb 17.1-2
+gimp 3.0.8-2
+git 2.53.0-1
+grub 2:2.14-1
+gst-plugin-pipewire 1:1.4.10-2
+gvfs-mtp 1.58.1-1
+htop 3.4.1-1
+i3-wm 4.25.1-1
+i3blocks 1.5-4
+i3status 2.15-1
+intel-ucode 20251111-1
+inxi 3.3.40.1-1
+iw 6.17-1
+iwd 3.10-1
+jre-openjdk 25.0.2.u10-1
+koreader-bin 2025.10-3
+lazygit 0.58.1-1
+lib32-nvidia-utils 590.48.01-1
+libadwaita-without-adwaita-git 1.8.4.r180.g474371b-1
+libpulse 17.0+r98+gb096704c0-1
+libva-nvidia-driver 0.0.15-1
+lightdm 1:1.32.0-6
+lightdm-gtk-greeter 1:2.0.9-1
+linux 6.18.7.arch1-1
+linux-firmware 20260110-1
+linux-headers 6.18.7.arch1-1
+linux-lts 6.12.68-1
+linux-lts-headers 6.12.68-1
+lldb 21.1.6-2
+localsend-bin 1.17.0-1
+ltex-ls-plus-bin 18.6.1-1
+lua-language-server 3.17.1-1
+luacheck 1.2.0-2
+maim 5.8.1-3
+man-db 2.13.1-1
+marksman 20260128-1
+mpv 1:0.41.0-2
+mtpfs 1.1-5
+nautilus 49.4-1
+neovim-nightly 0.12.0.r1714.ga950e8ea9d-1
+neovim-remote 2.5.1-1
+networkmanager 1.54.3-1
+npm 11.8.0-1
+nvidia-open-dkms 590.48.01-2
+nvidia-settings 590.48.01-1
+obsidian 1.11.5-1
+onlyoffice-bin 9.2.1-1
+openssh 10.2p1-2
+pandoc-bin 3.9-1
+paru 2.1.0-2
+paru-debug 2.1.0-2
+pavucontrol 1:6.2-1
+picom 12.5-3
+pipewire 1:1.4.10-2
+pipewire-alsa 1:1.4.10-2
+pipewire-jack 1:1.4.10-2
+pipewire-pulse 1:1.4.10-2
+polybar 3.7.2-2
+pyright 1.1.407-1
+python-black 25.12.0-4
+python-debugpy 1.8.20-1
+python-isort 7.0.0-2
+python-pip 25.3-3
+python-pynvim 0.6.0-2
+python-weasyprint 68.0-1
+python312 3.12.12-1
+qbittorrent-enhanced 5.1.3.10-1
+qogir-icon-theme 2025.02.15-1
+qt5ct 1.9-1
+qt6ct 0.11-4
+qutebrowser 3.6.3-2
+ranger 1.9.4-5
+redshift 1.12-15
+reflector 2023-5
+ripgrep 15.1.0-1
+rofi 2.0.0-1
+rofi-calc 2.5.0-1
+rofi-greenclip 4.2-3
+rsync 3.4.1-2
+rtl88x2bu-dkms-git 5.13.1.r212.825556e-1
+ruff 0.15.0-1
+sddm 0.21.0-6
+sdl3-git 3.4.0.r223.ga36ef1f187-1
+shellcheck 0.11.0-74
+shfmt 3.12.0-1
+simplicity-sddm-theme-git r96-1
+smartmontools 7.5-1
+sof-firmware 2025.12.2-1
+strace 6.18-1
+stylua 2.3.1-1
+syncthing 2.0.14-1
+taplo-cli 0.10.0-1
+tauon-music-box 8.2.3-5
+tectonic 0.15.0-4
+telegram-desktop 6.4.4-1
+texlive-basic 2025.2-3
+texlive-bibtexextra 2025.2-3
+texlive-bin 2025.2-3
+texlive-binextra 2025.2-3
+texlive-fontsextra 2025.2-3
+texlive-latex 2025.2-3
+texlive-latexextra 2025.2-3
+texlive-latexrecommended 2025.2-3
+texlive-pictures 2025.2-3
+tldr 3.4.3-3
+tmux 3.6_a-1
+tree 2.3.1-1
+typescript-language-server 5.1.3-1
+usb_modeswitch 2.6.2.20251207-1
+vim 9.1.2132-1
+vscodium 1.108.20787-1
+wget 1.25.0-3
+whatsapp-linux-desktop 1.0.1-1
+wireless_tools 30.pre9-5
+wireplumber 0.5.13-1
+wpa_supplicant 2:2.11-5
+xclip 0.13-6
+xdg-utils 1.2.1-2
+xorg-xinit 1.4.4-1
+xorg-xkill 1.0.7-1
+xsettingsd 1.0.2-3
+xss-lock 0.4.0-1
+yamllint 1.38.0-1
+yay-debug 12.5.3-1
+zathura 2026.02.03-2
+zathura-pdf-mupdf 2026.02.03-1
+zenity 4.2.1-1
+zip 3.0-11
+zram-generator 1.2.1-1
+zsh 5.9-5
+zsh-autosuggestions 0.7.1-1
+zsh-syntax-highlighting 0.8.0-1

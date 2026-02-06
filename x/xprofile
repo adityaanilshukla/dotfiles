@@ -2,5 +2,4 @@ export GTK_THEME=Adwaita:dark
 export PATH="$HOME/.local/bin:$PATH"
 export QT_QPA_PLATFORMTHEME=qt5ct
 export DESKTOP_SESSION=i3
-export GTK_THEME=Adwaita:dark
 [[ -f ~/.Xresources ]] && xrdb -merge ~/.Xresources

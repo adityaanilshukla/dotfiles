@@ -11,6 +11,7 @@ declare -A files=(
   ["tmux/tmux.conf"]="$HOME/.tmux.conf"
   ["x/Xresources"]="$HOME/.Xresources"
   ["x/xprofile"]="$HOME/.xprofile"
+  ["x/xsettingsd"]="$HOME/.xsettingsd"
   ["gtk/config/gtk-3.0/settings.ini"]="$HOME/.config/gtk-3.0/settings.ini"
   ["gtk/config/gtk-4.0/settings.ini"]="$HOME/.config/gtk-4.0/settings.ini"
   ["dunst/dunstrc"]="$HOME/.config/dunst/dunstrc"
