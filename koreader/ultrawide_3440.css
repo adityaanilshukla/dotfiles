@@ -1,0 +1,14 @@
+html,
+body {
+  width: 1600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body {
+  line-height: 1.7 !important;
+}
+
+p {
+  margin-bottom: 1.2em !important;
+}
