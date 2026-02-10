@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Reboot
-Comment=Reboot the system after confirmation
-Exec=sh -c 'GTK_ICON_THEME=Qogir-Dark zenity --question --title="Confirm Reboot" --text="Are you sure you want to Reboot?" --ok-label="Yes" --cancel-label="No" --window-icon=system-reboot && systemctl reboot'
-Icon=system-reboot
-Terminal=false
-Type=Application
-Categories=System;

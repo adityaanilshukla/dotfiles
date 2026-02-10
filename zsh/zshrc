@@ -2,7 +2,6 @@
 # Oh My Zsh basics
 # --------------------
 export ZSH="$HOME/.oh-my-zsh"
-# ZSH_THEME="agnoster"
 ZSH_THEME="arrow"
 
 # Completion behavior: use case-insensitive matching via zstyle (preferred)
@@ -51,6 +50,8 @@ alias n='nvim'
 alias c='clear'
 alias rr='ranger'
 alias f='fastfetch'
+alias projects='cd /mnt/c/Users/aditshuk/Projects'
+alias downloads='cd /mnt/c/Users/aditshuk/Downloads'
 
 export EDITOR="nvim"
 export VISUAL="nvim"
@@ -99,6 +100,10 @@ HISTFILE="$HOME/.zsh_history"
 # Completion settings
 # --------------------
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# make WSL ignore windows end line stuff
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
 
 # --------------------
 # Extra compdefs

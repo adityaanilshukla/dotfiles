@@ -1,0 +1,4 @@
+paru
+paru-debug
+python311
+python312
