@@ -26,15 +26,12 @@ source "$ZSH/oh-my-zsh.sh"
 # --------------------
 # zsh-autosuggestions (from Arch package)
 # --------------------
-if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-  ZSH_AUTOSUGGEST_USE_ASYNC=true
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
-  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-  bindkey '^ ' autosuggest-accept # Ctrl+Space accepts suggestion
-  # bindkey '^[[C' autosuggest-accept  # Uncomment to use Right Arrow for accepting suggestions
-fi
+# if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+#   ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+#   ZSH_AUTOSUGGEST_USE_ASYNC=false
+#   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+#   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+# fi
 
 # --------------------
 # zsh-syntax-highlighting (from Arch package) — MUST be last
@@ -50,8 +47,8 @@ alias n='nvim'
 alias c='clear'
 alias rr='ranger'
 alias f='fastfetch'
-alias projects='cd /mnt/c/Users/aditshuk/Projects'
-alias downloads='cd /mnt/c/Users/aditshuk/Downloads'
+alias act='source .venv/bin/activate'
+alias mkenv='python3 -m venv .venv'
 
 export EDITOR="nvim"
 export VISUAL="nvim"
