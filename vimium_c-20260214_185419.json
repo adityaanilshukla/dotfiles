@@ -1,0 +1,30 @@
+{
+	"name": "Vimium C",
+	"@time": "2/14/2026, 6:54:19 PM",
+	"time": 1771066459561,
+	"environment": {
+		"extension": "2.12.3",
+		"platform": "linux",
+		"firefox": 147
+	},
+	"exclusionRules": [
+		{
+			"passKeys": "0 1 5 7 8 < > m ",
+			"pattern": "^https?://www\\.youtube\\.com/watch"
+		}
+	],
+	"keyLayout": 2,
+	"keyMappings": [
+		"#!no-check",
+		"env youtube host=\"https://www.youtube.com/\"",
+		"map f runKey expect={\"youtube\":\"<v-ytf>\"} keys=\"<v-f>\"",
+		"map <v-ytf> LinkHints.activate clickable=\"#thumbnail\"",
+		"map <v-f> LinkHints.activate",
+		"map Z openUrl url=\"vimium://status\\u0020toggle\\u0020^\\u0020Z\"",
+		"map <c-l> scrollDown",
+		"map s focusInput",
+		""
+	],
+	"newTabUrl": "https://archlinux.org/",
+	"vimSync": true
+}
