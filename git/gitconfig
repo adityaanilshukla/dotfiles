@@ -1,0 +1,15 @@
+[user]
+    name = Aditya Anil Shukla
+    email = adityaanilsindhunath@gmail.com
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nvim
+
+[pull]
+    rebase = false
+
+[color]
+    ui = auto

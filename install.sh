@@ -22,6 +22,9 @@ declare -A files=(
   ["VScodium/settings.json"]="$HOME/.config/VSCodium/User/settings.json"
   ["VScodium/keybindings.json"]="$HOME/.config/VSCodium/User/keybindings.json"
 
+  #git
+  ["git/gitconfig"]="$HOME/.gitconfig"
+
   ["alacritty/alacritty.toml"]="$HOME/.config/alacritty/alacritty.toml"
   ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch/config.jsonc"
   ["koreader/profiles.lua"]="$HOME/.config/koreader/settings/profiles.lua"
