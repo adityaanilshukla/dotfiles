@@ -51,6 +51,9 @@ alias n='nvim'
 alias c='clear'
 alias rr='ranger'
 alias f='fastfetch'
+alias mkenv='python3 -m venv .venv'
+# Activate .venv if it exists; otherwise print a warning
+alias act='[ -d .venv ] && source .venv/bin/activate || echo "No .venv found"'
 
 export EDITOR="nvim"
 export VISUAL="nvim"
