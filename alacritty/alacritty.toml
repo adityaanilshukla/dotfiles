@@ -1,5 +1,5 @@
 [font]
-size = 13.0
+size = 20.0
 
 [font.normal]
 family = "Hack Nerd Font"
@@ -15,6 +15,7 @@ style = "Italic"
 
 [window]
 # opacity = 0.95
+decorations = "None"
 
 [bell]
 command = "None"

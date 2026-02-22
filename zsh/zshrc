@@ -4,43 +4,32 @@
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="arrow"
 
-# Completion behavior: use case-insensitive matching via zstyle (preferred)
-# If you want strict case-sensitive completion instead, set CASE_SENSITIVE="true" and remove the matcher-list below.
-# CASE_SENSITIVE="false"
 zstyle ':omz:update' mode reminder
 ENABLE_CORRECTION="true"
 
-# Only load oh-my-zsh-managed plugins here
 plugins=(git)
 
 # --------------------
-# Arch package integration (set fpath BEFORE omz so compinit sees it)
+# Homebrew completion path (macOS)
 # --------------------
-fpath+=(/usr/share/zsh/site-functions)
+fpath+=("$(brew --prefix)/share/zsh/site-functions")
 
 # --------------------
-# Initialize oh-my-zsh (runs compinit once)
+# Initialize oh-my-zsh
 # --------------------
 source "$ZSH/oh-my-zsh.sh"
 
 # --------------------
-# zsh-autosuggestions (from Arch package)
+# zsh-autosuggestions (Homebrew)
 # --------------------
-if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+if [ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
   ZSH_AUTOSUGGEST_STRATEGY=(history completion)
   ZSH_AUTOSUGGEST_USE_ASYNC=true
   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
-  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-  bindkey '^ ' autosuggest-accept # Ctrl+Space accepts suggestion
-  # bindkey '^[[C' autosuggest-accept  # Uncomment to use Right Arrow for accepting suggestions
-fi
+  source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
-# --------------------
-# zsh-syntax-highlighting (from Arch package) — MUST be last
-# --------------------
-if [ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
-  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  bindkey '^ ' autosuggest-accept   # Ctrl+Space
 fi
 
 # --------------------
@@ -51,23 +40,24 @@ alias c='clear'
 alias rr='ranger'
 alias f='fastfetch'
 alias mkenv='python3 -m venv .venv'
-# Activate .venv if it exists; otherwise print a warning
 alias act='[ -d .venv ] && source .venv/bin/activate || echo "No .venv found"'
 
 export EDITOR="nvim"
 export VISUAL="nvim"
 export PAGER="less"
 
+# macOS BSD ls uses -G instead of --color
+alias ls="ls -G"
 alias grep="grep --color=auto"
-alias ls="ls --color=auto"
 alias la="ls -A"
 alias ll="ls -alF"
 alias l="ls -CF"
 
-alias sleepmode='redshift -P -O 1500 -b 0.3'
-alias normalmode='redshift -x && xrandr --output eDP-1 --brightness 1.0'
+export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"
 
-# custom function that helps you quit ranger and moves you into the directory you closed ranger in
+# --------------------
+# Ranger helper
+# --------------------
 rw() {
   tempfile="$(mktemp)"
   ranger --choosedir="$tempfile" "$@"
@@ -81,15 +71,18 @@ rw() {
 # --------------------
 # Keybinds (non-autosuggest)
 # --------------------
-bindkey '^[[1;5C' forward-word  # Ctrl+Right
-bindkey '^[[1;5D' backward-word # Ctrl+Left
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
 # --------------------
-# Custom functions
+# macOS nosleep (replaces systemd-inhibit)
+# usage: nosleep 3600   # seconds
 # --------------------
 nosleep() {
-  local dur="${1:-1h}" # can take arguments like 20m 5h. Default 1h if no argument
-  systemd-inhibit --what=handle-lid-switch:sleep --why='Manual inhibit' bash -c "sleep $dur"
+  local dur="${1:-3600}"
+  caffeinate -dimsu -t "$dur"
 }
+
 # --------------------
 # History
 # --------------------
@@ -107,7 +100,17 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 # --------------------
 compdef _python java
 
-## [Completion]
-## Completion scripts setup. Remove the following line to uninstall
-[[ -f /home/aditya/.dart-cli-completion/zsh-config.zsh ]] && . /home/aditya/.dart-cli-completion/zsh-config.zsh || true
-## [/Completion]
+# --------------------
+# Dart completion (portable path)
+# --------------------
+[[ -f "$HOME/.dart-cli-completion/zsh-config.zsh" ]] && source "$HOME/.dart-cli-completion/zsh-config.zsh"
+
+# --------------------
+# zsh-syntax-highlighting (Homebrew) — MUST be last
+# --------------------
+if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+  source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
+
+export ZATHURA_PLUGINS_PATH=/opt/homebrew/lib/zathura
+export ZATHURA_PLUGINS_PATH=$(dirname $(find $(brew --cellar zathura-pdf-poppler) -name "libpdf-poppler.dylib" | head -n 1))
