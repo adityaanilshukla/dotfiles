@@ -32,6 +32,15 @@ source "$ZSH/oh-my-zsh.sh"
 #   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
 #   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 # fi
+# trying a new one
+if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+  ZSH_AUTOSUGGEST_STRATEGY=(history)
+  ZSH_AUTOSUGGEST_USE_ASYNC=true
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+  ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=(forward-char end-of-line)
+  ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
 
 # --------------------
 # zsh-syntax-highlighting (from Arch package) — MUST be last
@@ -49,6 +58,9 @@ alias rr='ranger'
 alias f='fastfetch'
 alias act='source .venv/bin/activate'
 alias mkenv='python3 -m venv .venv'
+alias pipup='python3 -m pip install --upgrade pip'
+alias lockrepo='echo "WSL $(date)" > .repo-lock'
+alias whoactive='cat .repo-lock'
 
 export EDITOR="nvim"
 export VISUAL="nvim"

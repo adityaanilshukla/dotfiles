@@ -11,6 +11,7 @@ declare -A files=(
   ["tmux/tmux.conf"]="$HOME/.tmux.conf"
   ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch/config.jsonc"
   ["nvim/init.lua"]="$HOME/.config/nvim/init.lua"
+  ["zathura/zathurarc"]="$HOME/.config/zathura/zathurarc"
 )
 
 for src in "${!files[@]}"; do

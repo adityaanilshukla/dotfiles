@@ -1,5 +1,6 @@
 -- options
 vim.wo.relativenumber = true
+vim.wo.number = true
 -- Make plain y/p use the system clipboard
 
 vim.opt.clipboard = "unnamedplus"
@@ -54,6 +55,14 @@ Plug 'rmagatti/auto-session'
 
 call plug#end()
 ]])
+
+require("neo-tree").setup({
+  filesystem = {
+    filtered_items = {
+      hide_gitignored = false,
+    },
+  },
+})
 
 -- Set leader key
 vim.g.mapleader = " "  -- space as leader
@@ -163,7 +172,6 @@ vim.api.nvim_create_autocmd('FileType', {
 require('render-markdown').setup({
     completions = { lsp = { enabled = true } },
 })
-
 
 require('nightfox').setup()
 vim.cmd("colorscheme carbonfox")
