@@ -33,14 +33,14 @@ source "$ZSH/oh-my-zsh.sh"
 #   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 # fi
 # trying a new one
-if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-  ZSH_AUTOSUGGEST_STRATEGY=(history)
-  ZSH_AUTOSUGGEST_USE_ASYNC=true
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
-  ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=(forward-char end-of-line)
-  ZSH_AUTOSUGGEST_MANUAL_REBIND=1
-  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-fi
+# if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+#   ZSH_AUTOSUGGEST_STRATEGY=(history)
+#   ZSH_AUTOSUGGEST_USE_ASYNC=true
+#   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+#   ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=(forward-char end-of-line)
+#   ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+#   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+# fi
 
 # --------------------
 # zsh-syntax-highlighting (from Arch package) — MUST be last
@@ -65,6 +65,7 @@ alias whoactive='cat .repo-lock'
 export EDITOR="nvim"
 export VISUAL="nvim"
 export PAGER="less"
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 
 alias grep="grep --color=auto"
 alias ls="ls --color=auto"
