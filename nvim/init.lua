@@ -31,9 +31,9 @@ vim.opt.fillchars:append { eob = " " }
 vim.wo.wrap = false
 vim.o.sessionoptions ="blank,buffers,curdir,folds,help,tabpages,winsize,localoptions"
 
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "nvim_treesitter#foldexpr()"
-vim.o.foldlevel = 0
+-- vim.o.foldmethod = "expr"
+-- vim.o.foldexpr = "nvim_treesitter#foldexpr()"
+-- vim.o.foldlevel = 0
 
 -- install pugins
 vim.cmd([[
@@ -51,7 +51,7 @@ Plug 'numToStr/Comment.nvim'
 
 Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 
-Plug 'nvim-treesitter/nvim-treesitter'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 Plug 'shortcuts/no-neck-pain.nvim', { 'tag': '*' }
 
@@ -173,7 +173,7 @@ vim.keymap.set("n", "<leader>ft", function()builtin.colorscheme({ enable_preview
 -- })
 
 -- Toggle comment on a line with <leader>/
--- This eequires Comment.nvim to be setup
+-- This requires Comment.nvim to be setup
 require('Comment').setup()
 map('n', '<leader>/', '<cmd>lua require("Comment.api").toggle.linewise.current()<CR>', opts)
 map('v', '<leader>/', '<esc><cmd>lua require("Comment.api").toggle.linewise(vim.fn.visualmode())<CR>', opts)
@@ -225,10 +225,21 @@ end
 
 vim.api.nvim_set_keymap("n", "<leader>gg", "<cmd>lua _lazygit_toggle()<CR>", {noremap = true, silent = true})
 
-require("nvim-treesitter").setup({
-  -- Directory to install parsers and queries to (prepended to `runtimepath` to have priority)
-  install_dir = vim.fn.stdpath('data') .. '/site'
+require("nvim-treesitter.config").setup({
+  ensure_installed = {
+    "java",
+    "python",
+    "javascript",
+    "cpp",
+    "dockerfile",
+    "bash",
+    "lua",
+    "markdown",
+  },
+  highlight = { enable = true },
+  indent = { enable = true },
 })
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = { '<filetype>' },
   callback = function() vim.treesitter.start() end,
