@@ -4,6 +4,14 @@ vim.wo.number = true
 -- Make plain y/p use the system clipboard
 
 vim.opt.clipboard = "unnamedplus"
+vim.opt.spell = true
+vim.opt.spelllang = { "en_us" }
+vim.api.nvim_create_autocmd("ColorScheme", {
+  pattern = "*",
+  callback = function()
+    vim.cmd("highlight SpellBad gui=underline cterm=underline")
+  end,
+})
 
 -- Reliable WSL clipboard via win32yank (fixes ^M / CRLF issues)
 vim.g.clipboard = {
@@ -156,6 +164,7 @@ map("n", "<leader>ff", "<cmd>Telescope find_files<CR>", opts)
 map("n", "<leader>fh", "<cmd>Telescope find_files hidden=true<CR>", opts)
 
 map('n', '<leader>fw', "<cmd>lua require('telescope.builtin').live_grep()<CR>", { desc = "Telescope live grep" })
+vim.keymap.set("n", "<leader>ft", function()builtin.colorscheme({ enable_preview = true })end, { desc = "Find themes" })
 
 -- map("n", "<leader>ft", function()
 --   builtin.colorscheme({ enable_preview = true })
@@ -192,6 +201,8 @@ vim.keymap.set("n", "<C-Down>", "<C-w>-", { silent = true })
 -- Close current buffer without closing the window
 vim.api.nvim_set_keymap("n", "<Leader>c", ":bp|bd#<CR>", { noremap = true, silent = true })
 
+-- spell check
+vim.keymap.set("n", "sc", "z=", { noremap = true })
 -- toggleterm custom functions 
 require("toggleterm").setup({
 })
