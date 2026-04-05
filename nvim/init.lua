@@ -161,7 +161,12 @@ local builtin = require("telescope.builtin")
 
 -- Open Telescope find_files with <leader>ff
 map("n", "<leader>ff", "<cmd>Telescope find_files<CR>", opts)
-map("n", "<leader>fh", "<cmd>Telescope find_files hidden=true<CR>", opts)
+-- map("n", "<leader>fh", "<cmd>Telescope find_files hidden=true<CR>", opts)
+map("n", "<leader>fh", "<cmd>Telescope find_files hidden=true no_ignore=true<CR>", opts)
+-- map("n", "<leader>fh",
+--   "<cmd>lua require('telescope.builtin').find_files({ hidden = true, no_ignore = true, file_ignore_patterns = { '%.venv/' } })<CR>",
+--   opts
+-- )
 
 map('n', '<leader>fw', "<cmd>lua require('telescope.builtin').live_grep()<CR>", { desc = "Telescope live grep" })
 vim.keymap.set("n", "<leader>ft", function()builtin.colorscheme({ enable_preview = true })end, { desc = "Find themes" })
@@ -205,6 +210,12 @@ vim.api.nvim_set_keymap("n", "<Leader>c", ":bp|bd#<CR>", { noremap = true, silen
 vim.keymap.set("n", "sc", "z=", { noremap = true })
 -- toggleterm custom functions 
 require("toggleterm").setup({
+  size = 20,
+  direction = "tab",        -- use tab, it's the cleanest on WSL+tmux (no split redraw bugs)
+  shade_terminals = false,  -- shading uses extra escape sequences, can cause artifacts on WSL
+  persist_mode = true,
+  start_in_insert = true,
+  auto_scroll = true,
 })
 local Terminal = require("toggleterm.terminal").Terminal
 local lazygit = Terminal:new({ cmd = "lazygit", hidden = true, direction="tab" })
