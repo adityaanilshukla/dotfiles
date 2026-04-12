@@ -1,14 +1,11 @@
 [font]
 size = 13.0
-
 [font.normal]
 family = "Hack Nerd Font"
 style = "Regular"
-
 [font.bold]
 family = "Hack Nerd Font"
 style = "Bold"
-
 [font.italic]
 family = "Hack Nerd Font"
 style = "Italic"
@@ -17,13 +14,12 @@ style = "Italic"
 # opacity = 0.95
 
 [bell]
-command = "None"
+# command = "None"  # removed invalid value; omit to silence bell
 
 [[keyboard.bindings]]
 key = "C"
 mods = "Control|Shift"
 chars = "\u0003"       # Send SIGINT
-
 [[keyboard.bindings]]
 key = "Back"
 mods = "Control"
@@ -38,16 +34,15 @@ background = "0x161718"
 foreground = "0xc4c8c5"
 
 [colors.cursor]
-text = "0x161718" # selection_foreground
-# cursor = "0xd0d0d0"
+text = "0x161718"
 cursor = "0x4da3ff"
 
 [colors.selection]
-text = "0x161718"       # selection_foreground
+text = "0x161718"
 background = "0x444444"
 
 [colors.normal]
-black = "0x000000"   # color0
+black = "0x3c3c3c"   # color0 — bumped from 0x000000
 red = "0xfc5ef0"     # color1
 green = "0x86c38a"   # color2
 yellow = "0xffd6b1"  # color3
@@ -56,9 +51,8 @@ magenta = "0xb9b5fc" # color5
 cyan = "0x85befd"    # color6
 white = "0xdfdfdf"   # color7
 
-
 [colors.bright]
-black = "0x000000"   # color8
+black = "0xaaaaaa"
 red = "0xfc5ef0"     # color9
 green = "0x94f936"   # color10
 yellow = "0xf5ffa7"  # color11
