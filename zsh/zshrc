@@ -18,6 +18,9 @@ plugins=(git)
 # --------------------
 fpath+=(/usr/share/zsh/site-functions)
 
+# source secrets if file exists
+[[ -f ~/.secrets ]] && source ~/.secrets
+
 # --------------------
 # Initialize oh-my-zsh (runs compinit once)
 # --------------------
