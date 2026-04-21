@@ -14,12 +14,12 @@ source "$ZSH/oh-my-zsh.sh"
 # --------------------
 # Plugins
 # --------------------
-if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-  ZSH_AUTOSUGGEST_USE_ASYNC=false
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
-  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-fi
+#if [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+#  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+#  ZSH_AUTOSUGGEST_USE_ASYNC=false
+#  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#888888'
+#  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+#fi
 
 # Fix ghost characters in Neovim terminal
 [[ -n "$NVIM" ]] && ZSH_HIGHLIGHT_MAXLENGTH=0
@@ -111,3 +111,4 @@ rw() {
 # --------------------
 [[ -f /home/aditya/.dart-cli-completion/zsh-config.zsh ]] && \
   source /home/aditya/.dart-cli-completion/zsh-config.zsh || true
+export PATH="$HOME/.local/bin:$PATH"
