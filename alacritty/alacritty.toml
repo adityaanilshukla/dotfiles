@@ -48,7 +48,7 @@ text = "0x161718"       # selection_foreground
 background = "0x444444"
 
 [colors.normal]
-black = "0x000000"   # color0
+black = "0x3c3c3c"   # color0 — bumped from 0x000000
 red = "0xfc5ef0"     # color1
 green = "0x86c38a"   # color2
 yellow = "0xffd6b1"  # color3
@@ -59,7 +59,7 @@ white = "0xdfdfdf"   # color7
 
 
 [colors.bright]
-black = "0x000000"   # color8
+black = "0xaaaaaa"
 red = "0xfc5ef0"     # color9
 green = "0x94f936"   # color10
 yellow = "0xf5ffa7"  # color11

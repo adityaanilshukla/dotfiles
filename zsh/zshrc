@@ -9,6 +9,9 @@ ENABLE_CORRECTION="true"
 
 plugins=(git)
 
+# source secrets if file exists
+[[ -f ~/.secrets ]] && source ~/.secrets
+
 # --------------------
 # Homebrew completion path (macOS)
 # --------------------
@@ -41,6 +44,7 @@ alias rr='ranger'
 alias f='fastfetch'
 alias mkenv='python3 -m venv .venv'
 alias act='[ -d .venv ] && source .venv/bin/activate || echo "No .venv found"'
+alias pipup='python -m pip install --upgrade pip'
 
 export EDITOR="nvim"
 export VISUAL="nvim"
@@ -112,5 +116,4 @@ if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.
   source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
 
-export ZATHURA_PLUGINS_PATH=/opt/homebrew/lib/zathura
-export ZATHURA_PLUGINS_PATH=$(dirname $(find $(brew --cellar zathura-pdf-poppler) -name "libpdf-poppler.dylib" | head -n 1))
+export ZATHURA_PLUGINS_PATH="$(brew --prefix)/Cellar/zathura-pdf-poppler/2026.02.03:$(brew --prefix)/Cellar/zathura-pdf-mupdf/2026.02.03"
