@@ -54,7 +54,8 @@ alias ls="ls --color=auto"
 alias la="ls -A"
 alias ll="ls -alF"
 alias l="ls -CF"
-#
+# make scratchpad notes quickly
+alias qn='nvim "/tmp/note_$(date +%Y-%m-%d_%H-%M-%S).txt"'
 # pacman aliases
 alias update='sudo pacman -Syu'
 alias install='sudo pacman -S'
