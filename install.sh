@@ -37,6 +37,8 @@ declare -A files=(
   ["polybar/polybar-timer.sh"]="$HOME/.config/polybar/polybar-timer.sh"
   ["polybar/sounds/timer-complete.mp3"]="$HOME/.config/polybar/sounds/timer-complete.mp3"
   ["polybar/launch.sh"]="$HOME/.config/polybar/launch.sh"
+  ["polybar/network.sh"]="$HOME/.config/polybar/network.sh"
+  ["polybar/audio-sink.sh"]="$HOME/.config/polybar/audio-sink.sh"
 )
 
 for src in "${!files[@]}"; do
