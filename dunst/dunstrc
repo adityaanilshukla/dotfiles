@@ -53,13 +53,13 @@
 
     # Set the progress bar height. This includes the frame, so make sure
     # it's at least twice as big as the frame width.
-    progress_bar_height = 10
+    progress_bar_height = 12
 
     # Set the frame width of the progress bar
     progress_bar_frame_width = 1
 
     # Set the minimum width for the progress bar
-    progress_bar_min_width = 150
+    progress_bar_min_width = 280
 
     # Set the maximum width for the progress bar
     progress_bar_max_width = 300
@@ -178,7 +178,7 @@
 
     # Alignment of message text.
     # Possible values are "left", "center" and "right".
-    alignment = left
+    alignment = center
 
     # Vertical alignment of message text and icon.
     # Possible values are "top", "center" and "bottom".
@@ -334,6 +334,7 @@
     # background = "#1b1e21"
     background = "#323538"
     foreground = "#ffffff"
+    highlight = "#ffffff"
     timeout = 10
     override_pause_level = 30
     # Icon for notifications with normal urgency, uncomment to enable
