@@ -2,8 +2,15 @@
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
 
   "logo": {
-    "type": "builtin",
-    "source": "arch_small",
+    "type": "chafa",
+    "source": "~/dotfiles/fastfetch/archlinux-logo.png",
+    "width": 20,
+    "height": 10,
+    "chafa": {
+      "symbols": "block+vhalf+hhalf+quad+space",
+      "ditherMode": "NONE",
+      "canvasMode": "TRUECOLOR",
+    },
   },
 
   "modules": [

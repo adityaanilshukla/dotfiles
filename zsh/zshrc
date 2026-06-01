@@ -54,6 +54,11 @@ alias c='clear'
 alias rr='ranger'
 alias f='fastfetch'
 alias mkenv='python3 -m venv .venv'
+# make scratchpad notes quickly
+alias qn='nvim "/tmp/note_$(date +%Y-%m-%d_%H-%M-%S).txt"'
+# helper scripts
+alias j='journal edit'
+alias jv='journal view'
 # Activate .venv if it exists; otherwise print a warning
 alias act='[ -d .venv ] && source .venv/bin/activate || echo "No .venv found"'
 alias pipup='pip install --upgrade pip'
