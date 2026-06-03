@@ -334,7 +334,7 @@
     # background = "#1b1e21"
     background = "#323538"
     foreground = "#ffffff"
-    highlight = "#ffffff"
+    highlight = "#4da3ff"
     timeout = 10
     override_pause_level = 30
     # Icon for notifications with normal urgency, uncomment to enable
