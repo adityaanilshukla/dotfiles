@@ -41,6 +41,7 @@ preset = 'qwerty'
 # Focus windows (i3 hjkl)
 alt-j = 'focus left'
 alt-k = 'focus right'
+alt-r = 'mode resize'
 
 # Reload config 
 alt-ctrl-r = 'reload-config'
@@ -117,6 +118,15 @@ alt-shift-7 = 'move-node-to-workspace 7'
 alt-shift-8 = 'move-node-to-workspace 8'
 alt-shift-9 = 'move-node-to-workspace 9'
 alt-shift-0 = 'move-node-to-workspace 10'
+
+[mode.resize.binding]
+# Exit resize mode
+esc = 'mode main'
+alt-r = 'mode main'
+
+# Use left/right arrow keys for horizontal resizing
+left = 'resize width -50'   # Left arrow: shrink width
+right = 'resize width +50'  # Right arrow: expand width
 
 # ---------- App Workspace Rules ----------
 
