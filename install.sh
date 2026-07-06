@@ -24,6 +24,14 @@ if [[ -f "$DOTFILES_DIR/Brewfile" ]]; then
     || echo "brew bundle finished with some failures — review the output above."
 fi
 
+# --- De-quarantine ad-hoc-signed casks ------------------------------------
+# qBittorrent's cask build is ad-hoc signed (not notarized), so Gatekeeper
+# quarantines it and blocks first launch. Strip the quarantine flag so it opens
+# without the "could not verify" prompt. Re-runs harmlessly if already clear.
+for app in "/Applications/qBittorrent.app"; do
+  [[ -d "$app" ]] && xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
+done
+
 # --- online-zathura -------------------------------------------------------
 # Reading-state sync used by scripts/readbook. It's its own repo, built with
 # its Makefile into ~/.local/bin. Needs `go` (Brewfile). Actual Turso sync also
