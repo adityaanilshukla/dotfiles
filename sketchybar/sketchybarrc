@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+# ============================================================================
+# SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
+# Layout: [workspaces 1-10] [front_app]  <center>  [wifi] [volume] [battery] [clock]
+# ============================================================================
+
+export CONFIG_DIR="$HOME/.config/sketchybar"
+export PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/icons.sh"
+
+# ----- Bar appearance -----
+# Height 37 matches the macOS menubar/notch on M-series MacBooks, and pure
+# black makes the notch blend seamlessly into the bar.
+sketchybar --bar \
+  height=37 \
+  blur_radius=0 \
+  position=top \
+  sticky=on \
+  padding_left=10 \
+  padding_right=10 \
+  color="$BAR_COLOR" \
+  topmost=window
+
+# ----- Defaults applied to subsequent items -----
+sketchybar --default \
+  updates=when_shown \
+  icon.font="Hack Nerd Font:Regular:14.0" \
+  icon.color="$WHITE" \
+  icon.padding_left=8 \
+  icon.padding_right=4 \
+  label.font="Hack Nerd Font:Regular:13.0" \
+  label.color="$WHITE" \
+  label.padding_left=4 \
+  label.padding_right=8 \
+  background.corner_radius=6 \
+  background.height=24 \
+  background.color="$ITEM_BG_COLOR" \
+  background.drawing=off \
+  padding_left=2 \
+  padding_right=2
+
+# ----- AeroSpace workspaces (left) -----
+# Declare the custom event AeroSpace fires via exec-on-workspace-change.
+sketchybar --add event aerospace_workspace_change
+
+# Per-workspace visual items. The controller (below) decides which are drawn.
+for sid in 1 2 3 4 5 6 7 8 9 10; do
+  sketchybar --add item space.$sid left \
+             --set space.$sid \
+                   label="$sid" \
+                   label.padding_left=8 \
+                   label.padding_right=8 \
+                   icon.drawing=off \
+                   drawing=off \
+                   click_script="aerospace workspace $sid"
+done
+
+# Invisible controller — single script call updates all 10 space.N items.
+# Fires on workspace switch + every 2s to catch window open/close in
+# unfocused workspaces (AeroSpace has no per-window-removal hook).
+sketchybar --add item aerospace_controller left \
+           --subscribe aerospace_controller aerospace_workspace_change \
+           --set aerospace_controller \
+                 drawing=off \
+                 updates=on \
+                 update_freq=2 \
+                 script="$PLUGIN_DIR/aerospace.sh"
+
+# Initial paint.
+sketchybar --trigger aerospace_workspace_change \
+           FOCUSED_WORKSPACE="$(aerospace list-workspaces --focused 2>/dev/null)"
+
+# ----- Clock (right) -----
+sketchybar --add item clock right \
+           --set clock \
+                 update_freq=10 \
+                 icon="$CLOCK" \
+                 script="$PLUGIN_DIR/clock.sh"
+
+# ----- Battery (right) -----
+sketchybar --add item battery right \
+           --subscribe battery system_woke power_source_change \
+           --set battery \
+                 update_freq=120 \
+                 script="$PLUGIN_DIR/battery.sh"
+
+# ----- Volume (right) -----
+sketchybar --add item volume right \
+           --subscribe volume volume_change \
+           --set volume \
+                 update_freq=1 \
+                 script="$PLUGIN_DIR/volume.sh"
+
+# ----- Wifi (right) -----
+sketchybar --add item wifi right \
+           --subscribe wifi wifi_change system_woke \
+           --set wifi \
+                 update_freq=30 \
+                 script="$PLUGIN_DIR/wifi.sh"
+
+# ----- Finalize -----
+sketchybar --update

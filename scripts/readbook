@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# --- environment (important for GUI launches) ---
+# GUI keybind invocations don't inherit a normal shell env, so we set up
+# PATH (incl. ~/.local/bin for online-zathura), source the project-scoped
+# Turso creds, and pin both binaries.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+[[ -f "$HOME/.secrets" ]] && source "$HOME/.secrets"
+
+ZATHURA="/opt/homebrew/bin/zathura"
+ONLINE_ZATHURA="$HOME/.local/bin/online-zathura"
+
+PDF_POPPLER="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler)" -name 'libpdf-poppler.dylib' | head -n1)")"
+PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-mupdf.dylib' | head -n1)")"
+
+export ZATHURA_PLUGINS_PATH="$PDF_POPPLER:$PDF_MUPDF"
+
+# --- book picker ---
+BOOK_DIR="$HOME/Documents"
+
+BOOK=$(find "$BOOK_DIR" \
+  -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" -o -iname "*.djvu" \) \
+  2>/dev/null | fzf)
+
+# Nothing selected (fzf cancelled) — bail before launching anything.
+[[ -z "$BOOK" ]] && exit 0
+
+# List the AeroSpace window-ids of every open zathura window. zathura has no
+# app bundle id on macOS, so we match by app-name.
+zathura_ids() {
+  aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
+    | awk -F'|' '$2 == "zathura" { print $1 }'
+}
+
+# Highest existing zathura window-id (0 if none). AeroSpace window-ids are
+# monotonically increasing, so the window we're about to open will have a
+# larger id than any already open — that's how we single it out.
+before_max=$(zathura_ids | sort -n | tail -n1)
+before_max=${before_max:-0}
+
+# --- launch ---
+# Route through online-zathura: it pulls reading state from Turso, execs
+# real zathura (via ZATHURA_BINARY), and pushes deltas back when you close
+# the window. nohup+& detaches the whole wrapper so alacritty can close.
+ZATHURA_BINARY="$ZATHURA" nohup "$ONLINE_ZATHURA" "$BOOK" >/dev/null 2>&1 &
+
+# --- focus zathura under AeroSpace ---
+# AeroSpace (not macOS/AppleScript) governs keyboard focus, so an AppleScript
+# `activate` doesn't reliably hand keystrokes to the reader. Poll (up to ~5s)
+# for the newly-opened zathura window and focus it by window-id, so keypresses
+# land in zathura without a manual click. Doing this while alacritty is still
+# open (but now unfocused) means alacritty closing afterwards won't steal focus.
+for _ in $(seq 1 50); do
+  sleep 0.1
+  wid=$(zathura_ids | sort -n | tail -n1)
+  if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
+    aerospace focus --window-id "$wid"
+    break
+  fi
+done

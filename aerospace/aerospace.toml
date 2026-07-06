@@ -1,0 +1,151 @@
+# =========================
+# AeroSpace i3-style config
+# =========================
+
+start-at-login = true
+
+# Use alt as mod (closest to i3 mod key feel)
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+# Open default apps on their starting workspaces once, at AeroSpace startup.
+# Soft placement — after launch, windows can be moved anywhere freely.
+after-startup-command = [
+  'exec-and-forget open -a BetterDisplay',
+  'exec-and-forget /Users/aditya/.config/aerospace/startup.sh',
+]
+
+# Notify sketchybar whenever the focused workspace changes so the bar's
+# workspace indicator stays in sync.
+exec-on-workspace-change = ['/bin/bash', '-c',
+    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
+]
+
+# Reserve space at the top so tiled windows sit below the 37pt sketchybar.
+# Per-monitor: built-in gets 5 (macOS already reserves ~24pt for the menubar
+# in the notch area), external monitors get the full 37pt.
+[gaps]
+outer.top = [{ monitor.'built-in Retina Display' = 5 }, { monitor.'DELL S3423DWC' = 37 }, 37]
+outer.bottom = 0
+outer.left = 0
+outer.right = 0
+inner.horizontal = 0
+inner.vertical = 0
+
+# ---------- Keybindings ----------
+[key-mapping]
+preset = 'qwerty'
+
+[mode.main.binding]
+
+# Focus windows (i3 hjkl)
+alt-j = 'focus left'
+alt-k = 'focus right'
+
+# Reload config 
+alt-ctrl-r = 'reload-config'
+
+# Take a screenshot and put it in the clipboard
+alt-shift-s = 'exec-and-forget screencapture -i -c'
+
+# Move windows
+alt-shift-j = 'move left'
+alt-shift-k = 'move right'
+
+# Resize (optional but nice)
+alt-ctrl-h = 'resize width -50'
+alt-ctrl-l = 'resize width +50'
+alt-ctrl-j = 'resize height +50'
+alt-ctrl-k = 'resize height -50'
+
+# Layout toggles
+alt-v = 'join-with right'
+alt-b = 'join-with down'
+alt-shift-f = "fullscreen"
+
+# Close window (i3 style) — closes only the focused window; quits the app if it was its last window
+alt-q = 'close --quit-if-last-window'
+
+# ---------- Raycast ----------
+
+# Open Raycast launcher
+alt-d = 'exec-and-forget open -g "raycast://extensions/raycast/raycast/launcher"'
+
+# Open Raycast clipboard history
+alt-p = 'exec-and-forget open -g "raycast://extensions/raycast/clipboard-history/clipboard-history"'
+
+alt-x = 'exec-and-forget alacritty -e zsh -lc "~/Scripts/readbook; "sleep 0.3'
+
+# Launch Alacritty with tmux
+# alt-enter = 'exec-and-forget open -na Alacritty --args -e tmux'
+
+# Launch Alacritty 
+alt-t = 'exec-and-forget open -na Alacritty'
+
+# Launch Firefox
+alt-f = 'exec-and-forget open -na "Brave Browser" --args --new-window "https://archlinux.org/"'
+
+# Launch Brave incognito window (plain incognito, never Tor)
+ctrl-shift-p = 'exec-and-forget open -na "Brave Browser" --args --incognito'
+
+# Launch ranger
+# ranger with no path arg reads the stale PWD env var (which launchd/open leaves
+# as "/"), so it opened at root instead of home. Pass $HOME explicitly to fix it.
+alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -e ranger "$HOME"'
+
+# ---------- Workspaces ----------
+
+alt-1 = 'workspace 1'
+alt-2 = 'workspace 2'
+alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
+alt-0 = 'workspace 10'
+
+# Move window to workspace
+alt-shift-1 = 'move-node-to-workspace 1'
+alt-shift-2 = 'move-node-to-workspace 2'
+alt-shift-3 = 'move-node-to-workspace 3'
+alt-shift-4 = 'move-node-to-workspace 4'
+alt-shift-5 = 'move-node-to-workspace 5'
+alt-shift-6 = 'move-node-to-workspace 6'
+alt-shift-7 = 'move-node-to-workspace 7'
+alt-shift-8 = 'move-node-to-workspace 8'
+alt-shift-9 = 'move-node-to-workspace 9'
+alt-shift-0 = 'move-node-to-workspace 10'
+
+# ---------- App Workspace Rules ----------
+
+# qutebrowser launches as bundle "org.python.python" on macOS (PyQt app), so
+# match by window title instead — it always ends with "qutebrowser" per the
+# title_format set in ~/.qutebrowser/config.py.
+[[on-window-detected]]
+if.window-title-regex-substring = 'qutebrowser$'
+run = ['layout tiling', 'fullscreen on']
+
+[[on-window-detected]]
+if.app-id = 'org.mozilla.nightly'
+run = ['move-node-to-workspace 9']
+
+# [[on-window-detected]]
+# if.app-id = "org.mozilla.firefox"
+# run = "move-node-to-workspace 2"
+#
+# [[on-window-detected]]
+# if.app-id = "com.microsoft.Outlook"
+# run = "move-node-to-workspace 4"
+#
+# Alacritty opened via `open -na Alacritty` (e.g. the alt-n ranger launcher) is a
+# NEW instance, and AeroSpace tends to drop new-instance windows to floating.
+# Force every Alacritty window back to the tiling layout.
+[[on-window-detected]]
+if.app-id = 'org.alacritty'
+run = 'layout tiling'
+#
+# [[on-window-detected]]
+# if.app-id = "ru.keepcoder.Telegram"
+# run = "move-node-to-workspace 3"
