@@ -1,9 +1,9 @@
 {
     "workbench.colorTheme": "Gnome Dark (GitHub)",
-    "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
-    },
     "vim.useSystemClipboard": true,
+    "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+    "vim.smartRelativeLine": true,
+    "editor.lineNumbers": "relative",
     "notebook.lineNumbers": "on",
     "editor.minimap.enabled": false,
     "workbench.activityBar.location": "hidden",
@@ -12,5 +12,6 @@
     "zenMode.centerLayout": true,
     "zenMode.hideActivityBar": true,
     "zenMode.hideStatusBar": true,
-    "zenMode.hideLineNumbers": false
+    "zenMode.hideLineNumbers": false,
+    "git.openRepositoryInParentFolders": "always"
 }
