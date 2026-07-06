@@ -127,9 +127,14 @@ alt-shift-0 = 'move-node-to-workspace 10'
 if.window-title-regex-substring = 'qutebrowser$'
 run = ['layout tiling', 'fullscreen on']
 
+# Playwright's Firefox (apply-bot) carries this bundle id. Route it to
+# workspace 9, then return focus to whatever window was focused before Firefox
+# grabbed it, so the relaunch leaves you exactly where you were. macOS activates
+# Firefox on launch, so a bare move drags the view to 9; focus-back-and-forth
+# undoes that by re-focusing the prior window (on whatever workspace it's on).
 [[on-window-detected]]
 if.app-id = 'org.mozilla.nightly'
-run = ['move-node-to-workspace 9']
+run = ['move-node-to-workspace 9', 'focus-back-and-forth']
 
 # [[on-window-detected]]
 # if.app-id = "org.mozilla.firefox"
