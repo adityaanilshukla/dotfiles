@@ -1,6 +1,11 @@
 # Background (around the page)
 set default-bg "#1e1e1e"
 
+set guioptions ""
+set window-title-basename true
+set statusbar-h-padding 0
+set statusbar-v-padding 0
+
 # Page background and text
 set recolor "true"
 set recolor-lightcolor "#1e1e1e"   # page background
