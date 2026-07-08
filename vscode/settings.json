@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Gnome Dark (GitHub)",
+    "workbench.colorTheme": "oxocarbon",
     "vim.useSystemClipboard": true,
     "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
     "vim.smartRelativeLine": true,

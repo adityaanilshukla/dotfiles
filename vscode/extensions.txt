@@ -4,7 +4,9 @@
 # Editing
 vscodevim.vim
 
-# Theme — provides "Gnome Dark (GitHub)" (set in settings.json)
+# Themes — "oxocarbon" is the active one (set in settings.json);
+# fedora-gnome-light-dark is kept as an alternative.
+nyoomengineering.oxocarbon-vscode
 olifink.fedora-gnome-light-dark
 
 # Python
