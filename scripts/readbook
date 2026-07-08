@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+# --- internal list mode -------------------------------------------------
+# Used by the fzf picker below (initial load + Tab reload): print one row per
+# book as "<display>\t<fullpath>", then exit before the slower zathura env
+# setup. $2 is the display mode:
+#   name  -> just the filename
+#   path  -> the path relative to ~/Documents, so directories are searchable
+# The full path is always the second (hidden) field, so selection is
+# unambiguous even when two books share a filename.
+if [[ "${1:-}" == "--list" ]]; then
+  find "$HOME/Documents" \
+    -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" -o -iname "*.djvu" \) \
+    2>/dev/null | while IFS= read -r p; do
+      if [[ "${2:-name}" == path ]]; then disp="${p#*/Documents/}"; else disp="${p##*/}"; fi
+      printf '%s\t%s\n' "$disp" "$p"
+    done
+  exit 0
+fi
+
+# Absolute path to this script, so the fzf Tab-reload can re-invoke it.
+SELF="$0"; [[ "$SELF" != /* ]] && SELF="$PWD/$SELF"
+
 # --- environment (important for GUI launches) ---
 # GUI keybind invocations don't inherit a normal shell env, so we set up
 # PATH (incl. ~/.local/bin for online-zathura), source the project-scoped
@@ -16,11 +37,23 @@ PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-
 export ZATHURA_PLUGINS_PATH="$PDF_POPPLER:$PDF_MUPDF"
 
 # --- book picker ---
-BOOK_DIR="$HOME/Documents"
+# The list shows each book's filename. Press Tab to switch the whole list to
+# show paths relative to ~/Documents instead, so you can fuzzy-match on a
+# directory too; Tab again switches back. A temp file holds the current mode so
+# the Tab reload knows which way to flip. --with-nth=1/--nth=1 keep the hidden
+# full-path field out of both the display and the search.
+MODE_FILE=$(mktemp)
+export MODE_FILE
+printf 'name\n' > "$MODE_FILE"
 
-BOOK=$(find "$BOOK_DIR" \
-  -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" -o -iname "*.djvu" \) \
-  2>/dev/null | fzf)
+SEL=$("$SELF" --list name | fzf \
+  --delimiter='\t' --with-nth=1 --nth=1 \
+  --bind 'tab:reload(m=$(cat "$MODE_FILE"); [ "$m" = name ] && m=path || m=name; printf "%s\n" "$m" > "$MODE_FILE"; '"$SELF"' --list "$m")')
+
+rm -f "$MODE_FILE"
+
+# Recover the full path (the field after the tab); empty if fzf was cancelled.
+BOOK="${SEL#*$'\t'}"
 
 # Nothing selected (fzf cancelled) — bail before launching anything.
 [[ -z "$BOOK" ]] && exit 0
