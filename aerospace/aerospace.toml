@@ -94,6 +94,11 @@ ctrl-shift-p = 'exec-and-forget open -na "Brave Browser" --args --incognito'
 # as "/"), so it opened at root instead of home. Pass $HOME explicitly to fix it.
 alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -e ranger "$HOME"'
 
+# Dismiss notification banners. killall restarts the (launchd-managed) process
+# within ~1s, so this just clears whatever's on screen rather than disabling
+# notifications. Not a default macOS shortcut (verified before binding it).
+ctrl-shift-x = 'exec-and-forget killall NotificationCenter'
+
 # ---------- Workspaces ----------
 
 alt-1 = 'workspace 1'
