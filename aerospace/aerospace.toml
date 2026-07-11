@@ -81,7 +81,7 @@ alt-x = 'exec-and-forget alacritty -e zsh -lc "~/Scripts/readbook; "sleep 0.3'
 # alt-enter = 'exec-and-forget open -na Alacritty --args -e tmux'
 
 # Launch Alacritty 
-alt-t = 'exec-and-forget open -na Alacritty'
+alt-enter = 'exec-and-forget open -na Alacritty'
 
 # Launch Firefox
 alt-f = 'exec-and-forget open -na "Brave Browser" --args --new-window "https://archlinux.org/"'
