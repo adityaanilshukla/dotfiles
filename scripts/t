@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Sketchybar-backed countdown timer. Usage:
 #   t <minutes>              work timer only
-#   t <minutes> b <seconds>  work timer, then auto-starts a break on completion
+#   t <minutes> b <minutes>  work timer, then auto-starts a break on completion
 #   t pause                  freeze the active timer
 #   t play                   resume a paused timer
 #   t stop                   cancel the active timer
@@ -15,7 +15,7 @@ set -euo pipefail
 STATE_FILE="/tmp/sketchybar_timer.state"
 
 usage() {
-  echo "Usage: t <minutes> [b <break_seconds>]   |   t pause   |   t play   |   t stop" >&2
+  echo "Usage: t <minutes> [b <break_minutes>]   |   t pause   |   t play   |   t stop" >&2
   exit 1
 }
 
@@ -79,7 +79,7 @@ work_minutes="$1"
 break_seconds=0
 if [[ $# -eq 3 ]]; then
   [[ "$2" == "b" && "$3" =~ ^[0-9]+$ && "$3" -gt 0 ]] || usage
-  break_seconds="$3"
+  break_seconds=$(( "$3" * 60 ))
 fi
 
 end=$(( $(date +%s) + work_minutes * 60 ))
@@ -89,7 +89,7 @@ sketchybar --set timer drawing=on >/dev/null 2>&1
 sketchybar --trigger timer_update >/dev/null 2>&1 || true
 
 if (( break_seconds > 0 )); then
-  echo "Timer started: ${work_minutes}m work, then ${break_seconds}s break."
+  echo "Timer started: ${work_minutes}m work, then $(( break_seconds / 60 ))m break."
 else
   echo "Timer started: ${work_minutes}m."
 fi
