@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sketchybar-backed countdown timer. Usage:
+#   t <minutes>              work timer only
+#   t <minutes> b <seconds>  work timer, then auto-starts a break on completion
+#   t pause                  freeze the active timer
+#   t play                   resume a paused timer
+#   t stop                   cancel the active timer
+#
+# This script only ever writes state; sketchybar/plugins/timer.sh polls it
+# every second and does the actual countdown, phase transitions and
+# notifications.
+
+STATE_FILE="/tmp/sketchybar_timer.state"
+
+usage() {
+  echo "Usage: t <minutes> [b <break_seconds>]   |   t pause   |   t play   |   t stop" >&2
+  exit 1
+}
+
+if [[ "${1:-}" == "stop" || "${1:-}" == "cancel" ]]; then
+  rm -f "$STATE_FILE"
+  sketchybar --set timer drawing=off icon="" label="" >/dev/null 2>&1 || true
+  echo "Timer stopped."
+  exit 0
+fi
+
+if [[ "${1:-}" == "pause" ]]; then
+  if [[ ! -f "$STATE_FILE" ]]; then
+    echo "No timer running."
+    exit 0
+  fi
+
+  read -r phase end phase_total next_break paused_remaining < "$STATE_FILE"
+  paused_remaining="${paused_remaining:-0}"
+
+  if [[ "$paused_remaining" -gt 0 ]]; then
+    echo "Already paused."
+    exit 0
+  fi
+
+  remaining=$(( end - $(date +%s) ))
+  if (( remaining <= 0 )); then
+    echo "Timer already finished."
+    exit 0
+  fi
+  echo "$phase $end $phase_total $next_break $remaining" > "$STATE_FILE"
+  sketchybar --trigger timer_update >/dev/null 2>&1 || true
+  printf "Timer paused at %02d:%02d.\n" $(( remaining / 60 )) $(( remaining % 60 ))
+  exit 0
+fi
+
+if [[ "${1:-}" == "play" ]]; then
+  if [[ ! -f "$STATE_FILE" ]]; then
+    echo "No timer running."
+    exit 0
+  fi
+
+  read -r phase end phase_total next_break paused_remaining < "$STATE_FILE"
+  paused_remaining="${paused_remaining:-0}"
+
+  if [[ "$paused_remaining" -eq 0 ]]; then
+    echo "Already running."
+    exit 0
+  fi
+
+  new_end=$(( $(date +%s) + paused_remaining ))
+  echo "$phase $new_end $phase_total $next_break 0" > "$STATE_FILE"
+  sketchybar --trigger timer_update >/dev/null 2>&1 || true
+  printf "Timer resumed, %02d:%02d left.\n" $(( paused_remaining / 60 )) $(( paused_remaining % 60 ))
+  exit 0
+fi
+
+[[ $# -eq 1 || $# -eq 3 ]] || usage
+[[ "$1" =~ ^[0-9]+$ && "$1" -gt 0 ]] || usage
+work_minutes="$1"
+
+break_seconds=0
+if [[ $# -eq 3 ]]; then
+  [[ "$2" == "b" && "$3" =~ ^[0-9]+$ && "$3" -gt 0 ]] || usage
+  break_seconds="$3"
+fi
+
+end=$(( $(date +%s) + work_minutes * 60 ))
+echo "work $end $(( work_minutes * 60 )) $break_seconds 0" > "$STATE_FILE"
+
+sketchybar --set timer drawing=on >/dev/null 2>&1
+sketchybar --trigger timer_update >/dev/null 2>&1 || true
+
+if (( break_seconds > 0 )); then
+  echo "Timer started: ${work_minutes}m work, then ${break_seconds}s break."
+else
+  echo "Timer started: ${work_minutes}m."
+fi

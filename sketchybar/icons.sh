@@ -27,3 +27,13 @@ export WIFI_DISCONNECTED=$(printf '\xef\x80\x8d')
 export CLOCK=$(printf '\xef\x80\x97')
 export CALENDAR=$(printf '\xef\x81\xb3')
 export APPLE=$(printf '\xef\x85\xb9')
+
+# Timer: nf-fa-hourglass_start/half/end (U+F251/F252/F253), nf-fa-coffee (U+F0F4) for break
+export HOURGLASS_START=$(printf '\xef\x89\x91')
+export HOURGLASS_HALF=$(printf '\xef\x89\x92')
+export HOURGLASS_END=$(printf '\xef\x89\x93')
+export COFFEE=$(printf '\xef\x83\xb4')
+
+# Timer paused: nf-fa-play (U+F04B) — shows the action a `t pause` toggle
+# will take next (resume), same convention as a media player's play/pause button.
+export PLAY=$(printf '\xef\x81\x8b')

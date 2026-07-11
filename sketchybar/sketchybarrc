@@ -2,7 +2,7 @@
 
 # ============================================================================
 # SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
-# Layout: [workspaces 1-10] [front_app]  <center>  [wifi] [volume] [battery] [clock]
+# Layout: [workspaces 1-10] [front_app]  <center>  [wifi] [timer] [volume] [battery] [clock]
 # ============================================================================
 
 export CONFIG_DIR="$HOME/.config/sketchybar"
@@ -93,6 +93,20 @@ sketchybar --add item volume right \
            --set volume \
                  update_freq=1 \
                  script="$PLUGIN_DIR/volume.sh"
+
+# ----- Timer (right) -----
+# Countdown started via `t <minutes> [b <break_seconds>]` (scripts/t, on PATH
+# as ~/Scripts/t). Hidden until a timer is active; timer.sh renders the
+# countdown and also drives the work -> break transition and notifications.
+sketchybar --add event timer_update
+
+sketchybar --add item timer right \
+           --subscribe timer timer_update \
+           --set timer \
+                 drawing=off \
+                 updates=on \
+                 update_freq=1 \
+                 script="$PLUGIN_DIR/timer.sh"
 
 # ----- Wifi (right) -----
 sketchybar --add item wifi right \

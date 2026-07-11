@@ -67,6 +67,9 @@ files=(
   # zathura launcher — aerospace's alt-x binding runs ~/Scripts/readbook.
   "scripts/readbook:$HOME/Scripts/readbook"
 
+  # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
+  "scripts/t:$HOME/Scripts/t"
+
   # VS Code (macOS config path)
   "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"
   "vscode/keybindings.json:$HOME/Library/Application Support/Code/User/keybindings.json"

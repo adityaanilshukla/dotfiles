@@ -60,6 +60,7 @@ alias ll="ls -alF"
 alias l="ls -CF"
 
 export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"
+export PATH="$HOME/Scripts:$PATH"
 
 # --------------------
 # Ranger helper
