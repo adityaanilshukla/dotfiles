@@ -138,13 +138,20 @@ if.window-title-regex-substring = 'qutebrowser$'
 run = ['layout tiling', 'fullscreen on']
 
 # Playwright's Firefox (apply-bot) carries this bundle id. Route it to
-# workspace 9, then return focus to whatever window was focused before Firefox
-# grabbed it, so the relaunch leaves you exactly where you were. macOS activates
-# Firefox on launch, so a bare move drags the view to 9; focus-back-and-forth
-# undoes that by re-focusing the prior window (on whatever workspace it's on).
+# workspace 9. move-node-to-workspace without --focus-follows-window never
+# touches AeroSpace's own focused workspace, so this alone doesn't disturb
+# your view. A prior version chained focus-back-and-forth here to counter
+# what looked like a focus steal from the move — it wasn't: AeroSpace only
+# remembers a single "previously focused window" slot (known upstream
+# limitation, see nikitabobko/AeroSpace#1024), so that call was popping
+# whatever window you'd last focused, unrelated to Firefox, every loop.sh
+# cycle (~5 min). That's the random jump to Alacritty. macOS still briefly
+# activates Firefox as the frontmost app on launch; that's handled in
+# apply-bot's browser.py instead (the only place that can capture "what was
+# frontmost right before launch").
 [[on-window-detected]]
 if.app-id = 'org.mozilla.nightly'
-run = ['move-node-to-workspace 9', 'focus-back-and-forth']
+run = ['move-node-to-workspace 9']
 
 # [[on-window-detected]]
 # if.app-id = "org.mozilla.firefox"
