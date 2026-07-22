@@ -34,11 +34,13 @@ declare -A files=(
 
   #polybar
   ["polybar/config.ini"]="$HOME/.config/polybar/config.ini"
-  ["polybar/polybar-timer.sh"]="$HOME/.config/polybar/polybar-timer.sh"
-  ["polybar/sounds/timer-complete.mp3"]="$HOME/.config/polybar/sounds/timer-complete.mp3"
+  ["polybar/timer.sh"]="$HOME/.config/polybar/timer.sh"
   ["polybar/launch.sh"]="$HOME/.config/polybar/launch.sh"
   ["polybar/network.sh"]="$HOME/.config/polybar/network.sh"
   ["polybar/audio-sink.sh"]="$HOME/.config/polybar/audio-sink.sh"
+
+  # polybar-backed countdown timer CLI — see polybar/timer.sh
+  ["scripts/t"]="$HOME/.local/bin/t"
 )
 
 for src in "${!files[@]}"; do
