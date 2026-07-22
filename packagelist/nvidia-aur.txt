@@ -22,3 +22,4 @@ tauon-music-box
 vscodium
 whatsapp-linux-desktop
 yay-debug
+zenity-gtk3

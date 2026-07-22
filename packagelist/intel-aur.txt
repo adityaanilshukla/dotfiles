@@ -31,3 +31,4 @@ rofi-greenclip
 tree-sitter-git
 vscodium
 whatsapp-for-linux
+zenity-gtk3
