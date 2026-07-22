@@ -19,10 +19,10 @@
 }
 
 window {
-    location:  center;
-    anchor:    center;
-    y-offset:  -180px;
-    width:     640px;
+    location:  north;
+    anchor:    north;
+    y-offset:  460px;
+    width:     900px;
 
     background-color: @bg;
     border:            1px;
@@ -34,7 +34,7 @@ window {
 mainbox {
     background-color: transparent;
     padding:           0px;
-    children:          [ inputbar, listview ];
+    children:          [ inputbar, listview, message ];
 }
 
 inputbar {
@@ -64,7 +64,7 @@ listview {
     border:            1px 0px 0px 0px;
     border-color:      @border-col;
     padding:           8px;
-    spacing:           2px;
+    spacing:           0px;
     lines:             9;
     fixed-height:      false;
     scrollbar:         false;
@@ -86,7 +86,7 @@ element normal.normal {
 }
 
 element alternate.normal {
-    background-color: transparent;
+    background-color: @bg-input;
     text-color:        @fg;
 }
 
@@ -103,4 +103,19 @@ element-icon {
 element-text {
     vertical-align: 0.5;
     text-color:     inherit;
+}
+
+message {
+    background-color: @bg-input;
+    border:            1px 0px 0px 0px;
+    border-color:      @border-col;
+    padding:           0px;
+}
+
+textbox {
+    background-color: transparent;
+    text-color:        @fg-muted;
+    padding:           10px 20px;
+    font:              "Hack Nerd Font 10";
+    horizontal-align:  0;
 }

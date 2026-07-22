@@ -31,6 +31,7 @@ declare -A files=(
   ["koreader/ultrawide_3440.css"]=$HOME"/.config/koreader/styletweaks/ultrawide_3440.css"
   ["zathura/zathurarc"]="$HOME/.config/zathura/zathurarc"
   ["rofi/config.rasi"]="$HOME/.config/rofi/config.rasi"
+  ["rofi/raycast.rasi"]="$HOME/.config/rofi/raycast.rasi"
 
   #polybar
   ["polybar/config.ini"]="$HOME/.config/polybar/config.ini"
