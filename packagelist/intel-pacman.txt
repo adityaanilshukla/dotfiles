@@ -115,7 +115,6 @@ xorg-xbacklight
 yamllint
 zathura
 zathura-pdf-mupdf
-zenity
 zsh
 zsh-autosuggestions
 zsh-completions
