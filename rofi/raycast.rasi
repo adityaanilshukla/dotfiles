@@ -1,0 +1,121 @@
+/*
+ * Raycast-inspired theme: centered floating search card, flat (no
+ * rounded corners), accent-highlighted selection row. Palette matches
+ * alacritty/dunst/polybar (see ../polybar/config.ini).
+ */
+
+* {
+    bg:         #161718;
+    bg-input:   #1c1d1f;
+    fg:         #c4c8c5;
+    fg-muted:   #6f7377;
+    accent:     #1a5fb4;
+    accent-fg:  #dfdfdf;
+    border-col: #2a2b2d;
+
+    background-color: transparent;
+    text-color:       @fg;
+    font:             "Hack Nerd Font 12";
+}
+
+window {
+    location:  north;
+    anchor:    north;
+    y-offset:  460px;
+    width:     900px;
+
+    background-color: @bg;
+    border:            1px;
+    border-color:      @border-col;
+    border-radius:     0px;
+    padding:           0px;
+}
+
+mainbox {
+    background-color: transparent;
+    padding:           0px;
+    children:          [ inputbar, listview, message ];
+}
+
+inputbar {
+    background-color: @bg-input;
+    text-color:        @fg;
+    padding:           16px 20px;
+    spacing:           12px;
+    children:          [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color:        @fg-muted;
+    font:               "Hack Nerd Font 13";
+}
+
+entry {
+    background-color:  transparent;
+    text-color:         @fg;
+    placeholder:         "Search…";
+    placeholder-color:   @fg-muted;
+    font:                "Hack Nerd Font 13";
+}
+
+listview {
+    background-color: @bg;
+    border:            1px 0px 0px 0px;
+    border-color:      @border-col;
+    padding:           8px;
+    spacing:           0px;
+    lines:             9;
+    fixed-height:      false;
+    scrollbar:         false;
+    cycle:             true;
+}
+
+element {
+    background-color: transparent;
+    text-color:        @fg;
+    padding:           10px 12px;
+    border-radius:     0px;
+    spacing:           12px;
+    orientation:        horizontal;
+}
+
+element normal.normal {
+    background-color: transparent;
+    text-color:        @fg;
+}
+
+element alternate.normal {
+    background-color: @bg-input;
+    text-color:        @fg;
+}
+
+element selected.normal {
+    background-color: @accent;
+    text-color:        @accent-fg;
+}
+
+element-icon {
+    size:            22px;
+    vertical-align:  0.5;
+}
+
+element-text {
+    vertical-align: 0.5;
+    text-color:     inherit;
+}
+
+message {
+    background-color: @bg-input;
+    border:            1px 0px 0px 0px;
+    border-color:      @border-col;
+    padding:           0px;
+}
+
+textbox {
+    background-color: transparent;
+    text-color:        @fg-muted;
+    padding:           10px 20px;
+    font:              "Hack Nerd Font 10";
+    horizontal-align:  0;
+}

@@ -57,11 +57,11 @@ font: "Hack Nerd Font 12";
 /*  refilter-timeout-limit: 8192;*/
 /*  xserver-i300-workaround: false;*/
 /*  pid: "/run/user/1000/rofi.pid";*/
-/*  display-window: ;*/
+  display-window: " ";
 /*  display-windowcd: ;*/
-/*  display-run: ;*/
+  display-run: " ";
 /*  display-ssh: ;*/
-/*  display-drun: ;*/
+  display-drun: " ";
 /*  display-combi: ;*/
 /*  display-keys: ;*/
 /*  display-filebrowser: ;*/
@@ -150,5 +150,5 @@ font: "Hack Nerd Font 12";
       sorting-method:    "name";
   }
 }
-@theme "gruvbox-dark-hard"
+@theme "raycast"
 
