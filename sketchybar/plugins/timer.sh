@@ -3,7 +3,7 @@
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
 
-# State written by `t` (scripts/t, on PATH as ~/Scripts/t):
+# State written by `t` (scripts/t, on PATH as ~/.local/bin/t):
 #   <phase> <end_epoch> <phase_total_seconds> <next_break_seconds> <paused_remaining>
 # phase is "work" or "break"; next_break_seconds is only meaningful mid-work,
 # it's the break to chain into once work hits zero (0 = no break requested).

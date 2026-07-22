@@ -95,8 +95,8 @@ sketchybar --add item volume right \
                  script="$PLUGIN_DIR/volume.sh"
 
 # ----- Timer (right) -----
-# Countdown started via `t <minutes> [b <break_seconds>]` (scripts/t, on PATH
-# as ~/Scripts/t). Hidden until a timer is active; timer.sh renders the
+# Countdown started via `t <minutes> [b <break_minutes>]` (scripts/t, on PATH
+# as ~/.local/bin/t). Hidden until a timer is active; timer.sh renders the
 # countdown and also drives the work -> break transition and notifications.
 sketchybar --add event timer_update
 
