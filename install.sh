@@ -40,9 +40,8 @@ declare -A files=(
   ["polybar/network.sh"]="$HOME/.config/polybar/network.sh"
   ["polybar/audio-sink.sh"]="$HOME/.config/polybar/audio-sink.sh"
 
-  # polybar-backed countdown timer CLI — see polybar/timer.sh. ~/Scripts to
-  # match the MacOS branch's convention for standalone CLI helpers.
-  ["scripts/t"]="$HOME/Scripts/t"
+  # polybar-backed countdown timer CLI, see polybar/timer.sh.
+  ["scripts/t"]="$HOME/.local/bin/t"
 )
 
 for src in "${!files[@]}"; do
