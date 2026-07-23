@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/.mount-drive.config"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+notify() {
+  if have notify-send; then notify-send "Mount Drive" "$1"; fi
+  echo "$1"
+}
+
+for dep in lsblk findmnt jq rofi zenity udisksctl; do
+  if ! have "$dep"; then
+    notify "Missing dependency: $dep"
+    exit 1
+  fi
+done
+
+declare -A CFG_UUID_MP=()
+declare -A CFG_UUID_NAME=()
+declare -A CFG_LBL_MP=()
+declare -A CFG_LBL_NAME=()
+if [[ -f "$CONFIG_FILE" ]]; then
+  while IFS='|' read -r key mp name || [[ -n "${key:-}" ]]; do
+    [[ -z "${key:-}" || "$key" =~ ^[[:space:]]*# ]] && continue
+    key="${key//[[:space:]]/}"
+    [[ -z "$key" ]] && continue
+    if [[ "$key" == LABEL:* ]]; then
+      lbl="${key#LABEL:}"
+      CFG_LBL_MP["$lbl"]="$mp"
+      CFG_LBL_NAME["$lbl"]="${name:-$lbl}"
+    else
+      CFG_UUID_MP["$key"]="$mp"
+      CFG_UUID_NAME["$key"]="${name:-$key}"
+    fi
+  done < "$CONFIG_FILE"
+fi
+
+mapfile -t DEV_ROWS < <(
+  lsblk --json -o NAME,PATH,TYPE,SIZE,FSTYPE,UUID,LABEL,MOUNTPOINT,HOTPLUG,RM 2>/dev/null \
+  | jq -r '
+      [ .. | objects | select(.type=="part" or .type=="crypt" or .type=="rom") ]
+      | .[]
+      | select(.uuid != null and .fstype != null and .fstype != "" and .fstype != "swap")
+      | select((.hotplug == true) or (.rm == true))
+      | [.path, .uuid, .fstype, .size, (.label // ""), (.mountpoint // "")]
+      | @tsv
+    '
+)
+
+ENTRIES=()
+for row in "${DEV_ROWS[@]}"; do
+  IFS=$'\t' read -r path uuid fstype size label mountpoint <<<"$row"
+  [[ -n "$mountpoint" ]] && continue
+  if findmnt -nS "UUID=$uuid" >/dev/null 2>&1; then continue; fi
+  cfg_mp=""; cfg_name=""
+  if [[ -n "${CFG_UUID_MP[$uuid]:-}" ]]; then
+    cfg_mp="${CFG_UUID_MP[$uuid]}"
+    cfg_name="${CFG_UUID_NAME[$uuid]}"
+  elif [[ -n "$label" && -n "${CFG_LBL_MP[$label]:-}" ]]; then
+    cfg_mp="${CFG_LBL_MP[$label]}"
+    cfg_name="${CFG_LBL_NAME[$label]}"
+  fi
+  if [[ -n "$cfg_mp" ]]; then
+    line="$(printf '%-18s %6s  %-8s  [config]  %s' "$cfg_name" "$size" "$fstype" "$cfg_mp")"
+    ENTRIES+=("config|$uuid|$path|$fstype|$cfg_mp|$cfg_name|$line")
+  else
+    display="${label:-$path}"
+    line="$(printf '%-18s %6s  %-8s  [auto]    %s' "$display" "$size" "$fstype" "$path")"
+    ENTRIES+=("auto|$uuid|$path|$fstype|||$line")
+  fi
+done
+
+if [[ ${#ENTRIES[@]} -eq 0 ]]; then
+  notify "No unmounted drives detected."
+  exit 0
+fi
+
+MENU_INPUT=""
+for entry in "${ENTRIES[@]}"; do
+  MENU_INPUT+="${entry##*|}"$'\n'
+done
+MENU_INPUT="${MENU_INPUT%$'\n'}"
+
+CHOICE="$(printf '%s\n' "$MENU_INPUT" | rofi -dmenu -i -p "mount" -no-custom)" || exit 0
+[[ -z "$CHOICE" ]] && exit 0
+
+SELECTED=""
+for entry in "${ENTRIES[@]}"; do
+  if [[ "${entry##*|}" == "$CHOICE" ]]; then
+    SELECTED="$entry"
+    break
+  fi
+done
+[[ -z "$SELECTED" ]] && { notify "Selection did not match any entry."; exit 1; }
+
+IFS='|' read -r SRC UUID DEVPATH FSTYPE MP NAME _ <<<"$SELECTED"
+
+mount_via_udisks() {
+  local out
+  if out="$(udisksctl mount -b "$DEVPATH" 2>&1)"; then
+    notify "$out"
+  else
+    notify "udisksctl failed: $out"
+    exit 1
+  fi
+}
+
+mount_via_sudo() {
+  if [[ ! -d "$MP" ]]; then
+    notify "Mountpoint $MP does not exist. Create it first."
+    exit 1
+  fi
+  local opts=""
+  local type_arg=()
+  case "$FSTYPE" in
+    vfat|exfat|fuseblk)
+      opts="uid=$(id -u),gid=$(id -g),umask=0022"
+      ;;
+    ntfs|ntfs3)
+      # Prefer the in-kernel ntfs3 driver. After a kernel package upgrade
+      # without a reboot, the running kernel's module tree is gone (pacman
+      # removed it when installing the new kernel), so modinfo fails and
+      # mount -t ntfs3 reports "unknown filesystem type". Fall back to
+      # ntfs-3g (FUSE, userspace) in that case.
+      opts="uid=$(id -u),gid=$(id -g),umask=0022"
+      if modinfo ntfs3 >/dev/null 2>&1; then
+        type_arg=(-t ntfs3)
+        opts="$opts,force"
+      elif have mount.ntfs-3g || [[ -x /usr/bin/ntfs-3g ]]; then
+        type_arg=(-t ntfs-3g)
+        opts="$opts,recover,remove_hiberfile"
+      else
+        notify "NTFS mount needs the ntfs3 kernel module for the running kernel (reboot after a kernel upgrade) or ntfs-3g installed."
+        exit 1
+      fi
+      ;;
+  esac
+  local pw
+  pw="$(zenity --password --title="Mount $NAME" 2>/dev/null || true)"
+  if [[ -z "$pw" ]]; then
+    notify "Cancelled."
+    exit 0
+  fi
+  local err rc
+  if [[ -n "$opts" ]]; then
+    err="$(echo "$pw" | sudo -S -p '' mount "${type_arg[@]}" "$DEVPATH" -o "$opts" "$MP" 2>&1)" \
+      && rc=0 || rc=$?
+  else
+    err="$(echo "$pw" | sudo -S -p '' mount "${type_arg[@]}" "$DEVPATH" "$MP" 2>&1)" \
+      && rc=0 || rc=$?
+  fi
+  unset pw
+  if [[ $rc -eq 0 ]]; then
+    notify "Mounted $NAME at $MP"
+  else
+    notify "Mount failed: $err"
+    exit 1
+  fi
+}
+
+case "$SRC" in
+  config) mount_via_sudo ;;
+  auto)   mount_via_udisks ;;
+  *)      notify "Unknown source: $SRC"; exit 1 ;;
+esac

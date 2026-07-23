@@ -42,6 +42,17 @@ declare -A files=(
 
   # polybar-backed countdown timer CLI, see polybar/timer.sh.
   ["scripts/t"]="$HOME/.local/bin/t"
+
+  # standalone ~/Scripts utilities, formerly the separate Eazy-Scripts repo
+  ["scripts/connect-bluetooth"]="$HOME/Scripts/connect-bluetooth"
+  ["scripts/forget-bluetooth"]="$HOME/Scripts/forget-bluetooth"
+  ["scripts/.bluetooth.lib"]="$HOME/Scripts/.bluetooth.lib"
+  ["scripts/.bluetooth.env.example"]="$HOME/Scripts/.bluetooth.env.example"
+  ["scripts/library"]="$HOME/Scripts/library"
+  ["scripts/mount-drive"]="$HOME/Scripts/mount-drive"
+  ["scripts/unmount-drive"]="$HOME/Scripts/unmount-drive"
+  ["scripts/.mount-drive.config.example"]="$HOME/Scripts/.mount-drive.config.example"
+  ["scripts/nightlight"]="$HOME/Scripts/nightlight"
 )
 
 for src in "${!files[@]}"; do

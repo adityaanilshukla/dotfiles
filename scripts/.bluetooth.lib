@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# Shared bluetooth helpers. Source this from connect-bluetooth and forget-bluetooth.
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+bt() { bluetoothctl --timeout "${BT_SCAN_TIMEOUT:-10}" "$@"; }
+
+bt_notify() {
+  local title="$1" msg="$2"
+  if have notify-send; then notify-send "$title" "$msg"; fi
+  echo "$msg"
+}
+
+find_macs_by_name() {
+  local name="$1"
+  local strict="${BT_STRICT_NAME:-0}"
+  local tmpfile
+  tmpfile="$(mktemp)"
+  trap 'rm -f "$tmpfile"' RETURN
+
+  if [[ "$strict" -eq 1 ]]; then
+    bluetoothctl devices Paired | awk -v IGNORECASE=1 -v n="$name" '
+      $1=="Device" {mac=$2; $1=$2=""; sub(/^  */,""); if (tolower($0)==tolower(n)) print mac}' >>"$tmpfile"
+    bluetoothctl devices | awk -v IGNORECASE=1 -v n="$name" '
+      $1=="Device" {mac=$2; $1=$2=""; sub(/^  */,""); if (tolower($0)==tolower(n)) print mac}' >>"$tmpfile"
+  else
+    bluetoothctl devices Paired | grep -iF "$name" | awk '$1=="Device"{print $2}' >>"$tmpfile" || true
+    bluetoothctl devices | grep -iF "$name" | awk '$1=="Device"{print $2}' >>"$tmpfile" || true
+  fi
+
+  awk '!seen[$0]++ {print}' "$tmpfile"
+}
+
+refresh_scan() {
+  bluetoothctl --timeout "${BT_SCAN_TIMEOUT:-10}" scan on >/dev/null 2>&1 || true
+  sleep "${BT_ACTIVE_SCAN_SECS:-6}"
+  bluetoothctl scan off >/dev/null 2>&1 || true
+}
+
+is_connected() {
+  bluetoothctl info "$1" 2>/dev/null | grep -q "Connected: yes"
+}
+
+is_paired() {
+  bluetoothctl info "$1" 2>/dev/null | grep -q "Paired: yes"
+}
+
+is_trusted() {
+  bluetoothctl info "$1" 2>/dev/null | grep -q "Trusted: yes"
+}
+
+disconnect_and_remove() {
+  local mac="$1"
+  if bluetoothctl info "$mac" 2>/dev/null | grep -q "Connected: yes"; then
+    bluetoothctl disconnect "$mac" >/dev/null 2>&1 || true
+    sleep 1
+  fi
+  bluetoothctl remove "$mac" >/dev/null 2>&1 || true
+  sleep 1
+  if bluetoothctl info "$mac" >/dev/null 2>&1; then
+    return 1
+  fi
+  return 0
+}
+
+pause_all_media() {
+  playerctl --all-players pause 2>/dev/null || true
+}
+
+quick_reconnect() {
+  local mac="$1"
+  if bluetoothctl connect "$mac" >/dev/null 2>&1; then
+    sleep 2
+    is_connected "$mac" && return 0
+  fi
+  return 1
+}
+
+full_repair() {
+  local name="$1"
+  local targets=()
+  mapfile -t targets < <(find_macs_by_name "$name")
+
+  for mac in "${targets[@]}"; do
+    disconnect_and_remove "$mac" || true
+  done
+
+  refresh_scan
+
+  local mac
+  mac="$(find_macs_by_name "$name" | head -n1 || true)"
+  if [[ -z "$mac" ]]; then
+    return 1
+  fi
+
+  if ! is_paired "$mac"; then
+    bluetoothctl pair "$mac" >/dev/null || return 1
+    sleep 1
+  fi
+
+  if ! is_trusted "$mac"; then
+    bluetoothctl trust "$mac" >/dev/null || return 1
+    sleep 1
+  fi
+
+  if bluetoothctl connect "$mac" >/dev/null 2>&1; then
+    sleep 2
+    if is_connected "$mac"; then
+      echo "$mac"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+wait_for_card() {
+  local card="$1"
+  local tries="${2:-20}"
+  for ((i=0; i<tries; i++)); do
+    if pactl list cards short 2>/dev/null | awk '{print $2}' | grep -qx "$card"; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  return 1
+}
+
+pick_a2dp_profile() {
+  local card="$1"
+  pactl list cards 2>/dev/null | awk -v c="$card" '
+    /^Card #/ {incard=0; inprof=0}
+    $1=="Name:" && $2==c {incard=1; next}
+    incard && /^\tProfiles:/ {inprof=1; next}
+    incard && inprof && /^\t[^\t]/ {inprof=0}
+    incard && inprof && /^\t\t[A-Za-z0-9._-]+:/ {
+      sub(/^\t\t/, "")
+      sub(/:.*$/, "")
+      print
+    }
+  ' | awk '
+    /^a2dp-sink$/ {exact=$0}
+    /^a2dp-sink/ {if (!any) any=$0}
+    END {print (exact ? exact : any)}
+  '
+}
+
+activate_audio_profile() {
+  local mac="$1"
+  local card="bluez_card.${mac//:/_}"
+
+  if ! wait_for_card "$card"; then
+    return 1
+  fi
+
+  local profile
+  profile="$(pick_a2dp_profile "$card" || true)"
+  if [[ -z "$profile" ]]; then
+    return 1
+  fi
+
+  pactl set-card-profile "$card" "$profile" 2>/dev/null || return 1
+
+  local sink
+  sink="$(pactl list sinks short 2>/dev/null | awk '{print $2}' | grep -F "${mac//:/_}" | head -n1 || true)"
+  if [[ -z "$sink" ]]; then
+    sleep 1
+    sink="$(pactl list sinks short 2>/dev/null | awk '{print $2}' | grep -F "${mac//:/_}" | head -n1 || true)"
+  fi
+  [[ -z "$sink" ]] && return 1
+
+  pactl set-default-sink "$sink" 2>/dev/null || true
+  while read -r id _; do
+    [[ -n "$id" ]] && pactl move-sink-input "$id" "$sink" 2>/dev/null || true
+  done < <(pactl list short sink-inputs 2>/dev/null)
+
+  echo "$sink"
+  return 0
+}

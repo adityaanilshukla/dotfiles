@@ -1,16 +1,17 @@
 {
-    "workbench.colorTheme": "oxocarbon OLED",
-    "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
-    },
-    "vim.useSystemClipboard": true,
-    "notebook.lineNumbers": "on",
-    "editor.minimap.enabled": false,
-    "workbench.activityBar.location": "hidden",
+  "workbench.colorTheme": "oxocarbon OLED",
+  "extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+  },
+  "vim.useSystemClipboard": true,
+  "editor.minimap.enabled": false,
+  "workbench.activityBar.location": "hidden",
 
-    "zenMode.fullScreen": false,
-    "zenMode.centerLayout": true,
-    "zenMode.hideActivityBar": true,
-    "zenMode.hideStatusBar": true,
-    "zenMode.hideLineNumbers": false
+  "zenMode.fullScreen": false,
+  "zenMode.centerLayout": true,
+  "zenMode.hideActivityBar": true,
+  "zenMode.hideStatusBar": true,
+  "zenMode.hideLineNumbers": false,
+  "notebook.lineNumbers": "on"
 }
+
