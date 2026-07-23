@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/.bluetooth.env"
+LIB_FILE="$SCRIPT_DIR/.bluetooth.lib"
+
+for f in "$ENV_FILE" "$LIB_FILE"; do
+  if [[ ! -f "$f" ]]; then
+    command -v notify-send >/dev/null 2>&1 && notify-send "Bluetooth Forget" "Missing: $f"
+    echo "Missing: $f" >&2
+    exit 1
+  fi
+done
+
+# shellcheck disable=SC1090
+source "$LIB_FILE"
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+
+if ! command -v rofi >/dev/null 2>&1; then
+  bt_notify "Bluetooth Forget" "rofi not installed."
+  exit 1
+fi
+
+if [[ -z "${BT_DEVICES[*]:-}" ]]; then
+  bt_notify "Bluetooth Forget" "BT_DEVICES not set in .bluetooth.env."
+  exit 1
+fi
+
+status_tag() {
+  local name="$1"
+  local mac
+  mac="$(find_macs_by_name "$name" | head -n1 || true)"
+  if [[ -z "$mac" ]]; then
+    echo "unpaired"
+  elif is_connected "$mac"; then
+    echo "connected"
+  elif is_paired "$mac"; then
+    echo "paired"
+  else
+    echo "unpaired"
+  fi
+}
+
+ENTRIES=()
+for spec in "${BT_DEVICES[@]}"; do
+  IFS='|' read -r label name kind <<<"$spec"
+  [[ -z "$label" || -z "$name" ]] && continue
+  tag="$(status_tag "$name")"
+  line="$(printf '%-14s %-22s [%s]' "$label" "$name" "$tag")"
+  ENTRIES+=("$label|$name|$line")
+done
+
+if [[ ${#ENTRIES[@]} -eq 0 ]]; then
+  bt_notify "Bluetooth Forget" "No devices configured."
+  exit 0
+fi
+
+MENU_INPUT=""
+for entry in "${ENTRIES[@]}"; do
+  MENU_INPUT+="${entry##*|}"$'\n'
+done
+MENU_INPUT="${MENU_INPUT%$'\n'}"
+
+CHOICE="$(printf '%s\n' "$MENU_INPUT" | rofi -dmenu -i -p "forget" -no-custom)" || exit 0
+[[ -z "$CHOICE" ]] && exit 0
+
+SELECTED=""
+for entry in "${ENTRIES[@]}"; do
+  if [[ "${entry##*|}" == "$CHOICE" ]]; then
+    SELECTED="$entry"
+    break
+  fi
+done
+[[ -z "$SELECTED" ]] && { bt_notify "Bluetooth Forget" "No match."; exit 1; }
+
+IFS='|' read -r LABEL NAME _ <<<"$SELECTED"
+
+pause_all_media
+
+mapfile -t targets < <(find_macs_by_name "$NAME")
+if [[ ${#targets[@]} -eq 0 ]]; then
+  refresh_scan
+  mapfile -t targets < <(find_macs_by_name "$NAME")
+fi
+
+if [[ ${#targets[@]} -eq 0 ]]; then
+  bt_notify "$LABEL" "No matching devices to forget."
+  exit 1
+fi
+
+ok=0; fail=0
+for mac in "${targets[@]}"; do
+  if disconnect_and_remove "$mac"; then
+    ((ok++))
+  else
+    ((fail++))
+  fi
+done
+
+if ((fail == 0)); then
+  bt_notify "$LABEL" "Forgot $ok device(s)."
+elif ((ok > 0)); then
+  bt_notify "$LABEL" "Partial: $ok forgot, $fail failed."
+  exit 1
+else
+  bt_notify "$LABEL" "Failed to forget any matching devices."
+  exit 1
+fi

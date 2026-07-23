@@ -1,0 +1,65 @@
+#!/bin/bash
+# GUI keybind invocations don't inherit a normal shell env, so set up PATH
+# (incl. ~/.local/bin for online-zathura) and source ~/.secrets (where the
+# project-scoped Turso creds live).
+export PATH="$HOME/.local/bin:$PATH"
+[[ -f "$HOME/.secrets" ]] && source "$HOME/.secrets"
+
+ZATHURA=$(command -v zathura)
+ONLINE_ZATHURA="$HOME/.local/bin/online-zathura"
+
+BOOK_DIR="$HOME/Documents"
+
+mapfile -t PATHS < <(find "$BOOK_DIR" \
+  -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" -o -iname "*.djvu" \) \
+  2>/dev/null)
+
+if [[ ${#PATHS[@]} -eq 0 ]]; then
+  command -v notify-send >/dev/null && notify-send "Library" "No books found under $BOOK_DIR"
+  exit 0
+fi
+
+# The list shows each book's filename. Tab toggles the whole list to show
+# paths relative to ~/Documents so you can fuzzy-match on a directory too;
+# Tab again switches back. Rofi has no in-place reload, so on each toggle
+# we exit with -kb-custom-1's code 10 and re-invoke rofi with the flipped
+# mode. -format i returns the row index, so the full path is recovered from
+# PATHS[$idx] and duplicate filenames stay unambiguous.
+# Tab is normally bound to kb-element-next (row navigation); we unbind it
+# just for this invocation and rebind to kb-custom-1. Arrow keys still move
+# through rows.
+mode="name"
+while :; do
+  ROWS=()
+  for p in "${PATHS[@]}"; do
+    if [[ "$mode" == path ]]; then
+      ROWS+=("${p#"$BOOK_DIR"/}")
+    else
+      ROWS+=("${p##*/}")
+    fi
+  done
+
+  # Rofi enforces a global single-instance lock via its default pidfile
+  # (/run/user/$UID/rofi.pid). If any other rofi is running (or a stuck
+  # calc/drun rofi is left behind), our -dmenu call exits 1 immediately
+  # with "Rofi already running?" and the menu never appears. A private
+  # pidfile scopes the lock to this launcher.
+  idx=$(printf '%s\n' "${ROWS[@]}" | rofi -dmenu -i -format 'i' \
+    -pid "/run/user/$(id -u)/rofi-library.pid" \
+    -p "📚 [$mode]" \
+    -mesg "Tab: toggle name/path" \
+    -kb-element-next "" \
+    -kb-custom-1 "Tab")
+  rc=$?
+
+  case $rc in
+    0)  BOOK="${PATHS[$idx]}"; break ;;
+    10) [[ "$mode" == name ]] && mode=path || mode=name ;;
+    *)  exit 0 ;;
+  esac
+done
+
+[[ -z "${BOOK:-}" ]] && exit 0
+
+# Route through online-zathura so Pull happens on open and Push on close.
+ZATHURA_BINARY="$ZATHURA" "$ONLINE_ZATHURA" "$BOOK" &

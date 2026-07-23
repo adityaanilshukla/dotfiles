@@ -1,0 +1,15 @@
+# mount-drive config. One drive per line: KEY|MOUNTPOINT|DISPLAY_NAME
+# Lines starting with # and blank lines are ignored.
+#
+# KEY can be:
+#   - a UUID         (stable for ext4, btrfs, ntfs, luks)
+#   - LABEL:<label>  (use for vfat/exfat where the UUID is just a volume
+#                     serial that changes on every reformat; case-sensitive,
+#                     match what `lsblk -o LABEL,UUID` reports)
+#
+# MOUNTPOINT must exist on disk and be owned by you (the script will not create it).
+#
+# Examples:
+# 4C6E97526E973424|/home/aditya/Media/Sanctuary|Sanctuary
+# LABEL:ECHOSD|/home/aditya/Media/echoSD|echoSD
+# LABEL:Music-backup|/home/aditya/Media/Music-backup|Music-backup

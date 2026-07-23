@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TEMP_K=2500
+STATE_FILE="/tmp/nightlight.on"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+notify() {
+  if have notify-send; then notify-send "Nightlight" "$1"; fi
+  echo "$1"
+}
+
+if ! have redshift; then
+  notify "redshift not installed."
+  exit 1
+fi
+
+if [[ -f "$STATE_FILE" ]]; then
+  redshift -x >/dev/null 2>&1 || true
+  rm -f "$STATE_FILE"
+  notify "Off"
+else
+  redshift -P -O "$TEMP_K" >/dev/null 2>&1
+  touch "$STATE_FILE"
+  notify "On (${TEMP_K}K)"
+fi
