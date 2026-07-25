@@ -39,9 +39,9 @@ gtk4
 hledger
 hledger-ui
 hledger-web
+i3-wm
 i3blocks
 i3status
-i3-wm
 inetutils
 inotify-tools
 intel-ucode
@@ -62,8 +62,8 @@ linux-headers
 linux-lts
 linux-lts-headers
 lldb
-luacheck
 lua-language-server
+luacheck
 maim
 man-db
 mariadb
@@ -87,6 +87,7 @@ pipewire
 pipewire-alsa
 pipewire-jack
 pipewire-pulse
+playerctl
 polybar
 pyright
 python-adblock

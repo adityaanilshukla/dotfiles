@@ -39,6 +39,7 @@ inotify-tools
 intel-ucode
 jdk17-openjdk
 jdk21-openjdk
+jq
 jre-openjdk
 lazygit
 libnotify
