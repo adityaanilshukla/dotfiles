@@ -1,5 +1,6 @@
 alacritty
 alsa-utils
+android-file-transfer
 arandr
 base
 base-devel
@@ -12,6 +13,7 @@ bluez-utils
 bolt
 capnet-assist
 catch2
+chafa
 clang
 contractor
 ddcutil
@@ -25,10 +27,12 @@ exfatprogs
 fastfetch
 feh
 firefox
+github-cli
 granite
 granite7
 grub
 gtk-theme-elementary
+gvfs-mtp
 i3-wm
 i3status
 inotify-tools
@@ -36,7 +40,6 @@ intel-ucode
 jdk17-openjdk
 jdk21-openjdk
 jre-openjdk
-ksnip
 lazygit
 libnotify
 lightdm
@@ -48,9 +51,11 @@ lldb
 lua-language-server
 luacheck
 lxappearance
+maim
 man-db
 marksman
 mpv
+mtpfs
 nautilus
 networkmanager
 npm
@@ -84,6 +89,7 @@ shellcheck
 shfmt
 sof-firmware
 sound-theme-elementary
+sshfs
 stylua
 sudo
 syncthing
@@ -97,7 +103,6 @@ texlive-latex
 texlive-latexextra
 texlive-latexrecommended
 texlive-pictures
-thunderbird
 tldr
 tmux
 trash-cli

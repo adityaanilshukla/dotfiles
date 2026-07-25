@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh
+# setup-symlinks.sh
 
 set -e
 
@@ -72,3 +72,8 @@ for src in "${!files[@]}"; do
   ln -sf "$src_path" "$dest"
   echo "Linked $src_path -> $dest"
 done
+
+# GTK theme settings are NOT applied here. They live in dconf rather than in a
+# file, and need a live D-Bus session, so they are a separate step: setup-gtk.sh
+# (run by bootstrap.sh). Keeping them out means this script stays offline-safe
+# and runnable over SSH.
