@@ -94,6 +94,7 @@ sshfs
 stylua
 sudo
 syncthing
+tailscale
 taplo-cli
 tectonic
 telegram-desktop
