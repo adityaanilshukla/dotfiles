@@ -1,4 +1,27 @@
 export PATH="$HOME/.local/bin:$PATH"
 export QT_QPA_PLATFORMTHEME=qt5ct
 export DESKTOP_SESSION=i3
+
+# Force the dark Adwaita VARIANT for GTK3 apps.
+#
+# Deliberately the env var rather than a setting, because on GTK 3.24.52 nothing
+# else works. Tested on buffyx, ALL of these rendered a light dialog:
+#   settings.ini  gtk-theme-name=Adwaita + gtk-application-prefer-dark-theme=true
+#   settings.ini  gtk-theme-name=Adwaita-dark
+#   settings.ini  gtk-theme-name=AdwaitaDark
+#   dconf         gtk-theme=Adwaita-dark
+# and only GTK_THEME=Adwaita:dark rendered dark.
+#
+# Why: 3.24.4x replaced Adwaita with a port of libadwaita's stylesheet, which
+# ignores gtk-application-prefer-dark-theme. "Adwaita-dark" is not a name GTK3
+# resolves, and the AdwaitaDark package on disk is not a working GTK3 dark
+# stylesheet. "Adwaita:dark" is theme:variant syntax, which still works.
+#
+# It also outranks XSETTINGS, which matters on brovo where xsettingsd publishes
+# Net/ThemeName "Adwaita" and overrides settings.ini entirely.
+#
+# Fixes: zenity-gtk3 dialogs and the browser file chooser (via
+# xdg-desktop-portal-gtk) rendering light on a dark desktop. GTK4/libadwaita
+# apps were never affected -- they follow color-scheme=prefer-dark instead.
+export GTK_THEME=Adwaita:dark
 [[ -f ~/.Xresources ]] && xrdb -merge ~/.Xresources
