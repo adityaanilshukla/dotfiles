@@ -24,4 +24,22 @@ export DESKTOP_SESSION=i3
 # xdg-desktop-portal-gtk) rendering light on a dark desktop. GTK4/libadwaita
 # apps were never affected -- they follow color-scheme=prefer-dark instead.
 export GTK_THEME=Adwaita:dark
+
+# ...and push it into the D-Bus/systemd activation environment.
+#
+# Exporting above only covers processes started FROM this session. D-Bus- and
+# systemd-activated services inherit the systemd user environment instead, which
+# is seeded from /etc/environment -- and that file still carries an old
+# GTK_THEME=Adwaita-dark (hyphen), a name GTK3 does not resolve, so it silently
+# falls back to light.
+#
+# The visible symptom was Firefox's file chooser being light while every other
+# GTK3 app was dark: that dialog is not drawn by Firefox, it is drawn by
+# xdg-desktop-portal-gtk, an activated service.
+#
+# Fix /etc/environment too if you have root (setup-gtk.sh warns about it), but
+# this line makes the session correct regardless.
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment --systemd GTK_THEME
+fi
 [[ -f ~/.Xresources ]] && xrdb -merge ~/.Xresources

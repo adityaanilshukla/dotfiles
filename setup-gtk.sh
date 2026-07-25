@@ -39,6 +39,25 @@ set_key() {
   fi
 }
 
+# GTK3 dark is driven by GTK_THEME=Adwaita:dark from x/xprofile, not by any of
+# the settings below -- on GTK 3.24.52 the rewritten Adwaita ignores
+# gtk-application-prefer-dark-theme, and neither "Adwaita-dark" nor
+# "AdwaitaDark" is a name it resolves. The keys below still matter for
+# GTK4/libadwaita apps, which follow color-scheme.
+#
+# /etc/environment is root-owned and outside this repo, so warn rather than
+# silently leave a machine half-themed.
+if grep -qs '^GTK_THEME=' /etc/environment; then
+  cur="$(grep -m1 '^GTK_THEME=' /etc/environment | cut -d= -f2-)"
+  if [ "$cur" != "Adwaita:dark" ]; then
+    printf '    WARNING: /etc/environment sets GTK_THEME=%s\n' "$cur"
+    printf '      That value seeds the systemd user environment, so D-Bus-activated\n'
+    printf '      services (notably xdg-desktop-portal-gtk, which draws file choosers)\n'
+    printf '      inherit it and render light. Fix with:\n'
+    printf '        sudo sed -i "s|^GTK_THEME=.*|GTK_THEME=Adwaita:dark|" /etc/environment\n'
+  fi
+fi
+
 set_key icon-theme   "Qogir-Dark"
 set_key color-scheme "prefer-dark"
 # "Adwaita" plus prefer-dark is the modern way to get dark GTK. Do NOT set
