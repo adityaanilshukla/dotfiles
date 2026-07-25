@@ -60,6 +60,26 @@ fi
 
 set_key icon-theme   "Qogir-Dark"
 set_key color-scheme "prefer-dark"
-# "Adwaita" plus prefer-dark is the modern way to get dark GTK. Do NOT set
-# "Adwaita-dark": it no longer ships, and GTK degrades to light without warning.
+# Only affects GTK4/libadwaita apps and GTK3-under-GNOME. GTK3 under i3 gets its
+# dark from GTK_THEME (see above), not from here.
 set_key gtk-theme    "Adwaita"
+
+# Pick up the systemd drop-in that pins GTK_THEME on the portal backend, and
+# restart it so the change applies now rather than at next login. Without this,
+# installing on an existing session leaves the file chooser light until reboot.
+if command -v systemctl >/dev/null 2>&1; then
+  if [[ -f $HOME/.config/systemd/user/xdg-desktop-portal-gtk.service.d/gtk-theme.conf ]]; then
+    systemctl --user daemon-reload 2>/dev/null || true
+    if systemctl --user restart xdg-desktop-portal-gtk.service 2>/dev/null; then
+      pid="$(systemctl --user show xdg-desktop-portal-gtk.service -p MainPID --value 2>/dev/null)"
+      if [[ -n ${pid:-} && -r /proc/$pid/environ ]]; then
+        got="$(tr '\0' '\n' < "/proc/$pid/environ" | grep '^GTK_THEME=' || true)"
+        info "portal restarted (pid $pid) with ${got:-GTK_THEME unset}"
+      else
+        info "portal restarted"
+      fi
+    else
+      info "portal not running; the drop-in applies when it next starts"
+    fi
+  fi
+fi
