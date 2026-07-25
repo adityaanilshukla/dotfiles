@@ -33,6 +33,10 @@ declare -A files=(
   ["rofi/config.rasi"]="$HOME/.config/rofi/config.rasi"
   ["rofi/raycast.rasi"]="$HOME/.config/rofi/raycast.rasi"
 
+  # systemd user drop-ins. The portal backend needs GTK_THEME pinned on the unit
+  # because activated services do not inherit the X session environment.
+  ["systemd/user/xdg-desktop-portal-gtk.service.d/gtk-theme.conf"]="$HOME/.config/systemd/user/xdg-desktop-portal-gtk.service.d/gtk-theme.conf"
+
   #polybar
   ["polybar/config.ini"]="$HOME/.config/polybar/config.ini"
   ["polybar/timer.sh"]="$HOME/.config/polybar/timer.sh"
