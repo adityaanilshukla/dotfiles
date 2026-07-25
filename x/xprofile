@@ -29,9 +29,9 @@ export GTK_THEME=Adwaita:dark
 #
 # Exporting above only covers processes started FROM this session. D-Bus- and
 # systemd-activated services inherit the systemd user environment instead, which
-# is seeded from /etc/environment -- and that file still carries an old
+# is seeded from /etc/environment -- and on buffyx that file carries an old
 # GTK_THEME=Adwaita-dark (hyphen), a name GTK3 does not resolve, so it silently
-# falls back to light.
+# falls back to light. brovo has no such line and was unaffected.
 #
 # The visible symptom was Firefox's file chooser being light while every other
 # GTK3 app was dark: that dialog is not drawn by Firefox, it is drawn by
