@@ -410,6 +410,14 @@ icon = /usr/share/icons/breeze/status/16/audio-volume-muted-symbolic.svg
 # NOTE: It might be helpful to run dunst -print in a terminal in order
 # to find fitting options for rules.
 
+# Timer script (polybar/timer.sh) notifications: normal urgency notifications
+# time out after 10s, easy to miss if you're away from the desk when a work
+# or break phase ends. Keep the normal-urgency look but make these persist
+# until dismissed.
+[timer]
+    appname = "Timer"
+    timeout = 0
+
 # Disable the transient hint so that idle_threshold cannot be bypassed from the
 # client
 #[transient_disable]
