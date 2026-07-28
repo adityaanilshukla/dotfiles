@@ -1,9 +1,14 @@
 #!/bin/bash
 # GUI keybind invocations don't inherit a normal shell env, so set up PATH
-# (incl. ~/.local/bin for online-zathura) and source ~/.secrets (where the
-# project-scoped Turso creds live).
+# (incl. ~/.local/bin for online-zathura).
+#
+# This used to also source ~/.secrets for the Turso credentials, because the
+# wrapper looked for its .env relative to the cwd and a keybind launch has no
+# useful cwd. It now resolves them from an absolute path
+# (${XDG_CONFIG_HOME:-$HOME/.config}/online-zathura/env), so that's no longer
+# needed -- and online-zathura owns its own credentials rather than borrowing
+# from ~/.secrets.
 export PATH="$HOME/.local/bin:$PATH"
-[[ -f "$HOME/.secrets" ]] && source "$HOME/.secrets"
 
 ZATHURA=$(command -v zathura)
 ONLINE_ZATHURA="$HOME/.local/bin/online-zathura"
