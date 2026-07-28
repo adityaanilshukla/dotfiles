@@ -22,7 +22,7 @@ window {
     location:  north;
     anchor:    north;
     y-offset:  32%;
-    width:     26%;
+    width:     calc(45% min 42em);
 
     background-color: @bg;
     border:            1px;
