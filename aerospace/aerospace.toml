@@ -94,10 +94,17 @@ ctrl-shift-p = 'exec-and-forget open -na "Brave Browser" --args --incognito'
 # as "/"), so it opened at root instead of home. Pass $HOME explicitly to fix it.
 alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -e ranger "$HOME"'
 
-# Dismiss notification banners. killall restarts the (launchd-managed) process
-# within ~1s, so this just clears whatever's on screen rather than disabling
-# notifications. Not a default macOS shortcut (verified before binding it).
-ctrl-shift-x = 'exec-and-forget killall NotificationCenter'
+# Dismiss notification banners. killall NotificationCenter (the previous
+# approach here) doesn't actually dismiss anything; it crash-restarts the
+# renderer, which redraws whatever's still mid-flight and lets it finish its
+# normal ~5s auto-hide countdown anyway, so it looked like a fix but wasn't.
+# scripts/dismiss-notifications presses each banner's real Close/Clear action
+# via System Events, same as clicking it. Needs Accessibility permission
+# granted to AeroSpace.app (System Settings > Privacy & Security >
+# Accessibility), since that's what spawns this via exec-and-forget; until
+# granted this silently no-ops. Not a default macOS shortcut (verified before
+# binding it).
+ctrl-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 
 # ---------- Workspaces ----------
 

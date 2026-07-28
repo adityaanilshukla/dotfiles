@@ -74,6 +74,9 @@ files=(
   # nothing synced to Turso. Also what readbook's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
+  # notification dismisser, run by aerospace's ctrl-shift-x binding
+  "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
+
   # VS Code (macOS config path)
   "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"
   "vscode/keybindings.json:$HOME/Library/Application Support/Code/User/keybindings.json"
