@@ -140,20 +140,28 @@ compdef _python java
 [[ -f /home/aditya/.dart-cli-completion/zsh-config.zsh ]] && . /home/aditya/.dart-cli-completion/zsh-config.zsh || true
 ## [/Completion]
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/opt/miniconda3/etc/profile.d/conda.sh"
+# --------------------
+# Lazy-load conda: the real init hook takes ~1.7s, so defer it until
+# `conda` is actually invoked instead of paying that cost on every
+# shell/terminal launch. NOTE: this is hand-rolled, not the stock
+# 'conda init' block — running `conda init` again will overwrite it
+# with the eager version above.
+# --------------------
+conda() {
+    unset -f conda
+    __conda_setup="$('/opt/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
     else
-        export PATH="/opt/miniconda3/bin:$PATH"
+        if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+            . "/opt/miniconda3/etc/profile.d/conda.sh"
+        else
+            export PATH="/opt/miniconda3/bin:$PATH"
+        fi
     fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+    unset __conda_setup
+    conda "$@"
+}
 
 # Created by `pipx` on 2026-07-12 12:25:37
 export PATH="$PATH:/home/aditya/.local/bin"
