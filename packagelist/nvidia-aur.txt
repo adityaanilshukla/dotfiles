@@ -18,7 +18,6 @@ qogir-icon-theme
 rofi-greenclip
 rtl88x2bu-dkms-git
 sdl3-git
-simplicity-sddm-theme-git
 turso-cli
 vscodium-bin
 waterfox-bin
