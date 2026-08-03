@@ -119,13 +119,16 @@ done
 # Xorg falls back to modesetting, and you get a black screen -- under ANY display
 # manager, sddm included. Outside this repo's scope (same call as setup-gtk.sh
 # makes about /etc/environment), so warn rather than write it.
+# /sys/module/nvidia_drm/parameters/modeset is root-only (0400), so test for
+# KMS by its observable effect instead: connector nodes like card*-HDMI-A-1
+# under /sys/class/drm only exist when a KMS driver has bound the card.
 if lspci 2>/dev/null | grep -qi nvidia; then
-  modeset="$(cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo '?')"
-  if [[ $modeset != Y ]]; then
-    warn "nvidia_drm modeset is '$modeset', not 'Y'."
-    warn "  Without KMS the nvidia Xorg OutputClass never matches and you get a"
-    warn "  black screen under any display manager. Check /etc/modprobe.d/ for"
-    warn "  'options nvidia_drm modeset=1' -- it is owned by no package here."
+  if ! compgen -G '/sys/class/drm/card*-*' >/dev/null; then
+    warn "no KMS connector nodes under /sys/class/drm -- nvidia_drm modeset"
+    warn "  looks OFF. Without KMS the nvidia Xorg OutputClass never matches"
+    warn "  and you get a black screen under ANY display manager. Check"
+    warn "  /etc/modprobe.d/ for 'options nvidia_drm modeset=1' -- that file"
+    warn "  is owned by no package here."
   fi
 fi
 
@@ -141,23 +144,44 @@ if [[ $DRY_RUN != 1 ]]; then
 fi
 
 # --- install -----------------------------------------------------------------
-# Idempotent: identical files are skipped, differing files stop the script and
-# show what changed. A copy that silently overwrites local edits would make
-# /etc drift invisible, which is the main thing symlinks would have given us.
+# Idempotent, and drift-aware in both directions. After every install a copy of
+# what was written is kept in $STAMP_DIR. That lets the next run tell apart the
+# two ways dest can differ from the repo:
+#
+#   dest == stamp   the file is untouched since we last wrote it; the REPO
+#                   moved ahead. Updating is exactly what the user asked for,
+#                   so do it without ceremony.
+#   dest != stamp   someone edited /etc directly (lightdm-settings on kalu
+#                   does this). Show the diff and refuse without FORCE=1,
+#                   because silently clobbering local edits is how machines
+#                   diverge invisibly.
+#
+# Without the stamp every legitimate repo change would demand FORCE=1, which
+# trains the habit of always passing FORCE and defeats the check entirely.
+STAMP_DIR=/var/lib/dotfiles/lightdm
+
 install_file() {
-  local src=$1 dest=$2
+  local src=$1 dest=$2 stamp
+  stamp="$STAMP_DIR/$(basename "$dest")"
   [[ -f $src ]] || die "missing source file: $src"
 
-  if [[ -f $dest ]] && sudo cmp -s "$src" "$dest"; then
+  # Comparisons need no sudo: everything this script installs is 0644, so read
+  # them as the invoking user. Only the writes below are privileged. This also
+  # keeps DRY_RUN genuinely password-free.
+  if [[ -f $dest ]] && cmp -s "$src" "$dest"; then
     info "$dest already current"
+    # Heal a missing stamp so the next repo update stays prompt-free.
+    if [[ ! -f $stamp ]]; then
+      run sudo install -Dm 0644 -o root -g root "$src" "$stamp"
+    fi
     return
   fi
 
-  if [[ -f $dest && $FORCE != 1 ]]; then
-    # Not managed by us, or edited in place. Either way, do not clobber silently.
+  if [[ -f $dest && $FORCE != 1 ]] && ! cmp -s "$dest" "$stamp"; then
+    # Not what we last installed: hand-edited, or never managed by us at all.
     printf '\n'
-    warn "$dest differs from the repo:"
-    sudo diff -u "$dest" "$src" | sed 's/^/      /' || true
+    warn "$dest differs from the repo AND from what this script last installed:"
+    diff -u "$dest" "$src" | sed 's/^/      /' || true
     printf '\n'
     die "refusing to overwrite $dest.
        Re-run with FORCE=1 to replace it, or copy the change back into
@@ -165,12 +189,13 @@ install_file() {
   fi
 
   # Back up anything that was there before we ever managed this path, once.
-  if [[ -f $dest && ! -f $dest.bak ]]; then
+  if [[ -f $dest && ! -f $dest.bak && ! -f $stamp ]]; then
     run sudo cp -a "$dest" "$dest.bak"
     info "backed up $dest -> $dest.bak"
   fi
 
   run sudo install -Dm 0644 -o root -g root "$src" "$dest"
+  run sudo install -Dm 0644 -o root -g root "$src" "$stamp"
   info "installed $dest"
 }
 
