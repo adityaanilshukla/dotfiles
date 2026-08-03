@@ -55,7 +55,7 @@ lib32-nvidia-utils
 libpulse
 libva-nvidia-driver
 lightdm
-lightdm-gtk-greeter
+lightdm-slick-greeter
 linux
 linux-firmware
 linux-headers
@@ -111,7 +111,6 @@ rofi-calc
 rsync
 ruff
 rust
-sddm
 shellcheck
 shfmt
 smartmontools

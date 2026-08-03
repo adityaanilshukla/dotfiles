@@ -47,6 +47,35 @@ if [ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.z
 fi
 
 # --------------------
+# ssh-agent on a fixed socket
+# --------------------
+# id_ed25519 is passphrase-protected. Without an agent every ssh/scp to kalu,
+# buffyx or ello prompts for it, and non-interactive callers (scripts, editors,
+# tooling) cannot connect at all -- they have no tty to prompt on and no
+# ssh-askpass installed, so they just fail with "Permission denied (publickey)".
+#
+# The socket path is fixed rather than the random /tmp/ssh-XXXX one ssh-agent
+# picks by default, so every shell AND anything spawned outside a shell shares
+# the same agent instead of starting its own.
+#
+# ssh-add -l exit codes: 0 = agent up with keys, 1 = agent up but empty,
+# 2 = cannot reach an agent. Only 2 means we need to spawn one; treating 1 as
+# failure would kill a perfectly good agent every time a new shell opened.
+export SSH_AUTH_SOCK="$HOME/.ssh/agent/sock"
+if [ ! -d "$HOME/.ssh/agent" ]; then
+  mkdir -p "$HOME/.ssh/agent" && chmod 700 "$HOME/.ssh/agent"
+fi
+ssh-add -l >/dev/null 2>&1
+if [ $? -eq 2 ]; then
+  rm -f "$SSH_AUTH_SOCK"
+  ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null 2>&1
+fi
+# Deliberately no automatic `ssh-add`: it would prompt for the passphrase on
+# every new shell before the agent holds the key. `AddKeysToAgent yes` in
+# ~/.ssh/config loads it on first real use instead. To load it up front:
+#   ssh-add ~/.ssh/id_ed25519
+
+# --------------------
 # Aliases and environment
 # --------------------
 alias n='nvim'

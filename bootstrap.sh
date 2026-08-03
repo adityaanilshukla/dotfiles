@@ -65,6 +65,13 @@ step_packages() { log "Packages";  run "$DOTFILES_DIR/setup-packages.sh"; }
 step_symlinks() { log "Symlinks";  run "$DOTFILES_DIR/setup-symlinks.sh"; }
 step_fonts()    { log "Fonts";     run "$DOTFILES_DIR/setup-fonts.sh"; }
 
+# The only step that writes to /etc and needs root, which is why it is its own
+# script rather than part of setup-symlinks.sh. It installs the login screen
+# config but does NOT change which display manager boots the machine -- that
+# needs SWITCH_DM=1 passed explicitly, so a routine bootstrap can never leave
+# you staring at a machine that will not log in.
+step_lightdm()  { log "Login screen"; run "$DOTFILES_DIR/setup-lightdm.sh"; }
+
 step_gtk() {
   log "GTK theme"
   # Needs a live session bus; over SSH or on a TTY there is nothing to talk to,
@@ -77,7 +84,9 @@ step_gtk() {
   run "$DOTFILES_DIR/setup-gtk.sh"
 }
 
-ALL_STEPS=(repos packages symlinks fonts gtk)
+# lightdm sits after fonts (it needs `packages` to have installed the greeter)
+# and before gtk (which must stay last -- it needs a live D-Bus session).
+ALL_STEPS=(repos packages symlinks fonts lightdm gtk)
 steps=("$@")
 (( ${#steps[@]} == 0 )) && steps=("${ALL_STEPS[@]}")
 [[ $SKIP_REPOS == 1 ]] && steps=("${steps[@]/repos}")
@@ -89,6 +98,7 @@ for s in "${steps[@]}"; do
     packages) step_packages ;;
     symlinks) step_symlinks ;;
     fonts)    step_fonts ;;
+    lightdm)  step_lightdm ;;
     gtk)      step_gtk ;;
     *)        die "unknown step '$s' (valid: ${ALL_STEPS[*]})" ;;
   esac
