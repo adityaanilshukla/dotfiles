@@ -44,6 +44,8 @@ alias rr='ranger'
 alias f='fastfetch'
 # quick note: open a timestamped scratch file in /tmp (cleared on reboot)
 alias qn='nvim "/tmp/note_$(date +%Y-%m-%d_%H-%M-%S).txt"'
+# career tracker: sync project repos and the tracker, regenerate the dashboard
+alias tracker='~/Projects/Progress-tracker/scripts/tracker.sh'
 alias mkenv='python3 -m venv .venv'
 alias act='[ -d .venv ] && source .venv/bin/activate || echo "No .venv found"'
 alias pipup='python -m pip install --upgrade pip'
