@@ -65,6 +65,10 @@ brew "gh"                             # PRs from the terminal
 brew "lazygit"
 
 # ----- PDF / eBook reader (zathura) -----
+# Named explicitly rather than left to arrive as a dependency of the pdf
+# plugins below: depending on someone else's dependency graph is how a thing
+# quietly stops being installed.
+brew "zathura"
 brew "homebrew-zathura/zathura/zathura-pdf-poppler"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading state
@@ -120,8 +124,10 @@ cask "localsend"
 # ----- Comms + everyday apps -----
 cask "spotify"
 cask "telegram"
+cask "whatsapp"                       # ranger's dn drops files into it
 cask "zoom"
 cask "microsoft-teams"
+cask "microsoft-outlook"
 cask "microsoft-word"
 cask "zoho-cliq"
 cask "zoho-mail"

@@ -155,13 +155,6 @@ right = 'resize width +50'  # Right arrow: expand width
 
 # ---------- App Workspace Rules ----------
 
-# qutebrowser launches as bundle "org.python.python" on macOS (PyQt app), so
-# match by window title instead — it always ends with "qutebrowser" per the
-# title_format set in ~/.qutebrowser/config.py.
-[[on-window-detected]]
-if.window-title-regex-substring = 'qutebrowser$'
-run = ['layout tiling', 'fullscreen on']
-
 # Playwright's Firefox (apply-bot) carries this bundle id. Route it to
 # workspace 9. move-node-to-workspace without --focus-follows-window never
 # touches AeroSpace's own focused workspace, so this alone doesn't disturb
