@@ -106,6 +106,23 @@ for src in "${!dirs[@]}"; do
   echo "Linked $src_path -> $dest"
 done
 
+# --- git hooks ------------------------------------------------------------
+# Hooks live in .git/hooks, which git does not track, so they never arrive with
+# a clone. The real scripts are tracked files under githooks/ and get symlinked
+# into place here instead; editing githooks/ then updates the live hook at once.
+#
+# post-checkout warns when the checked-out branch is not the one this machine
+# runs, because ~/.config/ranger (linked above) is a pointer into the repo, so
+# the checked-out branch IS the live ranger config.
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+  mkdir -p "$DOTFILES_DIR/.git/hooks"
+  for hook in "$DOTFILES_DIR"/githooks/*; do
+    [[ -f "$hook" ]] || continue
+    ln -sf "$hook" "$DOTFILES_DIR/.git/hooks/$(basename "$hook")"
+    echo "Linked $hook -> .git/hooks/$(basename "$hook")"
+  done
+fi
+
 # GTK theme settings are NOT applied here. They live in dconf rather than in a
 # file, and need a live D-Bus session, so they are a separate step: setup-gtk.sh
 # (run by bootstrap.sh). Keeping them out means this script stays offline-safe
