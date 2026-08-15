@@ -1,0 +1,71 @@
+#!/usr/bin/osascript -l JavaScript
+// Actually dismisses notification banners, unlike `killall NotificationCenter`
+// (which just crash-restarts the renderer; the banner reappears and finishes
+// its normal ~5s auto-hide countdown regardless, so that "fix" did nothing).
+// This walks System Events' accessibility tree for the NotificationCenter
+// process and presses each alert's real Close/Clear action, same as clicking
+// it by hand. Requires Accessibility permission (System Settings > Privacy &
+// Security > Accessibility) for whatever ends up running this; in practice
+// that's AeroSpace.app, since it's what spawns the process via exec-and-forget.
+
+function run() {
+  const systemEvents = Application('System Events');
+  systemEvents.includeStandardAdditions = true;
+
+  const notificationCenter = systemEvents.processes.byName('NotificationCenter');
+  if (notificationCenter.windows.length === 0) {
+    return 'no notification windows';
+  }
+
+  const ALERT_SUBROLES = ['AXNotificationCenterAlert', 'AXNotificationCenterAlertStack'];
+
+  function findAlerts(elements, found) {
+    for (const el of elements) {
+      let subrole;
+      try { subrole = el.subrole(); } catch (e) { subrole = null; }
+      if (ALERT_SUBROLES.indexOf(subrole) > -1) {
+        found.push(el);
+      } else {
+        let children;
+        try { children = el.uiElements(); } catch (e) { children = []; }
+        if (children.length > 0) findAlerts(children, found);
+      }
+    }
+    return found;
+  }
+
+  let closed = 0;
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    let root;
+    try {
+      root = notificationCenter.windows[0].uiElements[0].uiElements[0].uiElements();
+    } catch (e) {
+      break;
+    }
+    const alerts = findAlerts(root, []);
+    if (alerts.length === 0) break;
+
+    let didClose = false;
+    for (const alert of alerts) {
+      try {
+        const actions = alert.actions();
+        for (const action of actions) {
+          const desc = action.description();
+          if (desc === 'Close' || desc === 'Clear All' || desc === 'press') {
+            action.perform();
+            closed++;
+            didClose = true;
+            break;
+          }
+        }
+      } catch (e) {
+        // element already gone
+      }
+      if (didClose) break;
+    }
+    if (!didClose) break;
+  }
+
+  return 'closed ' + closed;
+}

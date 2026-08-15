@@ -20,6 +20,7 @@ cask "alacritty"
 brew "ranger"
 brew "fzf"                            # readbook book picker + ranger
 brew "fd"                             # fast file search for ranger
+brew "trash-cli"                      # ranger's dT binding (see rc.conf)
 
 # ----- PDF / eBook reader (zathura) -----
 brew "homebrew-zathura/zathura/zathura-pdf-poppler"
