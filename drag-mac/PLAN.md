@@ -42,10 +42,26 @@ Tradeoffs accepted by choosing Python over Swift:
 
 | Risk | Status | Mitigation |
 |---|---|---|
-| A non-bundled process cannot show a window when launched detached | **UNRETIRED. This killed the previous attempt and is the reason Phase 1 exists.** | Phase 1 is a go/no-go gate. Contingency: wrap in a minimal `.app` bundle, a pipeline already proven this session. |
-| Premature garbage collection of bridged ObjC objects | Known PyObjC failure mode | Adapted Rule 9, plus an idle-survival test |
-| TCC blocks reading files in Desktop/Documents | Possible | Manual acceptance case; the interpreter inherits the caller's TCC identity |
-| `kCGWindowName` needs Screen Recording permission | Likely | Tests assert on owner PID and bounds, never on window title |
+| A non-bundled process cannot show a window when launched detached | **RETIRED.** Accessory activation policy plus activate is enough; no `.app` bundle needed. Confirmed by test and by eye. | Phase 1 gate, passed |
+| Premature garbage collection of bridged ObjC objects | Held off so far | Adapted Rule 9, plus an idle-survival test |
+| TCC blocks reading files in Desktop/Documents | Still open | Manual acceptance case 12; the interpreter inherits the caller's TCC identity |
+| `kCGWindowName` needs Screen Recording permission | Confirmed avoidable | Tests assert on owner PID and bounds, never on window title |
+
+### Things that only turned up by building it
+
+- **macOS ships no `setsid(1)`.** It is a util-linux tool. The Darwin path has
+  to detach with `start_new_session=True`, the `setsid(2)` syscall itself.
+- **`sys.exit()` does nothing inside a runloop callback.** PyObjC traps the
+  `SystemExit`, logs it, and the loop keeps spinning. AppKit's `terminate_` is
+  the real exit. A watchdog written the obvious way would have hung forever.
+- **`NSDraggingContextOutsideApplication` is 0, not 1.** Hardcoding it inverted
+  made every external drop silently impossible while the drag still lifted and
+  tracked normally. The unit test asserted the same wrong literal and passed
+  throughout. Caught only by Tier 3. Constants now come from AppKit, never from
+  memory.
+- **`xcodebuild` needs full Xcode, `swiftc` does not.** Irrelevant once the
+  language choice moved to Python, but it is why the earlier Swift attempt
+  stalled.
 
 The previous tool (`jannis-baum/drag`) failed because it called `getchar()` on stdin
 and terminated on EOF. Under a detached launch stdin is not a terminal, EOF is

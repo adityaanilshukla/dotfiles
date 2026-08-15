@@ -73,12 +73,24 @@ class SpawnedTool:
             return ""
 
     def terminate(self) -> None:
-        if not self.alive():
-            return
-        self.proc.send_signal(signal.SIGTERM)
-        if self.wait_for_exit(2.0) is None:
-            self.proc.kill()
-            self.proc.wait(timeout=2.0)
+        if self.alive():
+            self.proc.send_signal(signal.SIGTERM)
+            if self.wait_for_exit(2.0) is None:
+                self.proc.kill()
+                self.proc.wait(timeout=2.0)
+        self.close_pipes()
+
+    def close_pipes(self) -> None:
+        """Explicitly close the stdout pipe.
+
+        Popen(stdout=PIPE) hands back a file object that nothing else owns. Left
+        to the garbage collector it raises during finalization, which surfaces
+        under `make check` (-W error) as an unraisable exception and masks any
+        real warning behind it.
+        """
+        stream = self.proc.stdout
+        if stream is not None and not stream.closed:
+            stream.close()
 
 
 @pytest.fixture
