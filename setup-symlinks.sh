@@ -47,6 +47,9 @@ declare -A files=(
   # polybar-backed countdown timer CLI, see polybar/timer.sh.
   ["scripts/t"]="$HOME/.local/bin/t"
 
+  # zathura, privately: open a one-off document with no reading state recorded.
+  ["scripts/zp"]="$HOME/.local/bin/zp"
+
   # standalone ~/Scripts utilities, formerly the separate Eazy-Scripts repo
   ["scripts/connect-bluetooth"]="$HOME/Scripts/connect-bluetooth"
   ["scripts/forget-bluetooth"]="$HOME/Scripts/forget-bluetooth"

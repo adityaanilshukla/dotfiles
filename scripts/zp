@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Open a document in zathura without recording any reading state.
+#
+# zathura keys its state (page position, bookmarks) by absolute path in
+# ~/.local/share/zathura/bookmarks.sqlite. Opening a one-off document the normal
+# way leaves a row there for good. This runs zathura against a throwaway data
+# dir instead: its bookmarks.sqlite is created inside a temp dir that is deleted
+# when the window closes, so the real database never gains a row. The config dir
+# is untouched, so zathurarc theming still applies. Cost: no page-resume for
+# this document, which is the entire point.
+#
+# Takes a path, so it works on files anywhere.
+
+set -u
+
+usage() {
+  cat <<'EOF'
+usage: zp FILE [FILE...]
+
+zathura, privately. Open FILE with no reading state stored anywhere: no page
+position, no bookmarks. Relative paths are fine.
+
+  -h, --help   show this message
+EOF
+}
+
+case "${1:-}" in
+  -h|--help) usage; exit 0 ;;
+  '')        usage >&2; exit 2 ;;
+esac
+
+for f in "$@"; do
+  [[ -f "$f" ]] || { printf 'zp: no such file: %s\n' "$f" >&2; exit 1; }
+done
+
+# Resolve zathura defensively: a detached or GUI-spawned launch inherits no
+# environment, so $PATH may be minimal. Linux finds its render plugins under
+# /usr/lib/zathura by default, so no plugin-path juggling is needed here.
+ZATHURA="${ZATHURA:-$(command -v zathura || true)}"
+[[ -x "$ZATHURA" ]] || { printf 'zp: zathura not found; set $ZATHURA\n' >&2; exit 1; }
+
+# --- launch ---
+TMPDATA=$(mktemp -d "${TMPDIR:-/tmp}"/zp.XXXXXX) || exit 1
+
+# Detached, so the shell (or the ranger process that spawned us) is free
+# immediately and nohup keeps zathura alive when that terminal closes. The temp
+# dir is removed by the same wrapper once zathura exits. Arguments are passed
+# positionally so paths with spaces survive and the inner shell expands nothing
+# of its own.
+nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
+  zp "$ZATHURA" "$TMPDATA" "$@" >/dev/null 2>&1 &
