@@ -18,6 +18,10 @@ cask "alacritty"
 
 # ----- File manager + fuzzy tooling used by ranger and readbook -----
 brew "ranger"
+# Declared explicitly rather than relied on as ranger's transitive dep: the
+# drag-mac venv (see install.sh) needs a python3 that is actually guaranteed
+# to be here.
+brew "python"
 brew "fzf"                            # readbook book picker + ranger
 brew "fd"                             # fast file search for ranger
 brew "trash-cli"                      # ranger's dT binding (see rc.conf)

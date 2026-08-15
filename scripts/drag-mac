@@ -1,0 +1,25 @@
+#!/bin/sh
+# drag-mac launcher: a macOS drag source for ranger's dn binding.
+#
+# Goes through a venv because Homebrew's python3 is PEP 668 externally managed,
+# so `pip install --user` refuses to run and PyObjC has nowhere else to live.
+# install.sh creates the venv; see dotfiles/drag-mac/PLAN.md.
+
+set -eu
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+VENV="${DRAG_MAC_VENV:-$HOME/.local/share/drag-mac/venv}"
+MODULE="$DOTFILES_DIR/drag-mac/drag_mac.py"
+
+if [ ! -x "$VENV/bin/python3" ]; then
+  echo "drag-mac: venv missing at $VENV" >&2
+  echo "  create it with: make -C '$DOTFILES_DIR/drag-mac' venv" >&2
+  exit 127
+fi
+
+if [ ! -f "$MODULE" ]; then
+  echo "drag-mac: module missing at $MODULE" >&2
+  exit 127
+fi
+
+exec "$VENV/bin/python3" "$MODULE" "$@"
