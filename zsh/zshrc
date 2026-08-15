@@ -136,3 +136,6 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+# Installed scripts live here: t, zp, online-zathura. Last so it wins over
+# conda's prepend above.
+export PATH="$HOME/.local/bin:$PATH"
