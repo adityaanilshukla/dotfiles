@@ -22,21 +22,29 @@ import os
 import sys
 from pathlib import Path
 
+import objc
 from AppKit import (
     NSApplication,
     NSApplicationActivationPolicyAccessory,
     NSBackingStoreBuffered,
     NSColor,
+    NSDragOperationCopy,
+    NSDragOperationNone,
+    NSDraggingItem,
     NSEvent,
     NSFloatingWindowLevel,
+    NSFont,
+    NSImageView,
     NSMakeRect,
     NSPanel,
     NSTextField,
+    NSView,
     NSWindowStyleMaskClosable,
     NSWindowStyleMaskNonactivatingPanel,
     NSWindowStyleMaskTitled,
+    NSWorkspace,
 )
-from Foundation import NSTimer
+from Foundation import NSTimer, NSURL
 
 EXIT_OK = 0
 EXIT_BAD_TARGET = 1
@@ -47,6 +55,13 @@ TIMEOUT_ENV_VAR = "DRAG_MAC_TIMEOUT_S"
 
 PANEL_WIDTH = 168.0
 PANEL_HEIGHT = 96.0
+
+ICON_SIZE = 64.0
+ICON_STACK_OFFSET = 6.0
+
+# NSDraggingContext: 0 is a drag within the same app, 1 is a drag to anything
+# else. This tool only exists to drag outward.
+DRAGGING_CONTEXT_OUTSIDE_APPLICATION = 1
 
 # Rule 9: strong references to every bridged object that outlives its creating
 # scope. Never read for logic, only to keep objects alive. Cleared at terminate.
@@ -122,10 +137,111 @@ def label_for(targets: list[Path]) -> str:
     return f"{len(targets)} items"
 
 
-def build_panel(caption: str) -> NSPanel:
-    """A small floating panel placed near the pointer."""
-    require(isinstance(caption, str), "caption must be a string", TypeError)
-    require(caption, "caption must not be empty", ValueError)
+def drag_payload(targets: list[Path]) -> list[tuple[NSURL, object]]:
+    """Pre-resolve every file URL and icon.
+
+    Rule 3: this is the part that touches disk, so it runs once at startup
+    rather than inside mouseDown_. The NSDraggingItem wrappers themselves are
+    built per drag in build_dragging_items, because a dragging item is consumed
+    by the session that carries it and reusing one across sessions is undefined.
+    """
+    require(isinstance(targets, list), "targets must be a list", TypeError)
+    require(targets, "cannot build a payload for an empty selection", UsageError)
+
+    workspace = NSWorkspace.sharedWorkspace()
+    require(workspace is not None, "sharedWorkspace returned nil", RuntimeError)
+
+    payload: list[tuple[NSURL, object]] = []
+    for target in targets:
+        path = str(target)
+        url = NSURL.fileURLWithPath_(path)
+        require(url is not None, f"could not build a file URL for {path}", RuntimeError)
+        icon = workspace.iconForFile_(path)
+        require(icon is not None, f"could not load an icon for {path}", RuntimeError)
+        payload.append((url, icon))
+    return payload
+
+
+def build_dragging_items(payload: list[tuple[NSURL, object]]) -> list[NSDraggingItem]:
+    """Wrap the payload as NSDraggingItems, fanned out so a multi-file drag
+    reads as a stack rather than a single icon."""
+    require(isinstance(payload, list), "payload must be a list", TypeError)
+    require(payload, "cannot build dragging items for an empty payload", UsageError)
+
+    items: list[NSDraggingItem] = []
+    for index, (url, icon) in enumerate(payload):
+        item = NSDraggingItem.alloc().initWithPasteboardWriter_(url)
+        require(item is not None, "NSDraggingItem allocation returned nil", RuntimeError)
+        offset = ICON_STACK_OFFSET * index
+        item.setDraggingFrame_contents_(
+            NSMakeRect(offset, offset, ICON_SIZE, ICON_SIZE), icon
+        )
+        items.append(item)
+    return items
+
+
+class DragSourceView(
+    NSView, protocols=[objc.protocolNamed("NSDraggingSource")]
+):
+    """The panel's content view. Starts a drag on mouse-down and exits once a
+    drop actually lands.
+
+    Conformance to NSDraggingSource must be declared here: without it PyObjC
+    does not route the session callbacks, draggingSession_endedAt_operation_
+    is never called, and the tool would hang until the watchdog fires.
+    """
+
+    def initWithTargets_(self, targets):
+        self = objc.super(DragSourceView, self).initWithFrame_(
+            NSMakeRect(0.0, 0.0, PANEL_WIDTH, PANEL_HEIGHT)
+        )
+        if self is None:
+            return None
+        self._targets = list(targets)
+        self._payload = drag_payload(self._targets)
+        return self
+
+    def targets(self):
+        return self._targets
+
+    def mouseDown_(self, event):
+        items = build_dragging_items(self._payload)
+        session = self.beginDraggingSessionWithItems_event_source_(items, event, self)
+        # Held only to keep the session alive for its own duration (rule 9).
+        _RETAIN["session"] = session
+
+    def draggingSession_sourceOperationMaskForDraggingContext_(self, _session, context):
+        if context == DRAGGING_CONTEXT_OUTSIDE_APPLICATION:
+            return NSDragOperationCopy
+        return NSDragOperationNone
+
+    def draggingSession_endedAt_operation_(self, _session, _point, operation):
+        """Exit after a drop that landed, matching dragon-drop's -x.
+
+        A cancelled drag (operation NSDragOperationNone) deliberately leaves the
+        window up so a fumbled grab does not force a relaunch. The watchdog
+        still bounds how long it can sit there.
+        """
+        _RETAIN.pop("session", None)
+        if operation == NSDragOperationNone:
+            return
+        finish(EXIT_OK)
+
+    def cancelOperation_(self, _sender):
+        """Escape."""
+        finish(EXIT_OK)
+
+    def acceptsFirstResponder(self):
+        return True
+
+
+def build_panel(targets: list[Path]) -> NSPanel:
+    """A small floating panel placed near the pointer, whose content view is the
+    drag source."""
+    require(isinstance(targets, list), "targets must be a list", TypeError)
+    require(targets, "cannot build a panel for an empty selection", UsageError)
+
+    caption = label_for(targets)
 
     style = (
         NSWindowStyleMaskNonactivatingPanel
@@ -145,8 +261,23 @@ def build_panel(caption: str) -> NSPanel:
     panel.setReleasedWhenClosed_(False)
     panel.setBackgroundColor_(NSColor.windowBackgroundColor())
 
+    view = DragSourceView.alloc().initWithTargets_(targets)
+    require(view is not None, "DragSourceView allocation returned nil", RuntimeError)
+    panel.setContentView_(view)
+    _RETAIN["drag_view"] = view
+
+    icon = NSImageView.alloc().initWithFrame_(
+        NSMakeRect((PANEL_WIDTH - ICON_SIZE) / 2.0, 26.0, ICON_SIZE, ICON_SIZE)
+    )
+    require(icon is not None, "NSImageView allocation returned nil", RuntimeError)
+    icon.setImage_(NSWorkspace.sharedWorkspace().iconForFile_(str(targets[0])))
+    # The image view must not swallow the mouse-down the drag needs.
+    icon.setEditable_(False)
+    view.addSubview_(icon)
+    _RETAIN["icon_view"] = icon
+
     field = NSTextField.alloc().initWithFrame_(
-        NSMakeRect(8.0, 8.0, PANEL_WIDTH - 16.0, PANEL_HEIGHT - 40.0)
+        NSMakeRect(4.0, 6.0, PANEL_WIDTH - 8.0, 18.0)
     )
     require(field is not None, "NSTextField allocation returned nil", RuntimeError)
     field.setStringValue_(caption)
@@ -155,7 +286,9 @@ def build_panel(caption: str) -> NSPanel:
     field.setBordered_(False)
     field.setDrawsBackground_(False)
     field.setAlignment_(1)  # NSTextAlignmentCenter
-    panel.contentView().addSubview_(field)
+    field.setFont_(NSFont.systemFontOfSize_(11.0))
+    field.setLineBreakMode_(4)  # NSLineBreakByTruncatingMiddle
+    view.addSubview_(field)
     _RETAIN["caption_field"] = field
 
     _place_near_pointer(panel)
@@ -234,7 +367,7 @@ def main(argv: list[str]) -> int:
     # window from ever appearing.
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
 
-    panel = build_panel(label_for(targets))
+    panel = build_panel(targets)
     _RETAIN["panel"] = panel
     _RETAIN["targets"] = targets
 
