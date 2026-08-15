@@ -135,6 +135,39 @@ class TestDragSourceView:
             mask = view.draggingSession_sourceOperationMaskForDraggingContext_(None, context)
             assert mask != NSDragOperationNone, f"context {context} refuses every drop"
 
+    def test_callbacks_match_real_selectors(self):
+        """Every draggingSession* callback must name a selector that exists.
+
+        Regression: the ended callback was spelled
+        draggingSession_endedAt_operation_, which maps to
+        draggingSession:endedAt:operation:. The real selector is endedAtPoint:.
+        An optional protocol method nobody implements is simply never called,
+        so nothing errored anywhere. macOS just never told the app the drag had
+        finished, and the window stayed up after every single drop, while this
+        very test file called the misspelled method by its Python name and
+        passed.
+
+        Calling your own method proves nothing about whether macOS will. Only
+        the protocol settles that.
+        """
+        import objc
+
+        protocol = objc.protocolNamed("NSDraggingSource")
+        real = {
+            d["selector"].decode() if isinstance(d["selector"], bytes) else str(d["selector"])
+            for d in protocol.instanceMethods()
+        }
+
+        mine = [n for n in dir(DragSourceView) if n.startswith("draggingSession")]
+        assert mine, "no dragging callbacks found at all"
+
+        for name in mine:
+            selector = name.replace("_", ":")
+            assert selector in real, (
+                f"{name} maps to {selector!r}, which is not in NSDraggingSource, "
+                f"so macOS will never call it. Real: {sorted(real)}"
+            )
+
     def test_a_completed_drop_finishes(self, two_files, monkeypatch):
         view = DragSourceView.alloc().initWithTargets_(two_files)
         calls = []
@@ -142,7 +175,7 @@ class TestDragSourceView:
 
         from AppKit import NSDragOperationCopy
 
-        view.draggingSession_endedAt_operation_(None, (0, 0), NSDragOperationCopy)
+        view.draggingSession_endedAtPoint_operation_(None, (0, 0),NSDragOperationCopy)
 
         assert calls == [0], "a completed drop must exit, matching dragon-drop -x"
 
@@ -155,7 +188,7 @@ class TestDragSourceView:
         calls = []
         monkeypatch.setattr("drag_mac.finish", lambda code: calls.append(code))
 
-        view.draggingSession_endedAt_operation_(None, (0, 0), NSDragOperationNone)
+        view.draggingSession_endedAtPoint_operation_(None, (0, 0),NSDragOperationNone)
 
         assert calls == []
 
