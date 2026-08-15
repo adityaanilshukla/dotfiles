@@ -45,6 +45,7 @@ Optional:
 | --- | --- |
 | `yp` / `yd` / `yn` / `y.` | Yank path / dir / name / name-without-ext to clipboard, with statusbar notification |
 | `dn` | Drag the selection out to another app |
+| `r` | Stock open-with picker. For a PDF the list includes `zp`, which opens it in zathura with no reading state stored (see `rifle.conf`). |
 | `cW` | Rename via sudo |
 | `dT` | Move selection to trash |
 | `gT` | cd to trash dir |
