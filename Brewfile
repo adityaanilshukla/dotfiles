@@ -1,20 +1,50 @@
-# Brewfile — core tools for this dotfiles setup.
+# Brewfile — everything this machine needs, so a fresh Mac is one command.
 # Install everything with:  brew bundle --file=~/dotfiles/Brewfile
 # (install.sh does this for you.)
+#
+# To find anything installed here but not tracked below:
+#   comm -13 <(grep -oE '"[^"]+"' Brewfile | tr -d '"' | sed 's|.*/||' | sort -u) \
+#            <(brew leaves; brew list --cask | sed 's|.*/||' | sort -u)
 
 # ----- Taps -----
 tap "nikitabobko/tap"          # aerospace
 tap "felixkratz/formulae"      # sketchybar
 tap "homebrew-zathura/zathura" # zathura + pdf plugins
 tap "tursodatabase/tap"        # turso (online-zathura reading-state sync)
+tap "smudge/smudge"            # nightlight
 
 # ----- Window manager + status bar -----
 cask "aerospace"
 brew "felixkratz/formulae/sketchybar"
 cask "font-sketchybar-app-font"      # sketchybar's glyph icons
 
-# ----- Terminal -----
+# ----- Terminal + shell -----
 cask "alacritty"
+brew "tmux"                          # tmux.conf is symlinked; inert without this
+brew "zsh-autosuggestions"           # sourced by zshrc
+brew "zsh-syntax-highlighting"       # sourced by zshrc, must load last
+brew "bash"                          # newer than the bash macOS ships
+brew "fastfetch"                     # zshrc alias f
+
+# ----- Editor -----
+# nvim itself is NOT a formula. bob manages the Neovim version and puts the
+# binary in ~/.local/share/bob/nvim-bin, which zshrc adds to PATH. Installing
+# bob alone leaves that directory empty, so install.sh runs `bob use` after.
+brew "bob"
+brew "tree-sitter"
+brew "tree-sitter-cli"
+brew "tree-sitter@0.25"
+brew "ripgrep"                       # telescope / live grep
+brew "pyright"                       # LSP: python
+brew "lua-language-server"           # LSP: lua
+brew "marksman"                      # LSP: markdown
+brew "ltex-ls-plus"                  # LSP: prose and grammar
+brew "ruff"                          # python lint + format
+brew "stylua"                        # lua format
+brew "luacheck"                      # lua lint
+brew "shellcheck"                    # shell lint
+brew "yamllint"                      # yaml lint
+brew "golangci-lint"                 # go lint
 
 # ----- File manager + fuzzy tooling used by ranger and readbook -----
 brew "ranger"
@@ -25,17 +55,80 @@ brew "python"
 brew "fzf"                            # readbook book picker + ranger
 brew "fd"                             # fast file search for ranger
 brew "trash-cli"                      # ranger's dT binding (see rc.conf)
+brew "bat"                            # cat with highlighting
+brew "tree"
+brew "dysk"                           # disk usage
+brew "tldr"
+
+# ----- Git -----
+brew "gh"                             # PRs from the terminal
+brew "lazygit"
 
 # ----- PDF / eBook reader (zathura) -----
 brew "homebrew-zathura/zathura/zathura-pdf-poppler"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading state
 brew "go"                             # builds online-zathura (see install.sh)
+cask "xournal++"                      # annotating PDFs
+
+# ----- Documents + media -----
+brew "pandoc"
+brew "weasyprint"                     # html to pdf
+brew "imagemagick"
+brew "mpv"                            # ranger rifle.conf video rule
+brew "sphinx-doc"
+
+# ----- Browsers -----
+cask "brave-browser"                  # aerospace alt-f / ctrl-shift-p, ranger PDF opener
+cask "firefox"
+
+# ----- Languages, build tooling, data -----
+cask "miniconda"                      # zshrc has a conda init block for this path
+brew "uv"                             # python package manager
+brew "pipx"
+brew "python-tk@3.14"
+brew "pyqt"
+brew "pyvim"
+brew "cmake"
+brew "meson"
+brew "pkgconf"
+brew "mysql"
+brew "bats-core"                      # bash test runner
+
+# ----- Local models -----
+brew "ollama"
+brew "llama.cpp"
+
+# ----- Editors and dev apps -----
+cask "visual-studio-code"             # install.sh installs its extensions
+cask "claude-code"
 
 # ----- Helpers the tracked configs invoke -----
 cask "betterdisplay"                  # sketchybar volume plugin + display scaling
 cask "raycast"                        # aerospace alt-d / alt-p bindings
 cask "karabiner-elements"             # ctrl+backspace -> forward-delete, etc.
+cask "keyclu"                         # shortcut cheatsheet
+cask "scroll-reverser"                # separate scroll direction for mouse vs trackpad
+brew "smudge/smudge/nightlight"       # night shift from the CLI
+cask "macfuse"                        # needs manual kernel-extension approval + reboot
+
+# ----- Networking + sync -----
+brew "syncthing"
+brew "tailscale"                      # links this machine to brovo
+cask "localsend"
+
+# ----- Comms + everyday apps -----
+cask "spotify"
+cask "telegram"
+cask "zoom"
+cask "microsoft-teams"
+cask "microsoft-word"
+cask "zoho-cliq"
+cask "zoho-mail"
+cask "anki"
 
 # ----- Fonts -----
 cask "font-hack-nerd-font"            # alacritty + sketchybar text font
+
+# Deliberately NOT tracked: qbittorrent. install.sh still de-quarantines it if
+# you install it by hand, since its cask build is ad-hoc signed.

@@ -32,6 +32,19 @@ for app in "/Applications/qBittorrent.app"; do
   [[ -d "$app" ]] && xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
 done
 
+# --- Neovim (via bob) -----------------------------------------------------
+# nvim is not a brew formula here. bob manages the version and drops the binary
+# in ~/.local/share/bob/nvim-bin, which zshrc puts on PATH. Installing bob alone
+# leaves that empty, so without this a fresh machine has every nvim config file
+# and no nvim.
+if command -v bob >/dev/null 2>&1; then
+  if [[ ! -x "$HOME/.local/share/bob/nvim-bin/nvim" ]]; then
+    echo "Installing Neovim via bob..."
+    bob use "${BOB_NVIM_VERSION:-nightly}" \
+      || echo "  bob failed — install manually: bob use nightly"
+  fi
+fi
+
 # --- online-zathura -------------------------------------------------------
 # Reading-state sync used by scripts/readbook. It's its own repo, built with
 # its Makefile into ~/.local/bin. Needs `go` (Brewfile). Actual Turso sync also
