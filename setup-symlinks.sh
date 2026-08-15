@@ -80,6 +80,32 @@ for src in "${!files[@]}"; do
   echo "Linked $src_path -> $dest"
 done
 
+# Config *directories* symlinked wholesale into the repo, as opposed to the
+# individual files above. ranger's config (rc.conf, commands.py, the devicons
+# plugin) is managed here rather than in its old standalone ranger-config repo.
+declare -A dirs=(
+  ["ranger"]="$HOME/.config/ranger"
+)
+
+for src in "${!dirs[@]}"; do
+  dest="${dirs[$src]}"
+  src_path="$DOTFILES_DIR/$src"
+
+  # Back up a real (non-symlink) directory before replacing it with the link.
+  # This is where the old standalone ~/.config/ranger repo lands on first run.
+  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+    mv "$dest" "$dest.backup"
+    echo "Backed up $dest to $dest.backup"
+  fi
+
+  mkdir -p "$(dirname "$dest")"
+
+  # -n so a re-run replaces the existing symlink instead of dropping a new link
+  # *inside* the already-linked directory (which ln -sf would do for a dir).
+  ln -sfn "$src_path" "$dest"
+  echo "Linked $src_path -> $dest"
+done
+
 # GTK theme settings are NOT applied here. They live in dconf rather than in a
 # file, and need a live D-Bus session, so they are a separate step: setup-gtk.sh
 # (run by bootstrap.sh). Keeping them out means this script stays offline-safe
