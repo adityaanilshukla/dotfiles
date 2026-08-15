@@ -123,21 +123,35 @@ fi
 
 export ZATHURA_PLUGINS_PATH="$(brew --prefix)/Cellar/zathura-pdf-poppler/2026.02.03:$(brew --prefix)/Cellar/zathura-pdf-mupdf/2026.02.03"
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
-        . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+# --------------------
+# Lazy-load conda. The stock eager `conda init` block that used to sit here ran
+# the hook on every shell: measured at ~0.23s of a ~0.37s startup, so roughly
+# 60% of the time to open a terminal, for something most shells never use. The
+# same fix landed on the Linux branch in 50ba6fc, where the hook cost ~1.7s.
+#
+# The cost is paid on first `conda` invocation instead: the function replaces
+# itself with the real init, then re-runs the command transparently.
+#
+# NOTE: hand-rolled, not the stock block. Running `conda init` again will
+# overwrite this with the eager version.
+# --------------------
+conda() {
+    unset -f conda
+    __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
     else
-        export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+        if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+            . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+        else
+            export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+        fi
     fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+    unset __conda_setup
+    conda "$@"
+}
 
-# Installed scripts live here: t, zp, online-zathura. Last so it wins over
-# conda's prepend above.
+# Installed scripts live here: t, zp, online-zathura. Conda no longer prepends
+# to PATH at startup, but it still does on first use, and this must keep winning
+# then too.
 export PATH="$HOME/.local/bin:$PATH"
