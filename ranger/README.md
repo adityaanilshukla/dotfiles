@@ -1,48 +1,68 @@
-# ranger-config
+# ranger config
 
-My personal [ranger](https://github.com/ranger/ranger) configuration.
+My personal [ranger](https://github.com/ranger/ranger) configuration. Part of the
+dotfiles repo; `install.sh` symlinks this directory to `~/.config/ranger`, so
+edits here are live immediately with no copy step.
 
 ## Install
 
-Clone into `~/.config/ranger`, pulling the devicons submodule along the way:
+Nothing to do separately. Clone the dotfiles repo and run `./install.sh`.
 
-```bash
-git clone --recurse-submodules https://github.com/adityaanilshukla/ranger-config ~/.config/ranger
-```
-
-If you already cloned without `--recurse-submodules`:
-
-```bash
-git -C ~/.config/ranger submodule update --init
-```
+The devicons plugin is vendored directly into `plugins/ranger_devicons`, not a
+submodule, so no `--recurse-submodules` or `submodule update` is needed.
 
 ## Dependencies
+
+All of these come from the repo `Brewfile` on macOS. On Linux, install the
+equivalents through the distro package manager.
 
 Required:
 
 - `ranger`
-- `xclip` (X11) or `wl-clipboard` (Wayland) — clipboard backend for `yp` / `yd` / `yn` / `y.`
-- A Nerd Font in your terminal — needed for the devicons plugin glyphs
+- A Nerd Font in the terminal, for the devicons glyphs
+- `trash-cli`, for `dT`. On macOS Homebrew this formula is **keg-only**, so its
+  binaries are never linked onto PATH and `rc.conf` calls `trash-put` by its
+  full keg path. macOS also ships its own unrelated `/usr/bin/trash`.
+
+Clipboard backend for `yp` / `yd` / `yn` / `y.`:
+
+- macOS: `pbcopy`, built in
+- X11: `xclip`; Wayland: `wl-clipboard`
+
+For `dn` (drag and drop), platform-specific:
+
+- macOS: `drag-mac`, in this repo under `drag-mac/`. Needs a Python venv with
+  PyObjC, which `install.sh` builds at `~/.local/share/drag-mac/venv`.
+- Linux: `dragon-drop` (Arch AUR: `paru -S dragon-drop`). X11 only.
 
 Optional:
 
-- `dragon-drop` (Arch AUR: `paru -S dragon-drop`) — needed for the `dn` drag-and-drop binding
-- `zathura` — PDFs open detached via the `mime` rule in `rc.conf`
-- `mpv` — mp4 playback
-- `trash-cli` — for `dT` (move selection to trash)
+- `zathura` for PDFs, `mpv` for video
 
 ## Custom keybindings
 
 | Key | Action |
 | --- | --- |
 | `yp` / `yd` / `yn` / `y.` | Yank path / dir / name / name-without-ext to clipboard, with statusbar notification |
-| `dn` | Drag-and-drop selection out via dragon-drop |
+| `dn` | Drag the selection out to another app |
 | `cW` | Rename via sudo |
-| `dT` | trash-put selection |
+| `dT` | Move selection to trash |
 | `gT` | cd to trash dir |
-| `g{P,C,S,e,M,p,D,b,l,i,…}` | Quick-cd shortcuts — see `rc.conf` for the full list |
+| `g{P,C,S,e,M,p,D,b,l,i,…}` | Quick-cd shortcuts, see `rc.conf` for the full list |
 
 ## Notes
 
-- The `yank` command in `commands.py` overrides the stock one. It notifies on success and, when running inside tmux, falls back to tmux's server-global `DISPLAY` / `XAUTHORITY` if the ranger process's own env is missing them — which happens in panes that predate the X session.
-- The `drag` command uses `setsid -f` so dragon-drop is fully detached from ranger.
+- The `yank` command in `commands.py` overrides the stock one. It notifies on
+  success and, inside tmux, falls back to tmux's server-global `DISPLAY` /
+  `XAUTHORITY` when the ranger process's own env lacks them, which happens in
+  panes that predate the X session.
+- The `drag` command picks its tool by platform. Linux detaches with
+  `setsid -f`; macOS ships no `setsid(1)` at all, so it detaches with
+  `start_new_session`, the same syscall. The macOS launcher is invoked by
+  absolute path because `Popen` resolves bare names against ranger's own PATH,
+  which is whatever `open -na Alacritty` handed it and does not include
+  `~/.local/bin`.
+- On macOS the drag window closes itself once a drop lands. `Escape` closes it
+  when focused, and `ctrl-shift-d` (aerospace) closes it from anywhere, which
+  matters because after a drag the destination app holds focus. `q` is
+  deliberately not bound: if the window is not really focused, `q` quits ranger.
