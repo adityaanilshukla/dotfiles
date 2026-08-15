@@ -17,19 +17,48 @@ function run() {
     return 'no notification windows';
   }
 
-  const ALERT_SUBROLES = ['AXNotificationCenterAlert', 'AXNotificationCenterAlertStack'];
+  // Matched by prefix rather than an exact list. macOS renames these between
+  // releases: this looked for AXNotificationCenterAlert and
+  // AXNotificationCenterAlertStack, but macOS 26 calls a banner
+  // AXNotificationCenterBanner, so the walk sailed straight past the very
+  // thing it was meant to close and reported "no notification windows".
+  const ALERT_SUBROLE_PREFIX = 'AXNotificationCenter';
 
-  function findAlerts(elements, found) {
+  function isAlert(el) {
+    let subrole;
+    try { subrole = el.subrole(); } catch (e) { subrole = null; }
+    if (subrole && subrole.indexOf(ALERT_SUBROLE_PREFIX) === 0) return true;
+    // Fallback for a future rename: anything that offers a Close action is a
+    // dismissable banner regardless of what Apple decided to call it.
+    return closeAction(el) !== null;
+  }
+
+  // Returns the action object, not its name. An action's *name* is AXPress and
+  // the like; the human label lives in its *description*, so a byName lookup
+  // for "Close" finds nothing and the banner never closes.
+  const CLOSE_LABELS = ['Close', 'Clear All', 'Clear'];
+
+  function closeAction(el) {
+    let actions;
+    try { actions = el.actions(); } catch (e) { return null; }
+    for (const action of actions) {
+      let label;
+      try { label = action.description(); } catch (e) { continue; }
+      if (CLOSE_LABELS.indexOf(label) > -1) return action;
+    }
+    return null;
+  }
+
+  function findAlerts(elements, found, depth) {
+    if (depth > 12) return found;   // bounded: the tree is shallow in practice
     for (const el of elements) {
-      let subrole;
-      try { subrole = el.subrole(); } catch (e) { subrole = null; }
-      if (ALERT_SUBROLES.indexOf(subrole) > -1) {
+      if (isAlert(el)) {
         found.push(el);
-      } else {
-        let children;
-        try { children = el.uiElements(); } catch (e) { children = []; }
-        if (children.length > 0) findAlerts(children, found);
+        continue;                   // don't descend into a banner's own labels
       }
+      let children;
+      try { children = el.uiElements(); } catch (e) { children = []; }
+      if (children.length > 0) findAlerts(children, found, depth + 1);
     }
     return found;
   }
@@ -37,32 +66,31 @@ function run() {
   let closed = 0;
   const deadline = Date.now() + 5000;
   while (Date.now() < deadline) {
-    let root;
-    try {
-      root = notificationCenter.windows[0].uiElements[0].uiElements[0].uiElements();
-    } catch (e) {
-      break;
-    }
-    const alerts = findAlerts(root, []);
+    // Walk from the windows themselves rather than a hardcoded
+    // uiElements[0].uiElements[0] path. That path encoded one release's exact
+    // tree shape and would silently find nothing the moment Apple nested things
+    // differently, which is indistinguishable from having no notifications.
+    let windows;
+    try { windows = notificationCenter.windows(); } catch (e) { break; }
+    if (!windows || windows.length === 0) break;
+
+    const alerts = findAlerts(windows, [], 0);
     if (alerts.length === 0) break;
 
     let didClose = false;
     for (const alert of alerts) {
+      const action = closeAction(alert);
+      if (!action) continue;
       try {
-        const actions = alert.actions();
-        for (const action of actions) {
-          const desc = action.description();
-          if (desc === 'Close' || desc === 'Clear All' || desc === 'press') {
-            action.perform();
-            closed++;
-            didClose = true;
-            break;
-          }
-        }
+        // Never "press": that activates the notification and opens whatever
+        // app sent it, which is the opposite of dismissing it.
+        action.perform();
+        closed++;
+        didClose = true;
+        break;      // the tree is stale after a close; re-walk it
       } catch (e) {
-        // element already gone
+        // element already gone, try the next one
       }
-      if (didClose) break;
     }
     if (!didClose) break;
   }
