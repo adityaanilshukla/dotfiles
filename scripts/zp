@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+# Open a document in zathura without recording any reading state.
+#
+# zathura keys its state (page position, bookmarks) by absolute path in
+# ~/.local/share/zathura/bookmarks.sqlite, and online-zathura pushes every new
+# row in that file to Turso on the next synced launch. So merely skipping the
+# wrapper does NOT keep a one-off document off the remote: the row still lands
+# locally and gets uploaded later as an "add".
+#
+# This runs zathura against a throwaway data dir instead. Its bookmarks.sqlite
+# is created inside a temp dir that is deleted when the window closes, the real
+# database never gains a row, and the next synced launch has no delta to push.
+# The config dir is untouched, so zathurarc theming still applies. Cost: no
+# page-resume for this document, which is the point.
+#
+# Takes a path, so unlike readbook it works on files anywhere, not only the
+# books under ~/Documents.
+
+set -u
+
+usage() {
+  cat <<'EOF'
+usage: zp FILE [FILE...]
+
+zathura, privately. Open FILE with no reading state stored anywhere: no page
+position, no bookmarks, nothing pushed to Turso. Relative paths are fine.
+
+  -h, --help   show this message
+
+For a synced read, where the page position is remembered and follows you
+across machines, use `readbook` or `online-zathura` instead.
+EOF
+}
+
+case "${1:-}" in
+  -h|--help) usage; exit 0 ;;
+  '')        usage >&2; exit 2 ;;
+esac
+
+for f in "$@"; do
+  [[ -f "$f" ]] || { printf 'zp: no such file: %s\n' "$f" >&2; exit 1; }
+done
+
+# --- environment ---
+# Usually run from an interactive shell, but readbook execs it too and a GUI
+# launch inherits no environment, so resolve everything defensively.
+ZATHURA="${ZATHURA:-$(command -v zathura || true)}"
+ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
+[[ -x "$ZATHURA" ]] || { printf 'zp: zathura not found; set $ZATHURA\n' >&2; exit 1; }
+
+# Only pay for the cellar lookup when the inherited value is missing or stale;
+# zshrc hardcodes the plugin versions, which go wrong after a brew upgrade.
+if [[ -z "${ZATHURA_PLUGINS_PATH:-}" || ! -d "${ZATHURA_PLUGINS_PATH%%:*}" ]]; then
+  if command -v brew >/dev/null 2>&1; then
+    poppler="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler 2>/dev/null)" -name 'libpdf-poppler.dylib' 2>/dev/null | head -n1)" 2>/dev/null)"
+    mupdf="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf 2>/dev/null)" -name 'libpdf-mupdf.dylib' 2>/dev/null | head -n1)" 2>/dev/null)"
+    [[ -d "$poppler" && -d "$mupdf" ]] && export ZATHURA_PLUGINS_PATH="$poppler:$mupdf"
+  fi
+fi
+
+# --- focus prep (AeroSpace, macOS only) ---
+# AeroSpace governs keyboard focus, so a newly opened window doesn't reliably
+# receive keystrokes. Snapshot the highest existing zathura window-id now;
+# window-ids increase monotonically, so anything larger afterwards is the
+# window we just opened. zathura has no bundle id here, hence the app-name
+# match. Skipped entirely where aerospace isn't installed.
+zathura_ids() {
+  aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
+    | awk -F'|' '$2 == "zathura" { print $1 }'
+}
+
+HAVE_AEROSPACE=0
+if command -v aerospace >/dev/null 2>&1; then
+  HAVE_AEROSPACE=1
+  before_max=$(zathura_ids | sort -n | tail -n1)
+  before_max=${before_max:-0}
+fi
+
+# --- launch ---
+TMPDATA=$(mktemp -d "${TMPDIR:-/tmp}"/zp.XXXXXX) || exit 1
+
+# Detached, so the shell (or the alacritty window readbook runs in) is free
+# immediately and nohup keeps zathura alive when that terminal closes. The temp
+# dir is removed by the same wrapper once zathura exits. Arguments are passed
+# positionally so paths with spaces survive and the inner shell expands nothing
+# of its own.
+nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
+  zp "$ZATHURA" "$TMPDATA" "$@" >/dev/null 2>&1 &
+
+# --- focus ---
+(( HAVE_AEROSPACE )) || exit 0
+for _ in $(seq 1 50); do
+  sleep 0.1
+  wid=$(zathura_ids | sort -n | tail -n1)
+  if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
+    aerospace focus --window-id "$wid"
+    break
+  fi
+done

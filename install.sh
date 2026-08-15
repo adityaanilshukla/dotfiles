@@ -70,6 +70,10 @@ files=(
   # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
   "scripts/t:$HOME/.local/bin/t"
 
+  # zathura, privately: open any document with no reading state stored and
+  # nothing synced to Turso. Also what readbook's ctrl-o hands off to.
+  "scripts/zp:$HOME/.local/bin/zp"
+
   # VS Code (macOS config path)
   "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"
   "vscode/keybindings.json:$HOME/Library/Application Support/Code/User/keybindings.json"

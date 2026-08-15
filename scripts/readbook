@@ -21,6 +21,45 @@ fi
 # Absolute path to this script, so the fzf Tab-reload can re-invoke it.
 SELF="$0"; [[ "$SELF" != /* ]] && SELF="$PWD/$SELF"
 
+# --- arguments ---
+# Default is a synced open through online-zathura. Private mode skips the
+# wrapper *and* redirects zathura's data dir to a throwaway, because merely
+# skipping the wrapper isn't enough: a row written into the real
+# bookmarks.sqlite gets picked up as an "add" by the next synced launch's
+# push. An optional FILE opens directly and skips the picker, which is the
+# usual case for a one-off download that doesn't live under ~/Documents.
+PRIVATE=0
+BOOK_ARG=""
+
+usage() {
+  cat <<'EOF'
+usage: readbook [-p|--private] [FILE]
+
+  (no args)        fzf-pick a book under ~/Documents and open it synced
+  -p, --private    open without sync: no reading state is stored anywhere
+  FILE             open FILE directly instead of showing the picker
+
+in the picker:
+  enter            open synced
+  ctrl-o           open private (no sync)
+  tab              toggle between filename and path matching
+
+The picker only lists books under ~/Documents. For anything else, `zp FILE`
+opens it privately from any directory.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -p|--private) PRIVATE=1 ;;
+    -h|--help)    usage; exit 0 ;;
+    --)           shift; BOOK_ARG="${1:-}"; break ;;
+    -*)           printf 'readbook: unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    *)            BOOK_ARG="$1" ;;
+  esac
+  shift
+done
+
 # --- environment (important for GUI launches) ---
 # GUI keybind invocations don't inherit a normal shell env, so we set up
 # PATH (incl. ~/.local/bin for online-zathura), source the project-scoped
@@ -28,8 +67,10 @@ SELF="$0"; [[ "$SELF" != /* ]] && SELF="$PWD/$SELF"
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 [[ -f "$HOME/.secrets" ]] && source "$HOME/.secrets"
 
-ZATHURA="/opt/homebrew/bin/zathura"
-ONLINE_ZATHURA="$HOME/.local/bin/online-zathura"
+# Overridable so the launch paths can be exercised with stub binaries; a GUI
+# invocation has no environment, so the defaults are what actually run.
+ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
+ONLINE_ZATHURA="${ONLINE_ZATHURA:-$HOME/.local/bin/online-zathura}"
 
 PDF_POPPLER="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler)" -name 'libpdf-poppler.dylib' | head -n1)")"
 PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-mupdf.dylib' | head -n1)")"
@@ -37,26 +78,61 @@ PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-
 export ZATHURA_PLUGINS_PATH="$PDF_POPPLER:$PDF_MUPDF"
 
 # --- book picker ---
-# The list shows each book's filename. Press Tab to switch the whole list to
-# show paths relative to ~/Documents instead, so you can fuzzy-match on a
-# directory too; Tab again switches back. A temp file holds the current mode so
-# the Tab reload knows which way to flip. --with-nth=1/--nth=1 keep the hidden
-# full-path field out of both the display and the search.
-MODE_FILE=$(mktemp)
-export MODE_FILE
-printf 'name\n' > "$MODE_FILE"
+# Skipped entirely when a FILE was given on the command line.
+if [[ -n "$BOOK_ARG" ]]; then
+  BOOK="$BOOK_ARG"
+  [[ -f "$BOOK" ]] || { printf 'readbook: no such file: %s\n' "$BOOK" >&2; exit 1; }
+else
+  # The list shows each book's filename. Press Tab to switch the whole list to
+  # show paths relative to ~/Documents instead, so you can fuzzy-match on a
+  # directory too; Tab again switches back. A temp file holds the current mode so
+  # the Tab reload knows which way to flip. --with-nth=1/--nth=1 keep the hidden
+  # full-path field out of both the display and the search.
+  MODE_FILE=$(mktemp)
+  export MODE_FILE
+  printf 'name\n' > "$MODE_FILE"
 
-SEL=$("$SELF" --list name | fzf \
-  --delimiter='\t' --with-nth=1 --nth=1 \
-  --bind 'tab:reload(m=$(cat "$MODE_FILE"); [ "$m" = name ] && m=path || m=name; printf "%s\n" "$m" > "$MODE_FILE"; '"$SELF"' --list "$m")')
+  # --private already chosen on the command line makes ctrl-o redundant, so the
+  # header only advertises it in the default (synced) case.
+  if (( PRIVATE )); then
+    HEADER='private: nothing is synced   tab: toggle filename/path'
+  else
+    HEADER='enter: open synced   ctrl-o: open private   tab: toggle filename/path'
+  fi
 
-rm -f "$MODE_FILE"
+  # --expect makes fzf print the pressed key as its own first line before the
+  # selected row, which is how ctrl-o gets distinguished from enter.
+  SEL=$("$SELF" --list name | fzf \
+    --delimiter='\t' --with-nth=1 --nth=1 \
+    --expect=ctrl-o --header="$HEADER" \
+    --bind 'tab:reload(m=$(cat "$MODE_FILE"); [ "$m" = name ] && m=path || m=name; printf "%s\n" "$m" > "$MODE_FILE"; '"$SELF"' --list "$m")')
 
-# Recover the full path (the field after the tab); empty if fzf was cancelled.
-BOOK="${SEL#*$'\t'}"
+  rm -f "$MODE_FILE"
 
-# Nothing selected (fzf cancelled) — bail before launching anything.
-[[ -z "$BOOK" ]] && exit 0
+  KEY="${SEL%%$'\n'*}"
+  ROW="${SEL#*$'\n'}"
+  # A cancelled fzf prints nothing, so KEY and ROW collapse to the same value.
+  [[ "$ROW" == "$KEY" ]] && ROW=""
+  # Nothing selected, so bail before launching anything.
+  [[ "$ROW" != *$'\t'* ]] && exit 0
+
+  # Recover the full path (the field after the tab).
+  BOOK="${ROW#*$'\t'}"
+  [[ "$KEY" == ctrl-o ]] && PRIVATE=1
+fi
+
+# --- private reads are handed off ---
+# scripts/zp owns the throwaway-data-dir launch and its own focus handling, so
+# there is one implementation of "read without syncing" and it is usable
+# straight from a shell on any path, not just books under ~/Documents.
+if (( PRIVATE )); then
+  ZP="${ZP:-$HOME/.local/bin/zp}"
+  [[ -x "$ZP" ]] || {
+    printf 'readbook: %s missing; re-run install.sh\n' "$ZP" >&2
+    exit 1
+  }
+  exec "$ZP" "$BOOK"
+fi
 
 # List the AeroSpace window-ids of every open zathura window. zathura has no
 # app bundle id on macOS, so we match by app-name.
