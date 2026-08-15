@@ -11,18 +11,7 @@ set recolor "true"
 set recolor-lightcolor "#1e1e1e"   # page background
 set recolor-darkcolor  "#dcdcdc"   # text color
 
-# Toggle recolouring, for documents where inverting hurts more than it helps:
-# scanned pages, figures, anything with real colour in it.
-#
-# ctrl-d, not alt-shift-d. Alt cannot be used here at all: macOS does not
-# deliver Option to GTK as a modifier, so <A-D> silently degrades to plain D,
-# which zathura already binds to "cycle opening column in dual page view". That
-# is what an alt-shift-d binding actually did in practice. Every <A-...> binding
-# fails the same way, so this is not a spelling problem to work around.
-#
-# ctrl does reach GTK reliably, and of the ctrl keys zathura uses (^c ^r ^m ^n),
-# ^d is free. zathura's own ^r toggles recolour too and still works.
-map <C-d> recolor
+# No custom recolour binding: zathura's built-in ctrl-r already toggles it.
 
 # Statusbar, inputbar, etc.
 set statusbar-bg "#2a2a2a"
