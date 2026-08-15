@@ -93,11 +93,47 @@ class TestDragSourceView:
         assert DragSourceView.conformsToProtocol_(objc.protocolNamed("NSDraggingSource"))
 
     def test_reports_copy_for_an_outside_drag(self, two_files):
-        from AppKit import NSDragOperationCopy
+        """Regression: this asserted against a hardcoded 1 and passed while the
+        code was broken, because both used the same inverted guess at the
+        context constant. Dragging into another app is context 0, and the tool
+        was answering NSDragOperationNone to exactly that, so no browser or
+        chat window would accept the drop. Always assert against the real
+        AppKit constant, never a literal.
+        """
+        from AppKit import NSDragOperationCopy, NSDraggingContextOutsideApplication
 
         view = DragSourceView.alloc().initWithTargets_(two_files)
-        mask = view.draggingSession_sourceOperationMaskForDraggingContext_(None, 1)
+        mask = view.draggingSession_sourceOperationMaskForDraggingContext_(
+            None, NSDraggingContextOutsideApplication
+        )
         assert mask == NSDragOperationCopy
+
+    def test_outside_application_context_is_zero(self):
+        """Pins the constant the bug got backwards."""
+        from AppKit import (
+            NSDraggingContextOutsideApplication,
+            NSDraggingContextWithinApplication,
+        )
+
+        assert NSDraggingContextOutsideApplication == 0
+        assert NSDraggingContextWithinApplication == 1
+
+    def test_never_reports_none_for_any_context(self, two_files):
+        """A None mask is silently fatal: the drag still lifts and tracks, so it
+        looks healthy, but nothing can accept it."""
+        from AppKit import (
+            NSDragOperationNone,
+            NSDraggingContextOutsideApplication,
+            NSDraggingContextWithinApplication,
+        )
+
+        view = DragSourceView.alloc().initWithTargets_(two_files)
+        for context in (
+            NSDraggingContextOutsideApplication,
+            NSDraggingContextWithinApplication,
+        ):
+            mask = view.draggingSession_sourceOperationMaskForDraggingContext_(None, context)
+            assert mask != NSDragOperationNone, f"context {context} refuses every drop"
 
     def test_a_completed_drop_finishes(self, two_files, monkeypatch):
         view = DragSourceView.alloc().initWithTargets_(two_files)

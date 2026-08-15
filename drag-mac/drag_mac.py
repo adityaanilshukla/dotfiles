@@ -59,10 +59,6 @@ PANEL_HEIGHT = 96.0
 ICON_SIZE = 64.0
 ICON_STACK_OFFSET = 6.0
 
-# NSDraggingContext: 0 is a drag within the same app, 1 is a drag to anything
-# else. This tool only exists to drag outward.
-DRAGGING_CONTEXT_OUTSIDE_APPLICATION = 1
-
 # Rule 9: strong references to every bridged object that outlives its creating
 # scope. Never read for logic, only to keep objects alive. Cleared at terminate.
 _RETAIN: dict[str, object] = {}
@@ -210,10 +206,20 @@ class DragSourceView(
         # Held only to keep the session alive for its own duration (rule 9).
         _RETAIN["session"] = session
 
-    def draggingSession_sourceOperationMaskForDraggingContext_(self, _session, context):
-        if context == DRAGGING_CONTEXT_OUTSIDE_APPLICATION:
-            return NSDragOperationCopy
-        return NSDragOperationNone
+    def draggingSession_sourceOperationMaskForDraggingContext_(self, _session, _context):
+        """Always offer copy.
+
+        This returned NSDragOperationNone for external drops for one revision,
+        because the context constant was hardcoded inverted:
+        NSDraggingContextOutsideApplication is 0 and WithinApplication is 1, not
+        the other way round. The drag lifted and tracked normally, so it looked
+        fine, but no destination could accept it.
+
+        The mask is now unconditional rather than switching on context. This
+        tool has exactly one job, handing a copy of these files to whoever will
+        take them, so there is no branch here to get backwards a second time.
+        """
+        return NSDragOperationCopy
 
     def draggingSession_endedAt_operation_(self, _session, _point, operation):
         """Exit after a drop that landed, matching dragon-drop's -x.
