@@ -32,6 +32,38 @@ for app in "/Applications/qBittorrent.app"; do
   [[ -d "$app" ]] && xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
 done
 
+# --- Tooling that does not come from brew ---------------------------------
+# Each of these is installed by its own ecosystem's package manager, so a
+# Brewfile entry cannot cover them and they would silently not exist.
+
+# Rust via rustup, not brew: rustup owns toolchain updates and component
+# installs (rust-analyzer, clippy, rustfmt), which a brew formula cannot do.
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "Installing Rust via rustup..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path \
+    || echo "  rustup install failed — see https://rustup.rs"
+fi
+
+# pipx: isolated CLI apps. nbstripout strips notebook output before commits;
+# otpfetch is the 2FA helper.
+if command -v pipx >/dev/null 2>&1; then
+  for app in nbstripout otpfetch; do
+    if ! pipx list --short 2>/dev/null | grep -q "^$app "; then
+      echo "Installing $app via pipx..."
+      pipx install "$app" >/dev/null || echo "  pipx install $app failed"
+    fi
+  done
+fi
+
+# eslint_d is what the nvim JS/TS linting talks to; without it that setup is
+# configured and inert.
+if command -v npm >/dev/null 2>&1; then
+  if ! npm ls -g --depth=0 2>/dev/null | grep -q "eslint_d@"; then
+    echo "Installing eslint_d..."
+    npm install -g eslint_d >/dev/null 2>&1 || echo "  npm install -g eslint_d failed"
+  fi
+fi
+
 # --- Neovim (via bob) -----------------------------------------------------
 # nvim is not a brew formula here. bob manages the version and drops the binary
 # in ~/.local/share/bob/nvim-bin, which zshrc puts on PATH. Installing bob alone
@@ -43,6 +75,17 @@ if command -v bob >/dev/null 2>&1; then
     bob use "${BOB_NVIM_VERSION:-nightly}" \
       || echo "  bob failed — install manually: bob use nightly"
   fi
+fi
+
+# The config is its own repo, not part of this one, so bob alone gives you a
+# working nvim binary and a completely empty config. Nothing errors; nvim just
+# opens bare, which is the least obvious way for 114 files to go missing.
+# Needs the SSH key to be on GitHub already.
+NVIM_CONFIG_DIR="$HOME/.config/nvim"
+if [[ ! -d "$NVIM_CONFIG_DIR" ]]; then
+  echo "Cloning Neovim config..."
+  git clone git@github.com:adityaanilshukla/nvim.git "$NVIM_CONFIG_DIR" \
+    || echo "  couldn't clone nvim config (check SSH access) — nvim will start with no config."
 fi
 
 # --- online-zathura -------------------------------------------------------
@@ -198,13 +241,14 @@ done
 # launch agent, so without this a fresh machine has the bar fully configured
 # and simply no bar on screen. Starting an already-started service is harmless,
 # so this stays idempotent.
-if command -v sketchybar >/dev/null 2>&1; then
-  if ! brew services list 2>/dev/null | grep -qE '^sketchybar\s+started'; then
-    echo "Starting sketchybar service..."
-    brew services start sketchybar >/dev/null \
-      || echo "  couldn't start sketchybar — run 'brew services start sketchybar'"
+for svc in sketchybar syncthing; do
+  command -v "$svc" >/dev/null 2>&1 || continue
+  if ! brew services list 2>/dev/null | grep -qE "^$svc\s+started"; then
+    echo "Starting $svc service..."
+    brew services start "$svc" >/dev/null \
+      || echo "  couldn't start $svc — run 'brew services start $svc'"
   fi
-fi
+done
 
 # --- VS Code extensions ---------------------------------------------------
 # Resolve the `code` CLI even if it isn't on PATH yet (fresh install).
