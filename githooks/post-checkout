@@ -1,0 +1,46 @@
+#!/bin/sh
+# Warn when the checked-out branch is not the one this machine runs on.
+#
+# install.sh symlinks several config directories straight into this repo:
+#
+#   ~/.config/ranger    -> dotfiles/ranger
+#   ~/.config/aerospace -> dotfiles/aerospace
+#
+# They are pointers, not copies, so the checked-out branch *is* the live
+# config. Switching branches silently reconfigures the file manager and the
+# window manager, with no warning and no visible symptom until the next time
+# one of them starts or reloads.
+#
+# That is not hypothetical: a dT fix was verified working, an unrelated branch
+# was checked out, rc.conf reverted underneath it, and the binding was then
+# reported broken. Twenty minutes went into debugging a bug that was only ever
+# the wrong branch.
+#
+# This hook prints. It cannot block a checkout or change any behaviour. Delete
+# the symlink in .git/hooks to be rid of it.
+
+# Git calls post-checkout for file checkouts too (git checkout -- some/file).
+# The third argument is 1 for a branch switch and 0 otherwise; only a branch
+# switch can swap the config out.
+[ "$3" = "1" ] || exit 0
+
+# The branch this machine's symlinked config is expected to track. A different
+# machine (Linux, WSL) would point this at its own branch.
+LIVE_BRANCH="MacOS"
+
+branch=$(git branch --show-current 2>/dev/null)
+
+# Detached HEAD reports empty. Worth flagging: it is even easier to forget.
+if [ -z "$branch" ]; then
+    printf '\033[33m⚠  Detached HEAD: live ranger/aerospace config is whatever this commit holds.\033[0m\n' >&2
+    exit 0
+fi
+
+if [ "$branch" != "$LIVE_BRANCH" ]; then
+    printf '\033[33m⚠  Live config is now branch '"'"'%s'"'"'\033[0m\n' "$branch" >&2
+    printf '   ~/.config/ranger and ~/.config/aerospace point into this repo, so\n' >&2
+    printf '   ranger and aerospace will read THIS branch when they next start.\n' >&2
+    printf '   Back to normal with: git switch %s\n' "$LIVE_BRANCH" >&2
+fi
+
+exit 0
