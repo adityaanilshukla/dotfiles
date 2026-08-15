@@ -51,6 +51,24 @@ if [[ ! -x "$HOME/.local/bin/online-zathura" ]]; then
   fi
 fi
 
+# --- drag-mac -------------------------------------------------------------
+# PyObjC drag source behind ranger's dn binding. Homebrew's python3 is PEP 668
+# externally managed, so pip refuses to install into it and PyObjC has to live
+# in a venv. Idempotent: re-running only upgrades what's already there.
+DRAG_MAC_VENV="$HOME/.local/share/drag-mac/venv"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if [[ ! -x "$DRAG_MAC_VENV/bin/python3" ]]; then
+    echo "Creating drag-mac venv..."
+    python3 -m venv "$DRAG_MAC_VENV" \
+      || echo "drag-mac venv creation failed — dn will fall back to an error notice."
+  fi
+  if [[ -x "$DRAG_MAC_VENV/bin/pip" ]]; then
+    "$DRAG_MAC_VENV/bin/pip" install --quiet --upgrade pip
+    "$DRAG_MAC_VENV/bin/pip" install --quiet pyobjc-framework-Cocoa pyobjc-framework-Quartz \
+      || echo "PyObjC install failed — run 'make -C $DOTFILES_DIR/drag-mac venv' manually."
+  fi
+fi
+
 # --- Symlinks -------------------------------------------------------------
 # Single-file configs.
 files=(
@@ -76,6 +94,10 @@ files=(
 
   # notification dismisser, run by aerospace's ctrl-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
+
+  # macOS drag source — ranger's dn binding runs this, since dragon-drop is
+  # X11-only. Needs the venv built below.
+  "scripts/drag-mac:$HOME/.local/bin/drag-mac"
 
   # VS Code (macOS config path)
   "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"

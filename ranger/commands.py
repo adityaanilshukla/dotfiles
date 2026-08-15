@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 
 from ranger.api.commands import Command
 from ranger.core.loader import CommandLoader
@@ -89,30 +90,61 @@ class yank(Command):
 class drag(Command):
     """:drag
 
-    Drag-and-drop the current selection out of ranger using dragon-drop.
-    Detached via setsid -f so ranger isn't blocked.
+    Drag-and-drop the current selection out of ranger.
+
+    dragon-drop is X11-only, so macOS uses drag-mac instead (a PyObjC drag
+    source living in dotfiles/drag-mac). Both are launched detached so ranger
+    keeps running, but the mechanism differs: macOS ships no setsid(1), so the
+    Darwin path uses start_new_session, which is the setsid(2) syscall itself.
     """
 
-    def execute(self):
+    def _darwin_argv(self):
+        """(argv, error) for macOS. Absolute path on purpose.
+
+        Popen resolves a bare name against ranger's own PATH, which is whatever
+        `open -na Alacritty` handed it and does not include ~/.local/bin. The
+        same trap already bit the dT trash binding.
+        """
+        launcher = os.path.expanduser("~/.local/bin/drag-mac")
+        if not os.access(launcher, os.X_OK):
+            repo_copy = os.path.expanduser("~/dotfiles/scripts/drag-mac")
+            if not os.access(repo_copy, os.X_OK):
+                return None, "drag: drag-mac not installed (run dotfiles/install.sh)"
+            launcher = repo_copy
+        return [launcher], None
+
+    def _linux_argv(self):
         from ranger.ext.get_executables import get_executables
 
-        if "dragon-drop" in get_executables():
-            tool = "dragon-drop"
-        elif "dragon" in get_executables():
-            tool = "dragon"
-        else:
-            self.fm.notify("drag: dragon-drop not installed (paru -S dragon-drop)", bad=True)
+        executables = get_executables()
+        for tool in ("dragon-drop", "dragon"):
+            if tool in executables:
+                # -a all files as one drag, -x exit after the drop.
+                return ["setsid", "-f", tool, "-a", "-x", "--"], None
+        return None, "drag: dragon-drop not installed (paru -S dragon-drop)"
+
+    def execute(self):
+        is_darwin = sys.platform == "darwin"
+        prefix, error = self._darwin_argv() if is_darwin else self._linux_argv()
+        if error:
+            self.fm.notify(error, bad=True)
             return
 
         paths = [f.path for f in self.fm.thistab.get_selection()]
         if not paths:
             return
 
-        subprocess.Popen(["setsid", "-f", tool, "-a", "-x", "--"] + paths,
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL,
-                         stdin=subprocess.DEVNULL,
-                         env=_x_env())
+        try:
+            subprocess.Popen(prefix + paths,
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL,
+                             stdin=subprocess.DEVNULL,
+                             start_new_session=is_darwin,
+                             env=os.environ.copy() if is_darwin else _x_env())
+        except OSError as exc:
+            self.fm.notify("drag: failed to launch ({})".format(exc), bad=True)
+            return
+
         self.fm.notify("dragging {} file(s)".format(len(paths)))
 
 
