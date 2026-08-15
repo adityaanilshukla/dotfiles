@@ -190,8 +190,14 @@ class DragSourceView(
     drop actually lands.
 
     Conformance to NSDraggingSource must be declared here: without it PyObjC
-    does not route the session callbacks, draggingSession_endedAt_operation_
-    is never called, and the tool would hang until the watchdog fires.
+    does not route the session callbacks, the ended callback never fires, and
+    the window would sit there until the watchdog.
+
+    Every callback name here maps to a real ObjC selector by mechanical
+    translation (underscore per colon), so a single wrong word silently means
+    "no such selector" and macOS simply never calls it. There is no error, no
+    warning, and nothing to see. test_callbacks_match_real_selectors pins each
+    one against the protocol for exactly that reason.
     """
 
     def initWithTargets_(self, targets):
@@ -228,8 +234,14 @@ class DragSourceView(
         """
         return NSDragOperationCopy
 
-    def draggingSession_endedAt_operation_(self, _session, _point, operation):
+    def draggingSession_endedAtPoint_operation_(self, _session, _point, operation):
         """Exit after a drop that landed, matching dragon-drop's -x.
+
+        The selector is endedAtPoint:, not endedAt:. This was spelled
+        draggingSession_endedAt_operation_ for several revisions, which maps to
+        a selector that simply does not exist, so macOS never called it and the
+        window stayed up after every single drop. Nothing failed loudly: an
+        unimplemented optional callback is just never invoked.
 
         A cancelled drag (operation NSDragOperationNone) deliberately leaves the
         window up so a fumbled grab does not force a relaunch. The watchdog

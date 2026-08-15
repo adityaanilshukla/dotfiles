@@ -26,8 +26,8 @@ printf 'gamma\n' > /tmp/dragdemo/gamma.txt
 | 2 | Single file to a browser | drag into a Brave upload field | File attaches | PASS |
 | 3 | Single file to a chat client | drag into WhatsApp | File attaches | PASS |
 | 4 | Multi-file | `drag-mac /tmp/dragdemo/*.txt`, drag once | All 3 arrive together | MACHINE, all 3 paths reach one process and one session; the landing is unconfirmed |
-| 5 | Closes after the drop | any successful drop | Window disappears without being clicked | TODO, and deprioritised: ctrl-shift-d dismisses it regardless, so a lingering window is not worth chasing |
-| 6 | Cancelled drag | start a drag, release over dead space | Window stays; no crash | TODO |
+| 5 | Closes after the drop | any successful drop | Window disappears without being clicked | PASS, after fixing the selector name; it never closed before that |
+| 6 | Cancelled drag | start a drag, release over dead space | Window stays; no crash | TODO, and only meaningful now: until the selector fix the callback never fired at all, so nothing could distinguish a cancel from a drop |
 | 7 | Escape | press Escape with the window focused | Window closes | TODO, synthetic key event only |
 | 8 | Watchdog | launch, wait 2 minutes, touch nothing | Window closes on its own | MACHINE, `test_watchdog_exit` plus an observed short-timeout run |
 | 9 | From ranger | `alt-n`, select a file, press `dn` | Window appears above ranger; drag works | MACHINE, ranger reported "dragging 1 file(s)" and the window was observed |
