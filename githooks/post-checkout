@@ -1,0 +1,44 @@
+#!/bin/sh
+# Warn when the checked-out branch is not the one this machine runs on.
+#
+# setup-symlinks.sh symlinks config directories straight into this repo, most
+# notably:
+#
+#   ~/.config/ranger -> dotfiles/ranger
+#
+# It is a pointer, not a copy, so the checked-out branch *is* the live ranger
+# config. Switching branches silently reconfigures the file manager, with no
+# warning and no visible symptom until ranger next starts or reloads.
+#
+# That is not hypothetical: on the macOS side a dT fix was verified working, an
+# unrelated branch was checked out, rc.conf reverted underneath it, and the
+# binding was then reported broken. The debugging went to trash-cli, not to git.
+#
+# This hook prints. It cannot block a checkout or change any behaviour. Delete
+# the symlink in .git/hooks to be rid of it.
+
+# Git calls post-checkout for file checkouts too (git checkout -- some/file).
+# The third argument is 1 for a branch switch and 0 otherwise; only a branch
+# switch can swap the config out.
+[ "$3" = "1" ] || exit 0
+
+# The branch this machine's symlinked config is expected to track. The macOS
+# machine points its own hook at "MacOS".
+LIVE_BRANCH="main"
+
+branch=$(git branch --show-current 2>/dev/null)
+
+# Detached HEAD reports empty. Worth flagging: it is even easier to forget.
+if [ -z "$branch" ]; then
+    printf '\033[33m⚠  Detached HEAD: live ~/.config/ranger is whatever this commit holds.\033[0m\n' >&2
+    exit 0
+fi
+
+if [ "$branch" != "$LIVE_BRANCH" ]; then
+    printf '\033[33m⚠  Live config is now branch '"'"'%s'"'"'\033[0m\n' "$branch" >&2
+    printf '   ~/.config/ranger points into this repo, so ranger will read\n' >&2
+    printf '   THIS branch when it next starts.\n' >&2
+    printf '   Back to normal with: git switch %s\n' "$LIVE_BRANCH" >&2
+fi
+
+exit 0
