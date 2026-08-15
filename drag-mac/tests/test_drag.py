@@ -162,3 +162,74 @@ class TestDragSourceView:
     def test_view_retains_its_targets(self, two_files):
         view = DragSourceView.alloc().initWithTargets_(two_files)
         assert list(view.targets()) == two_files
+
+
+def key_event(characters: str, key_code: int):
+    """A synthetic key-down, so keyboard exits are testable without a human."""
+    from AppKit import NSEvent, NSKeyDown
+
+    return NSEvent.keyEventWithType_location_modifierFlags_timestamp_windowNumber_context_characters_charactersIgnoringModifiers_isARepeat_keyCode_(
+        NSKeyDown, (0.0, 0.0), 0, 0.0, 0, None, characters, characters, False, key_code
+    )
+
+
+class TestKeyboardExit:
+    """The window has to be dismissable without touching the mouse."""
+
+    ESCAPE = ("\x1b", 53)
+
+    def test_escape_closes_the_window(self, two_files, monkeypatch):
+        view = DragSourceView.alloc().initWithTargets_(two_files)
+        calls = []
+        monkeypatch.setattr("drag_mac.finish", lambda c: calls.append(c))
+
+        view.keyDown_(key_event(*self.ESCAPE))
+
+        assert calls == [0]
+
+    @pytest.mark.parametrize("chars,code", [("q", 12), ("Q", 12), ("z", 6), ("d", 2)])
+    def test_letters_never_close_the_window(self, two_files, monkeypatch, chars, code):
+        """q must not close this window.
+
+        A keystroke only reaches here when the panel really has focus. The
+        hazard is believing it does when ranger does instead, where q quits
+        ranger outright. Escape is the only safe key to train the hand on, so
+        it is the only one bound. Dismissing without focus is the aerospace
+        binding's job.
+        """
+        view = DragSourceView.alloc().initWithTargets_(two_files)
+        calls = []
+        monkeypatch.setattr("drag_mac.finish", lambda c: calls.append(c))
+
+        view.keyDown_(key_event(chars, code))
+
+        assert calls == [], f"{chars!r} must not close the window"
+
+    def test_cancel_operation_closes(self, two_files, monkeypatch):
+        """Escape also arrives as cancelOperation_ on some paths."""
+        view = DragSourceView.alloc().initWithTargets_(two_files)
+        calls = []
+        monkeypatch.setattr("drag_mac.finish", lambda c: calls.append(c))
+
+        view.cancelOperation_(None)
+
+        assert calls == [0]
+
+
+class TestResponderWiring:
+    def test_the_drag_view_is_first_responder(self, two_files):
+        """Regression: the panel itself was first responder, so cancelOperation_
+        on the view was never reachable and Escape did nothing. The responder
+        chain runs view -> window, not window -> view.
+        """
+        from drag_mac import build_panel
+
+        panel = build_panel(two_files)
+        assert panel.firstResponder() is panel.contentView()
+
+    def test_panel_can_become_key(self, two_files):
+        """A panel that cannot become key receives no keystrokes at all."""
+        from drag_mac import build_panel
+
+        panel = build_panel(two_files)
+        assert panel.canBecomeKeyWindow()

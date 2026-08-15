@@ -59,6 +59,13 @@ PANEL_HEIGHT = 96.0
 ICON_SIZE = 64.0
 ICON_STACK_OFFSET = 6.0
 
+# Escape only. q was briefly here and was a bad idea: if the drag window is not
+# actually focused when you press it, the keystroke goes to whatever is, and in
+# ranger q quits. Escape is harmless everywhere it can land. For dismissing the
+# window without focusing it first, see the aerospace binding in
+# aerospace/aerospace.toml.
+CLOSE_KEYS = ("\x1b",)
+
 # Rule 9: strong references to every bridged object that outlives its creating
 # scope. Never read for logic, only to keep objects alive. Cleared at terminate.
 _RETAIN: dict[str, object] = {}
@@ -233,8 +240,22 @@ class DragSourceView(
             return
         finish(EXIT_OK)
 
+    def keyDown_(self, event):
+        """Keyboard dismissal, so finishing up never needs the mouse.
+
+        Escape and q both close. q is here because reaching for Escape is not
+        always where the hand already is, and this window has exactly one other
+        thing it could possibly do.
+        """
+        characters = event.charactersIgnoringModifiers()
+        if characters in CLOSE_KEYS:
+            finish(EXIT_OK)
+            return
+        objc.super(DragSourceView, self).keyDown_(event)
+
     def cancelOperation_(self, _sender):
-        """Escape."""
+        """Escape also arrives here rather than through keyDown_ depending on
+        how the window was focused."""
         finish(EXIT_OK)
 
     def acceptsFirstResponder(self):
@@ -296,6 +317,12 @@ def build_panel(targets: list[Path]) -> NSPanel:
     field.setLineBreakMode_(4)  # NSLineBreakByTruncatingMiddle
     view.addSubview_(field)
     _RETAIN["caption_field"] = field
+
+    # The responder chain runs view -> window, so unless the view is made
+    # first responder explicitly the panel keeps it and none of the view's
+    # key handlers are reachable. Escape silently did nothing before this.
+    panel.setInitialFirstResponder_(view)
+    panel.makeFirstResponder_(view)
 
     _place_near_pointer(panel)
     return panel

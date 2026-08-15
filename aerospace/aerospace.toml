@@ -106,6 +106,19 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # binding it).
 ctrl-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 
+# Dismiss ranger's dn drag window from anywhere, without focusing it first.
+# The window closes itself once a drop lands, so this is for the leftovers: a
+# fumbled drag, or launching it and changing your mind. It needs to be global
+# because after dragging into another app that app holds focus, so a key sent
+# to the drag window would never arrive.
+#
+# Escape closes it too, but only when it genuinely has focus. q is deliberately
+# NOT bound inside the window: believing it is focused when ranger actually is
+# would quit ranger.
+#
+# The pattern is the module path, not "python", so it cannot hit anything else.
+ctrl-shift-d = 'exec-and-forget pkill -f "drag-mac/drag_mac.py"'
+
 # ---------- Workspaces ----------
 
 alt-1 = 'workspace 1'
