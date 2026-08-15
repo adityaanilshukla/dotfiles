@@ -193,6 +193,19 @@ for pair in "${dirs[@]}"; do
   echo "Linked $src_path -> $dest"
 done
 
+# --- Services -------------------------------------------------------------
+# Installing sketchybar and symlinking its config is not enough: it runs as a
+# launch agent, so without this a fresh machine has the bar fully configured
+# and simply no bar on screen. Starting an already-started service is harmless,
+# so this stays idempotent.
+if command -v sketchybar >/dev/null 2>&1; then
+  if ! brew services list 2>/dev/null | grep -qE '^sketchybar\s+started'; then
+    echo "Starting sketchybar service..."
+    brew services start sketchybar >/dev/null \
+      || echo "  couldn't start sketchybar — run 'brew services start sketchybar'"
+  fi
+fi
+
 # --- VS Code extensions ---------------------------------------------------
 # Resolve the `code` CLI even if it isn't on PATH yet (fresh install).
 CODE_BIN="$(command -v code || true)"
@@ -223,7 +236,13 @@ if [[ -x "$DOTFILES_DIR/macos/defaults.sh" ]]; then
 fi
 
 echo "Done. Remaining manual steps:"
+echo "  - Open AeroSpace once. Installing the cask does not launch it, and the"
+echo "    start-at-login setting in aerospace.toml only registers after a first"
+echo "    launch. Opening it is also what raises the Accessibility prompt."
 echo "  - Grant permissions to AeroSpace, Karabiner-Elements, BetterDisplay and"
-echo "    Raycast in System Settings > Privacy & Security."
+echo "    Raycast in System Settings > Privacy & Security. AeroSpace needs it to"
+echo "    tile at all, and ctrl-shift-x (dismiss notifications) needs it too."
+echo "  - macfuse needs a kernel extension approved in System Settings, then a"
+echo "    reboot."
 echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"
 echo "    once on this machine to mint its Turso token."
