@@ -28,6 +28,11 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 - **Non-brew tooling** — rustup, pipx apps (`nbstripout`, `otpfetch`), and
   `eslint_d` via npm. None of these can come from a Brewfile.
 - **online-zathura** — clones and builds it into `~/.local/bin`.
+- **Karabiner** — generates the keyboard remaps from `karabiner/spec.json` and
+  merges them into `~/.config/karabiner/karabiner.json`. That file is generated,
+  not symlinked, so it is the one config here that does not live in the repo.
+  Non-fatal: if the driver permissions aren't granted yet the module says so and
+  the rest of the setup continues.
 - **drag-mac** — builds the PyObjC venv behind ranger's `dn` binding, then
   self-tests it. Self-healing: a Homebrew python upgrade breaks a venv, so it
   checks whether the venv can actually import its frameworks, not merely
@@ -44,6 +49,7 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 |---|---|
 | Open AeroSpace once | Installing a cask does not launch it, and `start-at-login` only registers after a first run. This also raises the Accessibility prompt. |
 | Grant **Accessibility** to AeroSpace, Karabiner, BetterDisplay, Raycast | AeroSpace cannot tile without it, and `ctrl-shift-x` (dismiss notifications) needs it. |
+| Approve the **Karabiner driver extension** and its Input Monitoring, then reboot | Nothing remaps until the DriverKit extension is `activated enabled`. `karabiner/install.sh` prints the exact panes; `karabiner/verify.sh` confirms. |
 | Approve the **macfuse** kernel extension, then reboot | Kernel extensions require explicit approval. |
 | `gh auth login` | per-device auth |
 | `tailscale up` | per-device auth; links this machine to `brovo` |
@@ -77,6 +83,7 @@ Progress-tracker.
 | `install.sh` | the whole bootstrap; idempotent |
 | `drag-mac/` | macOS drag source for ranger's `dn`; see its `PLAN.md` |
 | `githooks/` | tracked hooks, symlinked into `.git/hooks` by install.sh |
+| `karabiner/` | keyboard remaps; edit `spec.json`, see its `README.md` |
 | `macos/defaults.sh` | `defaults write` settings, which cannot be symlinked |
 | `scripts/` | helpers the configs invoke |
 | `secrets.gpg` | encrypted; see `scripts/secrets.sh` |

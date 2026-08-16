@@ -110,7 +110,10 @@ cask "claude-code"
 # ----- Helpers the tracked configs invoke -----
 cask "betterdisplay"                  # sketchybar volume plugin + display scaling
 cask "raycast"                        # aerospace alt-d / alt-p bindings
-cask "karabiner-elements"             # ctrl+backspace -> forward-delete, etc.
+cask "karabiner-elements"             # keyboard remaps; see karabiner/README.md
+brew "jq"                             # karabiner/install.sh merges rules with it
+                                      # (macOS ships /usr/bin/jq, but don't rely
+                                      #  on a version Apple controls)
 cask "keyclu"                         # shortcut cheatsheet
 cask "scroll-reverser"                # separate scroll direction for mouse vs trackpad
 brew "smudge/smudge/nightlight"       # night shift from the CLI
