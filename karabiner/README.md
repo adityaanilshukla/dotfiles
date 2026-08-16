@@ -88,6 +88,14 @@ Three things worth knowing about it:
   `Cmd+Q` would be untypable from it. After the swap, Command lives at the
   Alt position on that board. That asymmetry between keyboards is inherent to
   wanting Super as the mod on one of them.
+- It applies to **every** Option shortcut on that keyboard, not only AeroSpace's.
+  Anything an app binds to Option now wants the Super-position key there. This
+  is easy to mistake for a broken app: the Tampermonkey userscript at
+  `~/Projects/tampermonkey/claude/claude.js` uses `Option+[`, `Option+]` and
+  `Option+E` on claude.ai, and it silently no-ops if you press the Alt-position
+  key, because its handler bails when Command is held. Nothing wrong with it;
+  press Super instead. The upside is consistency: on the Glove80 the Super key
+  is the one modifier for AeroSpace and app Option-chords alike.
 - Both sides are swapped, left and right. The board's layout is non-standard
   (its Ctrl reports as `right_control`), so which side its Super key uses is not
   worth assuming.
