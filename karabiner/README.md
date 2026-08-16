@@ -52,8 +52,11 @@ readable version and `generate.py` produces the verbose one.
 `Shift` in brackets means the mapping carries Shift through, so `Ctrl+Shift+Z`
 is redo and `Ctrl+Shift+T` reopens a closed tab without needing their own rules.
 
-Only `left_control` triggers these. Right Control stays native, which is an easy
-escape hatch when an app really wants a raw `Ctrl+key`.
+Either Control key triggers these. The mappings used to require `left_control`,
+which meant they silently did nothing for anyone reaching for the right-hand
+Control key. `control` in `spec.json` matches both. If you ever want a raw
+`Ctrl+key` that no rule swallows, narrow the specific mapping back to
+`left_control` and use the right key as the escape hatch.
 
 ### Chords deliberately left alone
 

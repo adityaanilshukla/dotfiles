@@ -77,20 +77,20 @@
       "description": "Ctrl+letter to Cmd+letter (not in terminals)",
       "scope": "gui",
       "mappings": [
-        { "from": "c", "mods": ["left_control"], "optional": ["shift"], "to": "c", "to_mods": ["left_command"] },
-        { "from": "v", "mods": ["left_control"], "optional": ["shift"], "to": "v", "to_mods": ["left_command"] },
-        { "from": "x", "mods": ["left_control"], "to": "x", "to_mods": ["left_command"] },
-        { "from": "z", "mods": ["left_control"], "optional": ["shift"], "to": "z", "to_mods": ["left_command"] },
-        { "from": "y", "mods": ["left_control"], "to": "y", "to_mods": ["left_command"] },
-        { "from": "a", "mods": ["left_control"], "to": "a", "to_mods": ["left_command"] },
-        { "from": "f", "mods": ["left_control"], "to": "f", "to_mods": ["left_command"] },
-        { "from": "g", "mods": ["left_control"], "to": "g", "to_mods": ["left_command"] },
-        { "from": "s", "mods": ["left_control"], "to": "s", "to_mods": ["left_command"] },
-        { "from": "p", "mods": ["left_control"], "to": "p", "to_mods": ["left_command"] },
-        { "from": "t", "mods": ["left_control"], "optional": ["shift"], "to": "t", "to_mods": ["left_command"] },
-        { "from": "w", "mods": ["left_control"], "optional": ["shift"], "to": "w", "to_mods": ["left_command"] },
-        { "from": "n", "mods": ["left_control"], "optional": ["shift"], "to": "n", "to_mods": ["left_command"] },
-        { "from": "r", "mods": ["left_control"], "to": "r", "to_mods": ["left_command"] }
+        { "from": "c", "mods": ["control"], "optional": ["shift"], "to": "c", "to_mods": ["left_command"] },
+        { "from": "v", "mods": ["control"], "optional": ["shift"], "to": "v", "to_mods": ["left_command"] },
+        { "from": "x", "mods": ["control"], "to": "x", "to_mods": ["left_command"] },
+        { "from": "z", "mods": ["control"], "optional": ["shift"], "to": "z", "to_mods": ["left_command"] },
+        { "from": "y", "mods": ["control"], "to": "y", "to_mods": ["left_command"] },
+        { "from": "a", "mods": ["control"], "to": "a", "to_mods": ["left_command"] },
+        { "from": "f", "mods": ["control"], "to": "f", "to_mods": ["left_command"] },
+        { "from": "g", "mods": ["control"], "to": "g", "to_mods": ["left_command"] },
+        { "from": "s", "mods": ["control"], "to": "s", "to_mods": ["left_command"] },
+        { "from": "p", "mods": ["control"], "to": "p", "to_mods": ["left_command"] },
+        { "from": "t", "mods": ["control"], "optional": ["shift"], "to": "t", "to_mods": ["left_command"] },
+        { "from": "w", "mods": ["control"], "optional": ["shift"], "to": "w", "to_mods": ["left_command"] },
+        { "from": "n", "mods": ["control"], "optional": ["shift"], "to": "n", "to_mods": ["left_command"] },
+        { "from": "r", "mods": ["control"], "to": "r", "to_mods": ["left_command"] }
       ]
     },
 
@@ -98,8 +98,8 @@
       "description": "Ctrl+Left/Right word navigation (everywhere, terminals included)",
       "scope": "everywhere",
       "mappings": [
-        { "from": "left_arrow", "mods": ["left_control"], "optional": ["shift"], "to": "left_arrow", "to_mods": ["left_option"] },
-        { "from": "right_arrow", "mods": ["left_control"], "optional": ["shift"], "to": "right_arrow", "to_mods": ["left_option"] }
+        { "from": "left_arrow", "mods": ["control"], "optional": ["shift"], "to": "left_arrow", "to_mods": ["left_option"] },
+        { "from": "right_arrow", "mods": ["control"], "optional": ["shift"], "to": "right_arrow", "to_mods": ["left_option"] }
       ]
     },
 
@@ -107,8 +107,8 @@
       "description": "Ctrl+Backspace/Delete deletes a word (everywhere)",
       "scope": "everywhere",
       "mappings": [
-        { "from": "delete_or_backspace", "mods": ["left_control"], "to": "delete_or_backspace", "to_mods": ["left_option"] },
-        { "from": "delete_forward", "mods": ["left_control"], "to": "delete_forward", "to_mods": ["left_option"] }
+        { "from": "delete_or_backspace", "mods": ["control"], "to": "delete_or_backspace", "to_mods": ["left_option"] },
+        { "from": "delete_forward", "mods": ["control"], "to": "delete_forward", "to_mods": ["left_option"] }
       ]
     },
 
@@ -116,8 +116,8 @@
       "description": "Ctrl+Home/End jumps to document start/end",
       "scope": "gui",
       "mappings": [
-        { "from": "home", "mods": ["left_control"], "optional": ["shift"], "to": "up_arrow", "to_mods": ["left_command"] },
-        { "from": "end", "mods": ["left_control"], "optional": ["shift"], "to": "down_arrow", "to_mods": ["left_command"] }
+        { "from": "home", "mods": ["control"], "optional": ["shift"], "to": "up_arrow", "to_mods": ["left_command"] },
+        { "from": "end", "mods": ["control"], "optional": ["shift"], "to": "down_arrow", "to_mods": ["left_command"] }
       ]
     },
 
@@ -125,8 +125,8 @@
       "description": "Ctrl+Tab cycles tabs",
       "scope": "gui",
       "mappings": [
-        { "from": "tab", "mods": ["left_control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
-        { "from": "tab", "mods": ["left_control", "left_shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] }
+        { "from": "tab", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "tab", "mods": ["control", "shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] }
       ]
     },
 
@@ -134,15 +134,15 @@
       "description": "Ctrl+1..9 selects a tab",
       "scope": "gui",
       "mappings": [
-        { "from": "1", "mods": ["left_control"], "to": "1", "to_mods": ["left_command"] },
-        { "from": "2", "mods": ["left_control"], "to": "2", "to_mods": ["left_command"] },
-        { "from": "3", "mods": ["left_control"], "to": "3", "to_mods": ["left_command"] },
-        { "from": "4", "mods": ["left_control"], "to": "4", "to_mods": ["left_command"] },
-        { "from": "5", "mods": ["left_control"], "to": "5", "to_mods": ["left_command"] },
-        { "from": "6", "mods": ["left_control"], "to": "6", "to_mods": ["left_command"] },
-        { "from": "7", "mods": ["left_control"], "to": "7", "to_mods": ["left_command"] },
-        { "from": "8", "mods": ["left_control"], "to": "8", "to_mods": ["left_command"] },
-        { "from": "9", "mods": ["left_control"], "to": "9", "to_mods": ["left_command"] }
+        { "from": "1", "mods": ["control"], "to": "1", "to_mods": ["left_command"] },
+        { "from": "2", "mods": ["control"], "to": "2", "to_mods": ["left_command"] },
+        { "from": "3", "mods": ["control"], "to": "3", "to_mods": ["left_command"] },
+        { "from": "4", "mods": ["control"], "to": "4", "to_mods": ["left_command"] },
+        { "from": "5", "mods": ["control"], "to": "5", "to_mods": ["left_command"] },
+        { "from": "6", "mods": ["control"], "to": "6", "to_mods": ["left_command"] },
+        { "from": "7", "mods": ["control"], "to": "7", "to_mods": ["left_command"] },
+        { "from": "8", "mods": ["control"], "to": "8", "to_mods": ["left_command"] },
+        { "from": "9", "mods": ["control"], "to": "9", "to_mods": ["left_command"] }
       ]
     },
 
@@ -150,9 +150,9 @@
       "description": "Ctrl+L address bar, Ctrl+Shift+I/J devtools (browsers only)",
       "scope": "browsers",
       "mappings": [
-        { "from": "l", "mods": ["left_control"], "to": "l", "to_mods": ["left_command"] },
-        { "from": "i", "mods": ["left_control", "left_shift"], "to": "i", "to_mods": ["left_command", "left_option"] },
-        { "from": "j", "mods": ["left_control", "left_shift"], "to": "j", "to_mods": ["left_command", "left_option"] }
+        { "from": "l", "mods": ["control"], "to": "l", "to_mods": ["left_command"] },
+        { "from": "i", "mods": ["control", "shift"], "to": "i", "to_mods": ["left_command", "left_option"] },
+        { "from": "j", "mods": ["control", "shift"], "to": "j", "to_mods": ["left_command", "left_option"] }
       ]
     }
   ]
