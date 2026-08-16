@@ -114,7 +114,11 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # Accessibility), since that's what spawns this via exec-and-forget; until
 # granted this silently no-ops. Not a default macOS shortcut (verified before
 # binding it).
-ctrl-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
+#
+# On alt-shift-x, not ctrl-shift-x: that is the VS Code Extensions view on
+# Windows/Linux and Karabiner now translates it, which would leave a binding
+# here dead. See the ordering note on alt-i above.
+alt-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 
 # Dismiss ranger's dn drag window from anywhere, without focusing it first.
 # The window closes itself once a drop lands, so this is for the leftovers: a
@@ -127,7 +131,11 @@ ctrl-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 # would quit ranger.
 #
 # The pattern is the module path, not "python", so it cannot hit anything else.
-ctrl-shift-d = 'exec-and-forget pkill -f "drag-mac/drag_mac.py"'
+#
+# On alt-shift-d, not ctrl-shift-d: that is the VS Code Run and Debug view on
+# Windows/Linux and Karabiner now translates it, which would leave a binding
+# here dead. See the ordering note on alt-i above.
+alt-shift-d = 'exec-and-forget pkill -f "drag-mac/drag_mac.py"'
 
 # ---------- Workspaces ----------
 
