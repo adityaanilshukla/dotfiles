@@ -25,17 +25,24 @@ sketchybar --bar \
   topmost=window
 
 # ----- Defaults applied to subsequent items -----
+# Labels default to polybar's bar foreground (#c4c8c5); the brighter #dfdfdf
+# is reserved for the active workspace, same split as polybar.
+#
+# corner_radius 0 matches polybar's `radius = 0`: the active workspace is a
+# square block, not a pill. Font sizes stay at macOS values rather than
+# polybar's 8/10, which would be tiny at this bar height; change these two
+# numbers if you want the exact polybar proportions.
 sketchybar --default \
   updates=when_shown \
   icon.font="Hack Nerd Font:Regular:14.0" \
-  icon.color="$WHITE" \
+  icon.color="$FOREGROUND" \
   icon.padding_left=8 \
   icon.padding_right=4 \
   label.font="Hack Nerd Font:Regular:13.0" \
-  label.color="$WHITE" \
+  label.color="$FOREGROUND" \
   label.padding_left=4 \
   label.padding_right=8 \
-  background.corner_radius=6 \
+  background.corner_radius=0 \
   background.height=24 \
   background.color="$ITEM_BG_COLOR" \
   background.drawing=off \
@@ -73,11 +80,13 @@ sketchybar --add item aerospace_controller left \
 sketchybar --trigger aerospace_workspace_change \
            FOCUSED_WORKSPACE="$(aerospace list-workspaces --focused 2>/dev/null)"
 
-# ----- Clock (right) -----
+# ----- Date (right) -----
+# polybar's date module: calendar glyph in blue, `%a %b %d %H:%M`.
 sketchybar --add item clock right \
            --set clock \
                  update_freq=10 \
-                 icon="$CLOCK" \
+                 icon="$CALENDAR" \
+                 icon.color="$BLUE_BRIGHT" \
                  script="$PLUGIN_DIR/clock.sh"
 
 # ----- Battery (right) -----

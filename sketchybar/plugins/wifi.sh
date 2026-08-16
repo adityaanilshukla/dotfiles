@@ -3,35 +3,32 @@
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
 
-# Detect connectivity from interface state — `networksetup -getairportnetwork`
+# Mirrors polybar's [module/wlan] via network.sh: a single blue glyph, and the
+# module disappears entirely when the interface is down. polybar also hides
+# wifi when ethernet is the interface carrying the default route, so the same
+# check is done here with `route -n get default`.
+#
+# Note this drops the RSSI-tinted colour tiers the macOS version used to have.
+# polybar has no equivalent, and the signal strength came from a
+# system_profiler call that took about a second on every poll, so losing it
+# makes the bar cheaper as well as more faithful.
+
+# Detect connectivity from interface state: `networksetup -getairportnetwork`
 # returns nothing on Tahoe without Location Services permission.
 POWER=$(networksetup -getairportpower en0 2>/dev/null | awk '{print $NF}')
 STATUS=$(ifconfig en0 2>/dev/null | awk '/status:/ {print $2}')
 
 if [ "$POWER" = "Off" ] || [ "$STATUS" != "active" ]; then
-  sketchybar --set "$NAME" icon="$WIFI_DISCONNECTED" icon.color="$RED" label=""
+  sketchybar --set "$NAME" drawing=off
   exit 0
 fi
 
-# RSSI from system_profiler; format is "Signal / Noise: -58 dBm / -94 dBm".
-# Slow (~1s) but doesn't need root or Location Services on Tahoe.
-RSSI=$(system_profiler SPAirPortDataType 2>/dev/null \
-  | awk -F: '/Signal \/ Noise/ {print $2; exit}' \
-  | grep -oE '\-[0-9]+' | head -1)
-
-# Map RSSI (dBm) to a color tier. Higher (less negative) is stronger.
-if [ -z "$RSSI" ]; then
-  COLOR="$WHITE"
-elif [ "$RSSI" -ge -55 ]; then
-  COLOR="$GREEN"
-elif [ "$RSSI" -ge -65 ]; then
-  COLOR="$WHITE"
-elif [ "$RSSI" -ge -75 ]; then
-  COLOR="$YELLOW"
-elif [ "$RSSI" -ge -85 ]; then
-  COLOR="$ORANGE"
-else
-  COLOR="$RED"
+# If something else carries the default route (dock ethernet, say), let the
+# wired module speak instead, exactly as polybar's network.sh does.
+PRIMARY=$(route -n get default 2>/dev/null | awk '/interface:/ {print $2}')
+if [ -n "$PRIMARY" ] && [ "$PRIMARY" != "en0" ]; then
+  sketchybar --set "$NAME" drawing=off
+  exit 0
 fi
 
-sketchybar --set "$NAME" icon="$WIFI_CONNECTED" icon.color="$COLOR" label=""
+sketchybar --set "$NAME" drawing=on icon="$WIFI" icon.color="$BLUE_BRIGHT" label=""
