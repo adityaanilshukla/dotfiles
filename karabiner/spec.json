@@ -31,7 +31,20 @@
     "  ctrl+shift+r  -> vscode/keybindings.json runs all notebook cells",
     "  ctrl+shift+x  -> aerospace.toml dismisses notifications",
     "Adding `optional: [\"shift\"]` to p or r would swallow those before the app",
-    "ever sees them."
+    "ever sees them.",
+    "",
+    "Three mappings emit a DIFFERENT key than they receive, because the Windows",
+    "chord and the macOS chord disagree on the letter:",
+    "  ctrl+y -> cmd+shift+z   Windows redo. macOS cmd+y is History, not redo.",
+    "  ctrl+h -> cmd+y         Windows history. macOS cmd+h HIDES the app.",
+    "  ctrl+j -> cmd+shift+j   Windows downloads. Plain cmd+j is nothing useful.",
+    "",
+    "ctrl+shift+r is in the browsers scope, not gui, on purpose: it is hard",
+    "reload in a browser but vscode/keybindings.json wants it for notebooks. The",
+    "gui `r` mapping has no optional shift, so ctrl+shift+r falls through the gui",
+    "rule and only the browsers rule catches it. Same trick keeps ctrl+shift+i",
+    "and ctrl+shift+delete browser-only while plain ctrl+i is italic and plain",
+    "ctrl+backspace is delete-word."
   ],
 
   "scopes": {
@@ -81,8 +94,10 @@
         { "from": "v", "mods": ["control"], "optional": ["shift"], "to": "v", "to_mods": ["left_command"] },
         { "from": "x", "mods": ["control"], "to": "x", "to_mods": ["left_command"] },
         { "from": "z", "mods": ["control"], "optional": ["shift"], "to": "z", "to_mods": ["left_command"] },
-        { "from": "y", "mods": ["control"], "to": "y", "to_mods": ["left_command"] },
+        { "from": "y", "mods": ["control"], "to": "z", "to_mods": ["left_command", "left_shift"] },
         { "from": "a", "mods": ["control"], "to": "a", "to_mods": ["left_command"] },
+        { "from": "b", "mods": ["control"], "to": "b", "to_mods": ["left_command"] },
+        { "from": "i", "mods": ["control"], "to": "i", "to_mods": ["left_command"] },
         { "from": "f", "mods": ["control"], "to": "f", "to_mods": ["left_command"] },
         { "from": "g", "mods": ["control"], "to": "g", "to_mods": ["left_command"] },
         { "from": "s", "mods": ["control"], "to": "s", "to_mods": ["left_command"] },
@@ -122,11 +137,23 @@
     },
 
     {
-      "description": "Ctrl+Tab cycles tabs",
+      "description": "Ctrl+Tab and Ctrl+PageUp/PageDown cycle tabs",
       "scope": "gui",
       "mappings": [
         { "from": "tab", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
-        { "from": "tab", "mods": ["control", "shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] }
+        { "from": "tab", "mods": ["control", "shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "page_down", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "page_up", "mods": ["control"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+plus/minus/0 zoom",
+      "scope": "gui",
+      "mappings": [
+        { "from": "equal_sign", "mods": ["control"], "optional": ["shift"], "to": "equal_sign", "to_mods": ["left_command"] },
+        { "from": "hyphen", "mods": ["control"], "to": "hyphen", "to_mods": ["left_command"] },
+        { "from": "0", "mods": ["control"], "to": "0", "to_mods": ["left_command"] }
       ]
     },
 
@@ -147,10 +174,16 @@
     },
 
     {
-      "description": "Ctrl+L address bar, Ctrl+Shift+I/J devtools (browsers only)",
+      "description": "Browser chords: address bar, bookmarks, history, downloads, devtools, source",
       "scope": "browsers",
       "mappings": [
         { "from": "l", "mods": ["control"], "to": "l", "to_mods": ["left_command"] },
+        { "from": "d", "mods": ["control"], "to": "d", "to_mods": ["left_command"] },
+        { "from": "h", "mods": ["control"], "to": "y", "to_mods": ["left_command"] },
+        { "from": "j", "mods": ["control"], "to": "j", "to_mods": ["left_command", "left_shift"] },
+        { "from": "u", "mods": ["control"], "to": "u", "to_mods": ["left_command", "left_option"] },
+        { "from": "r", "mods": ["control", "shift"], "to": "r", "to_mods": ["left_command", "left_shift"] },
+        { "from": "delete_or_backspace", "mods": ["control", "shift"], "to": "delete_or_backspace", "to_mods": ["left_command", "left_shift"] },
         { "from": "i", "mods": ["control", "shift"], "to": "i", "to_mods": ["left_command", "left_option"] },
         { "from": "j", "mods": ["control", "shift"], "to": "j", "to_mods": ["left_command", "left_option"] }
       ]

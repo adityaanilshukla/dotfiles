@@ -20,10 +20,11 @@ decorations = "None"
 [bell]
 command = "None"
 
-[[keyboard.bindings]]
-key = "C"
-mods = "Control|Shift"
-chars = "\u0003"       # Send SIGINT
+# Ctrl+Shift+C used to be bound here to send SIGINT. Dropped: plain Ctrl+C
+# already does that. Karabiner's letter remaps skip terminals, so Ctrl+C
+# reaches the shell as a real Ctrl+C instead of becoming Cmd+C. Alacritty's
+# Ctrl+Shift+C = Copy default is Linux/Windows only, so on macOS this was a
+# second path to something that already worked.
 
 [[keyboard.bindings]]
 key = "Back"

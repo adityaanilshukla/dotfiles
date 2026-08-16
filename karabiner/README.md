@@ -41,13 +41,24 @@ readable version and `generate.py` produces the verbose one.
 | Chord | Becomes | Where |
 |---|---|---|
 | `fn+F7` / `fn+F8` | volume down / up | everywhere |
-| `Ctrl+C/V/X/Z/Y/A/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
+| `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
+| `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
+| `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | zoom in / out / reset | not in terminals |
 | `Ctrl+Left/Right` (`+Shift`) | `Option+Left/Right` | everywhere, terminals included |
 | `Ctrl+Backspace` / `Ctrl+Delete` | `Option+` same | everywhere |
 | `Ctrl+Home` / `Ctrl+End` (`+Shift`) | `Cmd+Up` / `Cmd+Down` | not in terminals |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | `Cmd+Option+Right/Left` | not in terminals |
+| `Ctrl+PageDown` / `Ctrl+PageUp` | same, next / previous tab | not in terminals |
 | `Ctrl+1`..`Ctrl+9` | `Cmd+1`..`Cmd+9` | not in terminals |
-| `Ctrl+L`, `Ctrl+Shift+I/J` | address bar, devtools | browsers only |
+| `Ctrl+L` / `Ctrl+D` | address bar / bookmark | browsers only |
+| `Ctrl+H` / `Ctrl+J` | history / downloads | browsers only |
+| `Ctrl+U` / `Ctrl+Shift+I` / `Ctrl+Shift+J` | source / devtools / console | browsers only |
+| `Ctrl+Shift+R` / `Ctrl+Shift+Backspace` | hard reload / clear data | browsers only |
+
+Three of those emit a different key than they take, because Windows and macOS
+disagree on the letter. `Ctrl+Y` sends `Cmd+Shift+Z`, since macOS `Cmd+Y` is
+History rather than redo. `Ctrl+H` sends `Cmd+Y`, since `Cmd+H` would hide the
+app. `Ctrl+J` sends `Cmd+Shift+J`, which is where Chrome keeps Downloads.
 
 `Shift` in brackets means the mapping carries Shift through, so `Ctrl+Shift+Z`
 is redo and `Ctrl+Shift+T` reopens a closed tab without needing their own rules.
@@ -70,8 +81,12 @@ before that something ever sees it:
 | `ctrl+shift+x` | `aerospace.toml` — dismiss notifications |
 | `ctrl+shift+d` | `aerospace.toml` — cancel a drag-mac drag |
 
-That is why `p` and `r` have no `optional: ["shift"]` in `spec.json` while `t`,
-`w` and `n` do.
+That is why `p` and `d` have no `optional: ["shift"]` in `spec.json` while `t`,
+`w` and `n` do. `r` is a special case: plain `Ctrl+R` is reload in the `gui`
+scope, and `Ctrl+Shift+R` is hard reload in the `browsers` scope only, so VS
+Code still gets its own `ctrl+shift+r`. The same split keeps `Ctrl+Shift+I`
+browser-only while plain `Ctrl+I` is italic, and `Ctrl+Shift+Backspace`
+browser-only while plain `Ctrl+Backspace` is delete-word.
 
 Known collision, pre-existing: `ctrl+shift+c` in VS Code (clear all notebook
 outputs) never fires, because `c` carries Shift through to `Cmd+Shift+C`. Drop
