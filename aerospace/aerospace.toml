@@ -90,8 +90,13 @@ alt-f = 'exec-and-forget open -na "Brave Browser" --args --new-window "https://a
 #
 # i for incognito. This used to be ctrl-shift-p, which had to go: that is the
 # VS Code command palette on Windows/Linux, and Karabiner now translates it to
-# cmd+shift+p. AeroSpace binds at a higher level than Karabiner remaps, so
-# leaving it here would have swallowed the palette before VS Code saw it.
+# cmd+shift+p.
+#
+# Karabiner runs BEFORE AeroSpace (it seizes the keyboard at the driver level
+# and re-emits from a virtual one, which is what AeroSpace then sees). So once
+# Karabiner rewrites ctrl+shift+p, AeroSpace never receives that chord and a
+# binding on it here would be silently dead. Karabiner wins; anything AeroSpace
+# needs to see must be a chord Karabiner does not touch.
 alt-i = 'exec-and-forget open -na "Brave Browser" --args --incognito'
 
 # Launch ranger
