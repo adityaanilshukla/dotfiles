@@ -123,20 +123,26 @@ before that something ever sees it:
 | Chord | Owner |
 |---|---|
 | `ctrl+shift+r` | `vscode/keybindings.json` — run all notebook cells |
-| `ctrl+shift+x` | `aerospace.toml` — dismiss notifications |
-| `ctrl+shift+d` | `aerospace.toml` — cancel a drag-mac drag |
 
-That is why `d` has no `optional: ["shift"]` in `spec.json` while `t`, `w`, `n`
-and `p` do.
-
-`ctrl+shift+p` used to be on that list, holding AeroSpace's Brave incognito
-binding. It is the VS Code command palette on Windows and Linux, which is worth
-more than a browser launcher on a chord no other platform uses for that, so
-incognito moved to `alt-i` and the palette works here now. `r` is a special case: plain `Ctrl+R` is reload in the `gui`
-scope, and `Ctrl+Shift+R` is hard reload in the `browsers` scope only, so VS
-Code still gets its own `ctrl+shift+r`. The same split keeps `Ctrl+Shift+I`
+`r` is handled by scope rather than by omission: plain `Ctrl+R` is reload in the
+`gui` scope, and `Ctrl+Shift+R` is hard reload in the `browsers` scope only, so
+VS Code still gets its own `ctrl+shift+r`. The same split keeps `Ctrl+Shift+I`
 browser-only while plain `Ctrl+I` is italic, and `Ctrl+Shift+Backspace`
 browser-only while plain `Ctrl+Backspace` is delete-word.
+
+Three chords used to be on that list and are not any more. Each was an AeroSpace
+launcher sitting on a chord that VS Code wants, and in every case the VS Code
+meaning won, because no other platform uses those chords for a launcher:
+
+| Chord | Now does | The AeroSpace binding moved to |
+|---|---|---|
+| `ctrl+shift+p` | command palette | `alt-i` — Brave incognito |
+| `ctrl+shift+d` | Run and Debug | `alt-shift-d` — cancel a drag-mac drag |
+| `ctrl+shift+x` | Extensions | `alt-shift-x` — dismiss notifications |
+
+AeroSpace now has no `ctrl` bindings at all, which is worth keeping that way:
+every launcher on the `alt` mod means the Glove80's Super key reaches all of
+them, and it leaves the whole `ctrl+shift+` space free for applications.
 
 Known collision, pre-existing: `ctrl+shift+c` in VS Code (clear all notebook
 outputs) never fires, because `c` carries Shift through to `Cmd+Shift+C`. Drop

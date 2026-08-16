@@ -180,7 +180,7 @@ files=(
   # nothing synced to Turso. Also what readbook's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
-  # notification dismisser, run by aerospace's ctrl-shift-x binding
+  # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
 
   # macOS drag source — ranger's dn binding runs this, since dragon-drop is
@@ -298,7 +298,7 @@ echo "    start-at-login setting in aerospace.toml only registers after a first"
 echo "    launch. Opening it is also what raises the Accessibility prompt."
 echo "  - Grant permissions to AeroSpace, Karabiner-Elements, BetterDisplay and"
 echo "    Raycast in System Settings > Privacy & Security. AeroSpace needs it to"
-echo "    tile at all, and ctrl-shift-x (dismiss notifications) needs it too."
+echo "    tile at all, and alt-shift-x (dismiss notifications) needs it too."
 echo "  - macfuse needs a kernel extension approved in System Settings, then a"
 echo "    reboot."
 echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"
