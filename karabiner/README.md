@@ -114,13 +114,17 @@ before that something ever sees it:
 
 | Chord | Owner |
 |---|---|
-| `ctrl+shift+p` | `aerospace.toml` — Brave incognito window |
 | `ctrl+shift+r` | `vscode/keybindings.json` — run all notebook cells |
 | `ctrl+shift+x` | `aerospace.toml` — dismiss notifications |
 | `ctrl+shift+d` | `aerospace.toml` — cancel a drag-mac drag |
 
-That is why `p` and `d` have no `optional: ["shift"]` in `spec.json` while `t`,
-`w` and `n` do. `r` is a special case: plain `Ctrl+R` is reload in the `gui`
+That is why `d` has no `optional: ["shift"]` in `spec.json` while `t`, `w`, `n`
+and `p` do.
+
+`ctrl+shift+p` used to be on that list, holding AeroSpace's Brave incognito
+binding. It is the VS Code command palette on Windows and Linux, which is worth
+more than a browser launcher on a chord no other platform uses for that, so
+incognito moved to `alt-shift-p` and the palette works here now. `r` is a special case: plain `Ctrl+R` is reload in the `gui`
 scope, and `Ctrl+Shift+R` is hard reload in the `browsers` scope only, so VS
 Code still gets its own `ctrl+shift+r`. The same split keeps `Ctrl+Shift+I`
 browser-only while plain `Ctrl+I` is italic, and `Ctrl+Shift+Backspace`
