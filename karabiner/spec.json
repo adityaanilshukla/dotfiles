@@ -16,9 +16,13 @@
     "Karabiner GUI have no prefix and are left alone.",
     "",
     "scopes: named condition blocks referenced by each group's `scope`.",
-    "  mode 'if'     = fire ONLY in the listed apps (allowlist)",
-    "  mode 'unless' = fire EVERYWHERE EXCEPT the listed apps (denylist)",
-    "  null          = no condition at all, fires everywhere",
+    "  mode 'if'        = fire ONLY in the listed apps (allowlist)",
+    "  mode 'unless'    = fire EVERYWHERE EXCEPT the listed apps (denylist)",
+    "  mode 'device_if' = fire only for events from the listed keyboards, which",
+    "                     takes `identifiers` (vendor_id/product_id) rather than",
+    "                     `bundle_identifiers`. Get the numbers from:",
+    "                     karabiner_cli --list-connected-devices",
+    "  null             = no condition at all, fires everywhere",
     "Scoping cannot see inside an app: tmux inside Alacritty reads as Alacritty",
     "(good), and VS Code's integrated terminal reads as VS Code (less good - the",
     "letter remaps do apply in that pane).",
@@ -44,7 +48,23 @@
     "gui `r` mapping has no optional shift, so ctrl+shift+r falls through the gui",
     "rule and only the browsers rule catches it. Same trick keeps ctrl+shift+i",
     "and ctrl+shift+delete browser-only while plain ctrl+i is italic and plain",
-    "ctrl+backspace is delete-word."
+    "ctrl+backspace is delete-word.",
+    "",
+    "The Glove80 group makes its Super-position key drive AeroSpace, the way",
+    "the Windows key drives i3 on Arch. AeroSpace's mod is `alt`, so Command",
+    "has to become Option on that keyboard. It is a SWAP, not a one-way map:",
+    "a one-way map would leave the Glove80 with no Command key at all, killing",
+    "cmd+space, cmd+tab and cmd+q from it. Both sides are swapped because the",
+    "board's layout is non-standard (its Ctrl reports as right_control), so",
+    "which side the Super key uses is not worth assuming.",
+    "",
+    "`optional: [\"any\"]` on those four is load-bearing, not decoration. Without",
+    "it the modifier only matches when nothing else is held, which breaks every",
+    "Super+Shift chord: aerospace's move-window and move-to-workspace bindings.",
+    "",
+    "Fixing this in the Glove80's ZMK firmware instead would break i3 on Arch,",
+    "which wants that same physical key to stay Super. Karabiner is per-machine,",
+    "so the keyboard keeps sending Super and only macOS reinterprets it."
   ],
 
   "scopes": {
@@ -63,6 +83,13 @@
       ]
     },
 
+    "glove80": {
+      "mode": "device_if",
+      "identifiers": [
+        { "vendor_id": 5824, "product_id": 10203, "is_keyboard": true }
+      ]
+    },
+
     "browsers": {
       "mode": "if",
       "bundle_identifiers": [
@@ -77,6 +104,17 @@
   "default_scope": "gui",
 
   "groups": [
+    {
+      "description": "Glove80 only: swap Command and Option",
+      "scope": "glove80",
+      "mappings": [
+        { "from": "left_command", "optional": ["any"], "to": "left_option" },
+        { "from": "left_option", "optional": ["any"], "to": "left_command" },
+        { "from": "right_command", "optional": ["any"], "to": "right_option" },
+        { "from": "right_option", "optional": ["any"], "to": "right_command" }
+      ]
+    },
+
     {
       "description": "fn+F7/F8 volume down/up",
       "scope": "everywhere",

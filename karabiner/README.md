@@ -69,6 +69,44 @@ Control key. `control` in `spec.json` matches both. If you ever want a raw
 `Ctrl+key` that no rule swallows, narrow the specific mapping back to
 `left_control` and use the right key as the escape hatch.
 
+### Per-keyboard: the Glove80's Super key drives AeroSpace
+
+On Arch, i3's mod key is the Windows/Super key. AeroSpace's mod is `alt`, so on
+the Glove80 that muscle memory lands on the wrong key. The `glove80` scope fixes
+it by swapping Command and Option **on that keyboard only**, matched by
+`vendor_id 5824, product_id 10203`. The built-in MacBook keyboard is untouched
+and keeps Option as the AeroSpace mod, which is what it has always been.
+
+No toggle, no second profile, no Raycast script: Karabiner keys off the device
+the event came from, so plugging the Glove80 in or walking away from it is the
+whole switch.
+
+Three things worth knowing about it:
+
+- It is a **swap**, not a one-way map. Mapping Command to Option alone would
+  leave the Glove80 with no Command key at all, so `Cmd+Space`, `Cmd+Tab` and
+  `Cmd+Q` would be untypable from it. After the swap, Command lives at the
+  Alt position on that board. That asymmetry between keyboards is inherent to
+  wanting Super as the mod on one of them.
+- Both sides are swapped, left and right. The board's layout is non-standard
+  (its Ctrl reports as `right_control`), so which side its Super key uses is not
+  worth assuming.
+- `optional: ["any"]` on all four mappings is load-bearing. Without it the
+  modifier only matches when nothing else is held, which silently breaks every
+  `Super+Shift` chord: AeroSpace's move-window and move-to-workspace bindings.
+
+Doing this in the Glove80's ZMK firmware instead would be cleaner in one sense,
+but the board is Bluetooth and also pairs with the Arch box, where i3 wants that
+same physical key to stay Super. Firmware fixes one host by breaking the other.
+Karabiner is per-machine, so the keyboard keeps sending Super and only macOS
+reinterprets it.
+
+Get the identifiers for another keyboard with:
+
+```sh
+karabiner_cli --list-connected-devices
+```
+
 ### Chords deliberately left alone
 
 Something else already owns these, and mapping them would swallow the event

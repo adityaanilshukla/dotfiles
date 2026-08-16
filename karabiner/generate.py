@@ -22,15 +22,22 @@ HERE = pathlib.Path(__file__).resolve().parent
 SPEC = HERE / "spec.json"
 DEST = HERE / "rules" / "managed.json"
 
-VALID_MODES = {"if", "unless"}
+APP_MODES = {"if", "unless"}
+DEVICE_MODES = {"device_if", "device_unless"}
+VALID_MODES = APP_MODES | DEVICE_MODES
 
 
 def build_conditions(spec: dict) -> dict:
     """Resolve spec.scopes into {name: conditions-list-or-None}.
 
+    Two kinds of scope. An app scope ('if'/'unless') keys off the frontmost
+    application and carries `bundle_identifiers`. A device scope ('device_if'/
+    'device_unless') keys off which keyboard the event came from and carries
+    `identifiers` (vendor_id/product_id, or is_built_in_keyboard).
+
     A scope of null means "no conditions", i.e. the rule fires everywhere. That
-    is a different thing from a scope with an empty app list, which would be a
-    typo, so an empty list is rejected rather than silently treated as global.
+    is a different thing from a scope with an empty list, which would be a typo,
+    so an empty list is rejected rather than silently treated as global.
     """
     resolved: dict = {}
     for name, scope in (spec.get("scopes") or {}).items():
@@ -41,6 +48,13 @@ def build_conditions(spec: dict) -> dict:
         mode = scope.get("mode", "if")
         if mode not in VALID_MODES:
             sys.exit(f"error: scope {name!r}: mode must be one of {sorted(VALID_MODES)}, got {mode!r}")
+
+        if mode in DEVICE_MODES:
+            identifiers = scope.get("identifiers") or []
+            if not identifiers:
+                sys.exit(f"error: scope {name!r} is a device scope but lists no identifiers.")
+            resolved[name] = [{"type": mode, "identifiers": identifiers}]
+            continue
 
         bundle_ids = scope.get("bundle_identifiers") or []
         if not bundle_ids:
