@@ -88,12 +88,11 @@ alt-f = 'exec-and-forget open -na "Brave Browser" --args --new-window "https://a
 
 # Launch Brave incognito window (plain incognito, never Tor)
 #
-# On alt-shift-p rather than ctrl-shift-p: ctrl+shift+p is the VS Code command
-# palette on Windows/Linux, and Karabiner now translates it to cmd+shift+p so
-# that muscle memory works here too. AeroSpace binds at a higher level than
-# Karabiner remaps, so leaving this on ctrl-shift-p would have swallowed the
-# palette before VS Code ever saw it.
-alt-shift-p = 'exec-and-forget open -na "Brave Browser" --args --incognito'
+# i for incognito. This used to be ctrl-shift-p, which had to go: that is the
+# VS Code command palette on Windows/Linux, and Karabiner now translates it to
+# cmd+shift+p. AeroSpace binds at a higher level than Karabiner remaps, so
+# leaving it here would have swallowed the palette before VS Code saw it.
+alt-i = 'exec-and-forget open -na "Brave Browser" --args --incognito'
 
 # Launch ranger
 # ranger with no path arg reads the stale PWD env var (which launchd/open leaves
