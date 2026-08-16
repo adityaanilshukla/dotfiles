@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/colors.sh"
 
 # Where we cache which display currently carries audio, so the steady-state
 # poll is a single fast BetterDisplay query instead of re-enumerating displays.
@@ -17,6 +18,15 @@ read_ddc() {
     *) awk -v v="$bd" 'BEGIN { printf "%d", v * 100 + 0.5 }'; return 0 ;;
   esac
 }
+
+# Muted takes precedence, matching polybar's format-muted: no icon at all,
+# just the word "muted" in the disabled colour. "missing value" comes back on
+# a DDC-controlled display, which has no macOS software mute, so only a
+# literal "true" counts.
+if [ "$(osascript -e 'output muted of (get volume settings)' 2>/dev/null)" = "true" ]; then
+  sketchybar --set "$NAME" icon.drawing=off label="muted" label.color="$DISABLED"
+  exit 0
+fi
 
 # INFO is set by the volume_change event (macOS software volume, an integer).
 # On a periodic refresh INFO is empty, so read the current output volume.
@@ -50,12 +60,8 @@ EOF
     ;;
 esac
 
-case "$VOLUME" in
-  100|9[0-9]|8[0-9]|7[0-9]) ICON=$VOLUME_100 ;;
-  6[0-9]|5[0-9]|4[0-9])     ICON=$VOLUME_66  ;;
-  3[0-9]|2[0-9])            ICON=$VOLUME_33  ;;
-  1[0-9])                   ICON=$VOLUME_10  ;;
-  *)                        ICON=$VOLUME_0   ;;
-esac
-
-sketchybar --set "$NAME" icon="$ICON" label="${VOLUME}%"
+# polybar shows one glyph at every level, tinted purple, with the percentage
+# as the label. No per-level icon ramp.
+sketchybar --set "$NAME" \
+  icon="$VOLUME_ICON" icon.drawing=on icon.color="$PURPLE" \
+  label="${VOLUME}%" label.color="$FOREGROUND"

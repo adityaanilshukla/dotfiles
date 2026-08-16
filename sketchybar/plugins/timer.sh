@@ -63,7 +63,9 @@ if [[ "$phase" == "break" ]]; then
   color="$GREEN"
 elif (( pct >= 50 )); then
   icon="$HOURGLASS_START"
-  color="$ACCENT_COLOR"
+  # polybar's timer uses the bright blue here, not the deep blue that tints
+  # the active workspace, so this is BLUE_BRIGHT rather than ACCENT_COLOR.
+  color="$BLUE_BRIGHT"
 elif (( pct >= 20 )); then
   icon="$HOURGLASS_HALF"
   color="$YELLOW"
