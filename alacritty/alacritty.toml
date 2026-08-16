@@ -31,6 +31,33 @@ key = "Back"
 mods = "Control"
 chars = "\u0017" # Ctrl+Backspace = delete word
 
+# Ctrl-based font zoom, matching the Linux/Windows defaults. Alacritty ships
+# these bound to Control on every platform EXCEPT macOS, where the defaults are
+# Cmd+= / Cmd+- / Cmd+0 instead (alacritty-bindings(5), "macOS only" section).
+# Karabiner cannot supply them: its zoom rules are in the "gui" scope, which
+# excludes terminals on purpose, and font size is the terminal's own business
+# rather than something to fake with a Cmd chord. Declared here instead, which
+# restores the Arch muscle memory. The Cmd+ versions keep working too.
+[[keyboard.bindings]]
+key = "="
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "+"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "-"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "0"
+mods = "Control"
+action = "ResetFontSize"
+
 [env]
 TERM = "xterm-256color"
 WINIT_X11_SCALE_FACTOR = "1.50"
