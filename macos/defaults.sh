@@ -11,4 +11,17 @@ set -euo pipefail
 # instead. Needed for Vim-style navigation (holding h/j/k/l) in VSCodeVim.
 defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 
-echo "Applied macOS defaults. Restart affected apps (e.g. VS Code) to pick them up."
+# Alacritty: turn off Core Text's stroke thickening. With no value set macOS
+# applies full smoothing, which fattens every glyph and reads as blurry on a
+# non-Retina external display. Measured on the Dell at font size 20: unset and
+# 3 are indistinguishable (~8500 lit pixels), 0 drops to ~6950, i.e. 19% fewer
+# lit pixels and visibly thinner strokes.
+#
+# Scoped to org.alacritty on purpose, so it doesn't restyle the rest of the OS.
+# Alacritty reads it once at process start, so a new window is not enough: quit
+# with Cmd-Q and relaunch.
+defaults write org.alacritty AppleFontSmoothing -int 0
+
+echo "Applied macOS defaults. Restart affected apps to pick them up:"
+echo "  - VS Code (press-and-hold)"
+echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
