@@ -144,6 +144,20 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   fi
 fi
 
+# --- Karabiner ------------------------------------------------------------
+# Keyboard remaps. Its own module because karabiner.json cannot be symlinked:
+# the settings GUI rewrites it, and the installer merges generated rules into
+# it. Needs brew (karabiner-elements, jq), so it has to run after the Brewfile.
+#
+# Non-fatal on purpose. A keyboard remapper failing — usually ungranted
+# permissions on a fresh machine — must not abort a whole machine setup, and
+# this script runs under `set -e`.
+if [[ -x "$DOTFILES_DIR/karabiner/install.sh" ]]; then
+  echo "Configuring Karabiner..."
+  "$DOTFILES_DIR/karabiner/install.sh" \
+    || echo "  karabiner module failed — re-run '$DOTFILES_DIR/karabiner/install.sh' after granting permissions."
+fi
+
 # --- Symlinks -------------------------------------------------------------
 # Single-file configs.
 files=(
@@ -153,9 +167,8 @@ files=(
   "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
   "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
 
-  # Karabiner writes runtime state (log/pid/tmp) into ~/.config/karabiner, so
-  # only the config file is symlinked — the directory itself stays real.
-  "karabiner/karabiner.json:$HOME/.config/karabiner/karabiner.json"
+  # Karabiner is deliberately absent here: karabiner.json is generated and
+  # merged by karabiner/install.sh, not symlinked. See karabiner/README.md.
 
   # zathura launcher — aerospace's alt-x binding runs ~/Scripts/readbook.
   "scripts/readbook:$HOME/Scripts/readbook"
@@ -167,7 +180,7 @@ files=(
   # nothing synced to Turso. Also what readbook's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
-  # notification dismisser, run by aerospace's ctrl-shift-x binding
+  # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
 
   # macOS drag source — ranger's dn binding runs this, since dragon-drop is
@@ -285,7 +298,7 @@ echo "    start-at-login setting in aerospace.toml only registers after a first"
 echo "    launch. Opening it is also what raises the Accessibility prompt."
 echo "  - Grant permissions to AeroSpace, Karabiner-Elements, BetterDisplay and"
 echo "    Raycast in System Settings > Privacy & Security. AeroSpace needs it to"
-echo "    tile at all, and ctrl-shift-x (dismiss notifications) needs it too."
+echo "    tile at all, and alt-shift-x (dismiss notifications) needs it too."
 echo "  - macfuse needs a kernel extension approved in System Settings, then a"
 echo "    reboot."
 echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"

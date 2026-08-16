@@ -36,7 +36,7 @@ printf 'gamma\n' > /tmp/dragdemo/gamma.txt
 | 12 | TCC-protected folder | `dn` on a file in ~/Documents | Drops, or prompts once and then drops | PASS, dropped into Brave with no permission prompt at all |
 | 13 | Filename with spaces | `dn` on a file named `with space.txt` | Correct file lands, name intact | TODO, covered in Tier 1 but not end to end |
 | 14 | Fresh machine | move the venv aside and re-run `install.sh` | venv rebuilt, `dn` works again | MACHINE, rebuilt in ~6.5s with 78/78 green against the result |
-| 15 | Dismiss without focus | `ctrl-shift-d` while another app holds focus | Window and process both gone | MACHINE |
+| 15 | Dismiss without focus | `alt-shift-d` while another app holds focus | Window and process both gone | MACHINE |
 
 Status values: PASS means a human watched it happen. MACHINE means it was
 verified by driving ranger through tmux and reading the window server, which

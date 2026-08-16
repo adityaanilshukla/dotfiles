@@ -80,8 +80,10 @@ rw() {
 # --------------------
 # Keybinds (non-autosuggest)
 # --------------------
-bindkey '^[[1;5C' forward-word
-bindkey '^[[1;5D' backward-word
+# Ctrl+Left/Right word navigation used to be bound here as '^[[1;5C' and
+# '^[[1;5D'. Karabiner now rewrites Ctrl+Arrow to Option+Arrow before Alacritty
+# sees it (karabiner/spec.json, "everywhere" scope), so those sequences never
+# arrive and the binds were dead. zsh handles the Option+Arrow form itself.
 
 # --------------------
 # macOS nosleep (replaces systemd-inhibit)

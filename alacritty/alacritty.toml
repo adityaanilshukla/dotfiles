@@ -20,15 +20,43 @@ decorations = "None"
 [bell]
 command = "None"
 
-[[keyboard.bindings]]
-key = "C"
-mods = "Control|Shift"
-chars = "\u0003"       # Send SIGINT
+# Ctrl+Shift+C used to be bound here to send SIGINT. Dropped: plain Ctrl+C
+# already does that. Karabiner's letter remaps skip terminals, so Ctrl+C
+# reaches the shell as a real Ctrl+C instead of becoming Cmd+C. Alacritty's
+# Ctrl+Shift+C = Copy default is Linux/Windows only, so on macOS this was a
+# second path to something that already worked.
 
 [[keyboard.bindings]]
 key = "Back"
 mods = "Control"
 chars = "\u0017" # Ctrl+Backspace = delete word
+
+# Ctrl-based font zoom, matching the Linux/Windows defaults. Alacritty ships
+# these bound to Control on every platform EXCEPT macOS, where the defaults are
+# Cmd+= / Cmd+- / Cmd+0 instead (alacritty-bindings(5), "macOS only" section).
+# Karabiner cannot supply them: its zoom rules are in the "gui" scope, which
+# excludes terminals on purpose, and font size is the terminal's own business
+# rather than something to fake with a Cmd chord. Declared here instead, which
+# restores the Arch muscle memory. The Cmd+ versions keep working too.
+[[keyboard.bindings]]
+key = "="
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "+"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "-"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "0"
+mods = "Control"
+action = "ResetFontSize"
 
 [env]
 TERM = "xterm-256color"

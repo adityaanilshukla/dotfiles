@@ -1,0 +1,245 @@
+{
+  "title": "dotfiles-managed keyboard remaps",
+  "prefix": "dotfiles: ",
+
+  "_notes": [
+    "Source of truth for every Karabiner rule this repo owns. Edit this file,",
+    "then run ./install.sh (or generate.py alone to refresh rules/managed.json).",
+    "Never hand-edit rules/managed.json - it is generated.",
+    "Never hand-edit ~/.config/karabiner/karabiner.json for anything defined",
+    "here; the next install.sh run replaces it.",
+    "",
+    "prefix: every generated rule description starts with this. install.sh",
+    "deletes all rules with this prefix before appending the current set, which",
+    "is what makes re-running replace rather than duplicate, and what makes",
+    "deleting a group here actually remove it. Rules you add by hand in the",
+    "Karabiner GUI have no prefix and are left alone.",
+    "",
+    "scopes: named condition blocks referenced by each group's `scope`.",
+    "  mode 'if'        = fire ONLY in the listed apps (allowlist)",
+    "  mode 'unless'    = fire EVERYWHERE EXCEPT the listed apps (denylist)",
+    "  mode 'device_if' = fire only for events from the listed keyboards, which",
+    "                     takes `identifiers` (vendor_id/product_id) rather than",
+    "                     `bundle_identifiers`. Get the numbers from:",
+    "                     karabiner_cli --list-connected-devices",
+    "  null             = no condition at all, fires everywhere",
+    "Scoping cannot see inside an app: tmux inside Alacritty reads as Alacritty",
+    "(good), and VS Code's integrated terminal reads as VS Code (less good - the",
+    "letter remaps do apply in that pane).",
+    "",
+    "Find a bundle id with: osascript -e 'id of app \"AppName\"'",
+    "or use Karabiner-EventViewer > Frontmost Application tab.",
+    "",
+    "Deliberately NOT mapped, because something else already owns the chord:",
+    "  ctrl+shift+r  -> vscode/keybindings.json runs all notebook cells",
+    "Adding `optional: [\"shift\"]` to r would swallow that before VS Code sees",
+    "it. Karabiner runs BEFORE aerospace and before any app, so a chord mapped",
+    "here never reaches whatever else wanted it.",
+    "",
+    "`e` is the odd one out: it takes shift as MANDATORY, not optional, so only",
+    "ctrl+shift+e is mapped and plain ctrl+e is left alone. ctrl+shift+e is the",
+    "VS Code explorer, but plain cmd+e in Finder is EJECT, and a stray ctrl+e",
+    "unmounting a disk is a worse failure than a missing shortcut.",
+    "",
+    "Three chords were freed by moving the aerospace binding that held them,",
+    "because the VS Code meaning is worth more than a launcher on a chord no",
+    "other platform uses for that:",
+    "  ctrl+shift+p -> command palette   (incognito moved to alt-i)",
+    "  ctrl+shift+d -> Run and Debug     (drag cancel moved to alt-shift-d)",
+    "  ctrl+shift+x -> Extensions        (dismiss notifs moved to alt-shift-x)",
+    "`d` takes shift as mandatory so plain ctrl+d stays the browsers-only",
+    "bookmark mapping.",
+    "",
+    "Three mappings emit a DIFFERENT key than they receive, because the Windows",
+    "chord and the macOS chord disagree on the letter:",
+    "  ctrl+y -> cmd+shift+z   Windows redo. macOS cmd+y is History, not redo.",
+    "  ctrl+h -> cmd+y         Windows history. macOS cmd+h HIDES the app.",
+    "  ctrl+j -> cmd+shift+j   Windows downloads. Plain cmd+j is nothing useful.",
+    "",
+    "ctrl+shift+r is in the browsers scope, not gui, on purpose: it is hard",
+    "reload in a browser but vscode/keybindings.json wants it for notebooks. The",
+    "gui `r` mapping has no optional shift, so ctrl+shift+r falls through the gui",
+    "rule and only the browsers rule catches it. Same trick keeps ctrl+shift+i",
+    "and ctrl+shift+delete browser-only while plain ctrl+i is italic and plain",
+    "ctrl+backspace is delete-word.",
+    "",
+    "The Glove80 group makes its Super-position key drive AeroSpace, the way",
+    "the Windows key drives i3 on Arch. AeroSpace's mod is `alt`, so Command",
+    "has to become Option on that keyboard. It is a SWAP, not a one-way map:",
+    "a one-way map would leave the Glove80 with no Command key at all, killing",
+    "cmd+space, cmd+tab and cmd+q from it. Both sides are swapped because the",
+    "board's layout is non-standard (its Ctrl reports as right_control), so",
+    "which side the Super key uses is not worth assuming.",
+    "",
+    "`optional: [\"any\"]` on those four is load-bearing, not decoration. Without",
+    "it the modifier only matches when nothing else is held, which breaks every",
+    "Super+Shift chord: aerospace's move-window and move-to-workspace bindings.",
+    "",
+    "Fixing this in the Glove80's ZMK firmware instead would break i3 on Arch,",
+    "which wants that same physical key to stay Super. Karabiner is per-machine,",
+    "so the keyboard keeps sending Super and only macOS reinterprets it."
+  ],
+
+  "scopes": {
+    "everywhere": null,
+
+    "gui": {
+      "mode": "unless",
+      "bundle_identifiers": [
+        "^com\\.apple\\.Terminal$",
+        "^com\\.googlecode\\.iterm2$",
+        "^io\\.alacritty$",
+        "^org\\.alacritty$",
+        "^net\\.kovidgoyal\\.kitty$",
+        "^com\\.mitchellh\\.ghostty$",
+        "^com\\.github\\.wez\\.wezterm$"
+      ]
+    },
+
+    "glove80": {
+      "mode": "device_if",
+      "identifiers": [
+        { "vendor_id": 5824, "product_id": 10203, "is_keyboard": true }
+      ]
+    },
+
+    "browsers": {
+      "mode": "if",
+      "bundle_identifiers": [
+        "^com\\.brave\\.Browser",
+        "^com\\.google\\.Chrome",
+        "^com\\.apple\\.Safari$",
+        "^org\\.mozilla\\.firefox$"
+      ]
+    }
+  },
+
+  "default_scope": "gui",
+
+  "groups": [
+    {
+      "description": "Glove80 only: swap Command and Option",
+      "scope": "glove80",
+      "mappings": [
+        { "from": "left_command", "optional": ["any"], "to": "left_option" },
+        { "from": "left_option", "optional": ["any"], "to": "left_command" },
+        { "from": "right_command", "optional": ["any"], "to": "right_option" },
+        { "from": "right_option", "optional": ["any"], "to": "right_command" }
+      ]
+    },
+
+    {
+      "description": "fn+F7/F8 volume down/up",
+      "scope": "everywhere",
+      "mappings": [
+        { "from": "f7", "mods": ["fn"], "to": "volume_decrement" },
+        { "from": "f8", "mods": ["fn"], "to": "volume_increment" }
+      ]
+    },
+
+    {
+      "description": "Ctrl+letter to Cmd+letter (not in terminals)",
+      "scope": "gui",
+      "mappings": [
+        { "from": "c", "mods": ["control"], "optional": ["shift"], "to": "c", "to_mods": ["left_command"] },
+        { "from": "v", "mods": ["control"], "optional": ["shift"], "to": "v", "to_mods": ["left_command"] },
+        { "from": "x", "mods": ["control"], "optional": ["shift"], "to": "x", "to_mods": ["left_command"] },
+        { "from": "d", "mods": ["control", "shift"], "to": "d", "to_mods": ["left_command", "left_shift"] },
+        { "from": "z", "mods": ["control"], "optional": ["shift"], "to": "z", "to_mods": ["left_command"] },
+        { "from": "y", "mods": ["control"], "to": "z", "to_mods": ["left_command", "left_shift"] },
+        { "from": "a", "mods": ["control"], "to": "a", "to_mods": ["left_command"] },
+        { "from": "b", "mods": ["control"], "to": "b", "to_mods": ["left_command"] },
+        { "from": "i", "mods": ["control"], "to": "i", "to_mods": ["left_command"] },
+        { "from": "e", "mods": ["control", "shift"], "to": "e", "to_mods": ["left_command", "left_shift"] },
+        { "from": "f", "mods": ["control"], "optional": ["shift"], "to": "f", "to_mods": ["left_command"] },
+        { "from": "g", "mods": ["control"], "optional": ["shift"], "to": "g", "to_mods": ["left_command"] },
+        { "from": "s", "mods": ["control"], "to": "s", "to_mods": ["left_command"] },
+        { "from": "p", "mods": ["control"], "optional": ["shift"], "to": "p", "to_mods": ["left_command"] },
+        { "from": "t", "mods": ["control"], "optional": ["shift"], "to": "t", "to_mods": ["left_command"] },
+        { "from": "w", "mods": ["control"], "optional": ["shift"], "to": "w", "to_mods": ["left_command"] },
+        { "from": "n", "mods": ["control"], "optional": ["shift"], "to": "n", "to_mods": ["left_command"] },
+        { "from": "r", "mods": ["control"], "to": "r", "to_mods": ["left_command"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+Left/Right word navigation (everywhere, terminals included)",
+      "scope": "everywhere",
+      "mappings": [
+        { "from": "left_arrow", "mods": ["control"], "optional": ["shift"], "to": "left_arrow", "to_mods": ["left_option"] },
+        { "from": "right_arrow", "mods": ["control"], "optional": ["shift"], "to": "right_arrow", "to_mods": ["left_option"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+Backspace/Delete deletes a word (everywhere)",
+      "scope": "everywhere",
+      "mappings": [
+        { "from": "delete_or_backspace", "mods": ["control"], "to": "delete_or_backspace", "to_mods": ["left_option"] },
+        { "from": "delete_forward", "mods": ["control"], "to": "delete_forward", "to_mods": ["left_option"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+Home/End jumps to document start/end",
+      "scope": "gui",
+      "mappings": [
+        { "from": "home", "mods": ["control"], "optional": ["shift"], "to": "up_arrow", "to_mods": ["left_command"] },
+        { "from": "end", "mods": ["control"], "optional": ["shift"], "to": "down_arrow", "to_mods": ["left_command"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+Tab and Ctrl+PageUp/PageDown cycle tabs",
+      "scope": "gui",
+      "mappings": [
+        { "from": "tab", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "tab", "mods": ["control", "shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "page_down", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
+        { "from": "page_up", "mods": ["control"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+plus/minus/0 zoom",
+      "scope": "gui",
+      "mappings": [
+        { "from": "equal_sign", "mods": ["control"], "optional": ["shift"], "to": "equal_sign", "to_mods": ["left_command"] },
+        { "from": "hyphen", "mods": ["control"], "to": "hyphen", "to_mods": ["left_command"] },
+        { "from": "0", "mods": ["control"], "to": "0", "to_mods": ["left_command"] }
+      ]
+    },
+
+    {
+      "description": "Ctrl+1..9 selects a tab",
+      "scope": "gui",
+      "mappings": [
+        { "from": "1", "mods": ["control"], "to": "1", "to_mods": ["left_command"] },
+        { "from": "2", "mods": ["control"], "to": "2", "to_mods": ["left_command"] },
+        { "from": "3", "mods": ["control"], "to": "3", "to_mods": ["left_command"] },
+        { "from": "4", "mods": ["control"], "to": "4", "to_mods": ["left_command"] },
+        { "from": "5", "mods": ["control"], "to": "5", "to_mods": ["left_command"] },
+        { "from": "6", "mods": ["control"], "to": "6", "to_mods": ["left_command"] },
+        { "from": "7", "mods": ["control"], "to": "7", "to_mods": ["left_command"] },
+        { "from": "8", "mods": ["control"], "to": "8", "to_mods": ["left_command"] },
+        { "from": "9", "mods": ["control"], "to": "9", "to_mods": ["left_command"] }
+      ]
+    },
+
+    {
+      "description": "Browser chords: address bar, bookmarks, history, downloads, devtools, source",
+      "scope": "browsers",
+      "mappings": [
+        { "from": "l", "mods": ["control"], "to": "l", "to_mods": ["left_command"] },
+        { "from": "d", "mods": ["control"], "to": "d", "to_mods": ["left_command"] },
+        { "from": "h", "mods": ["control"], "to": "y", "to_mods": ["left_command"] },
+        { "from": "j", "mods": ["control"], "to": "j", "to_mods": ["left_command", "left_shift"] },
+        { "from": "u", "mods": ["control"], "to": "u", "to_mods": ["left_command", "left_option"] },
+        { "from": "r", "mods": ["control", "shift"], "to": "r", "to_mods": ["left_command", "left_shift"] },
+        { "from": "delete_or_backspace", "mods": ["control", "shift"], "to": "delete_or_backspace", "to_mods": ["left_command", "left_shift"] },
+        { "from": "i", "mods": ["control", "shift"], "to": "i", "to_mods": ["left_command", "left_option"] },
+        { "from": "j", "mods": ["control", "shift"], "to": "j", "to_mods": ["left_command", "left_option"] }
+      ]
+    }
+  ]
+}
