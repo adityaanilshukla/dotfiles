@@ -132,10 +132,16 @@ alt-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 #
 # The pattern is the module path, not "python", so it cannot hit anything else.
 #
-# On alt-shift-d, not ctrl-shift-d: that is the VS Code Run and Debug view on
+# c for cancel. Not ctrl-shift-d: that is the VS Code Run and Debug view on
 # Windows/Linux and Karabiner now translates it, which would leave a binding
 # here dead. See the ordering note on alt-i above.
-alt-shift-d = 'exec-and-forget pkill -f "drag-mac/drag_mac.py"'
+#
+# Nor alt-shift-d, which this used to be. AeroSpace bindings are global and
+# consume the chord, and alt-shift-d is Dark Reader's toggle in the browser,
+# so this binding was silently eating it on both keyboards. Freed deliberately:
+# a window-manager binding for a drag window that closes itself on drop is
+# worth less than a shortcut used every day.
+alt-shift-c = 'exec-and-forget pkill -f "drag-mac/drag_mac.py"'
 
 # ---------- Workspaces ----------
 

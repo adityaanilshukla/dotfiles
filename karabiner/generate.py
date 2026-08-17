@@ -72,6 +72,48 @@ def build_conditions(spec: dict) -> dict:
     return resolved
 
 
+def resolve_scope(group: dict, conditions_by_scope: dict, default_scope) -> list | None:
+    """Resolve a group's `scope` into a conditions list, or None for everywhere.
+
+    A group may name one scope ("browsers") or several (["glove80", "browsers"]).
+    Karabiner ANDs everything in a manipulator's conditions array, so a list is
+    just concatenation: this keyboard AND this app.
+
+    `null` is only meaningful on its own. Inside a list it would be a no-op that
+    reads like it widens the scope, when in fact the other entries still narrow
+    it, so it is rejected rather than quietly ignored.
+    """
+    where = group.get("scope", default_scope)
+    names = where if isinstance(where, list) else [where]
+
+    if not names:
+        sys.exit(
+            f"error: group {group['description']!r} has an empty scope list. Use "
+            f"null for a rule that should fire everywhere."
+        )
+
+    for name in names:
+        if name not in conditions_by_scope:
+            sys.exit(
+                f"error: group {group['description']!r} references unknown scope "
+                f"{name!r}; defined scopes are {sorted(conditions_by_scope)}"
+            )
+
+    if not isinstance(where, list):
+        return conditions_by_scope[names[0]]
+
+    conditions = []
+    for name in names:
+        resolved = conditions_by_scope[name]
+        if resolved is None:
+            sys.exit(
+                f"error: group {group['description']!r} combines scope {name!r}, "
+                f"which is null (everywhere), with others. Drop it from the list."
+            )
+        conditions.extend(resolved)
+    return conditions
+
+
 def build(spec: dict) -> dict:
     conditions_by_scope = build_conditions(spec)
     default_scope = spec.get("default_scope")
@@ -79,13 +121,7 @@ def build(spec: dict) -> dict:
 
     rules = []
     for group in spec["groups"]:
-        scope_name = group.get("scope", default_scope)
-        if scope_name not in conditions_by_scope:
-            sys.exit(
-                f"error: group {group['description']!r} references unknown scope "
-                f"{scope_name!r}; defined scopes are {sorted(conditions_by_scope)}"
-            )
-        conditions = conditions_by_scope[scope_name]
+        conditions = resolve_scope(group, conditions_by_scope, default_scope)
 
         manipulators = []
         for m in group["mappings"]:

@@ -119,6 +119,173 @@
       ]
     },
     {
+      "description": "dotfiles: Glove80 in browsers: give the Alt key back its Option chords",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "open_bracket",
+            "modifiers": {
+              "mandatory": [
+                "command"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "open_bracket",
+              "modifiers": [
+                "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.brave\\.Browser",
+                "^com\\.google\\.Chrome",
+                "^com\\.apple\\.Safari$",
+                "^org\\.mozilla\\.firefox$"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "close_bracket",
+            "modifiers": {
+              "mandatory": [
+                "command"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "close_bracket",
+              "modifiers": [
+                "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.brave\\.Browser",
+                "^com\\.google\\.Chrome",
+                "^com\\.apple\\.Safari$",
+                "^org\\.mozilla\\.firefox$"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "e",
+            "modifiers": {
+              "mandatory": [
+                "command"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "e",
+              "modifiers": [
+                "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.brave\\.Browser",
+                "^com\\.google\\.Chrome",
+                "^com\\.apple\\.Safari$",
+                "^org\\.mozilla\\.firefox$"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "d",
+            "modifiers": {
+              "mandatory": [
+                "command",
+                "shift"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "d",
+              "modifiers": [
+                "left_option",
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.brave\\.Browser",
+                "^com\\.google\\.Chrome",
+                "^com\\.apple\\.Safari$",
+                "^org\\.mozilla\\.firefox$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "description": "dotfiles: fn+F7/F8 volume down/up",
       "manipulators": [
         {
@@ -859,7 +1026,7 @@
       ]
     },
     {
-      "description": "dotfiles: Ctrl+Left/Right word navigation (everywhere, terminals included)",
+      "description": "dotfiles: Ctrl+Left/Right word navigation (not in terminals)",
       "manipulators": [
         {
           "type": "basic",
@@ -879,6 +1046,20 @@
               "key_code": "left_arrow",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]
@@ -903,12 +1084,26 @@
                 "left_option"
               ]
             }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
+              ]
+            }
           ]
         }
       ]
     },
     {
-      "description": "dotfiles: Ctrl+Backspace/Delete deletes a word (everywhere)",
+      "description": "dotfiles: Ctrl+Backspace/Delete deletes a word (not in terminals)",
       "manipulators": [
         {
           "type": "basic",
@@ -925,6 +1120,20 @@
               "key_code": "delete_or_backspace",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]
@@ -944,6 +1153,20 @@
               "key_code": "delete_forward",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]

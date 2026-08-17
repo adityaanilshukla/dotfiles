@@ -55,6 +55,8 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 | `tailscale up` | per-device auth; links this machine to `brovo` |
 | `make -C ~/Projects/online-zathura join` | mints this device's Turso token for reading-state sync |
 | Import your **GPG key**, then `scripts/secrets.sh decrypt` | The private key is deliberately not in this repo. Without it `secrets.gpg` cannot be opened. |
+| Set **Dark Reader** to `Alt+Shift+D` in `about:addons` > Manage Extension Shortcuts | Browser extension shortcuts live in the Firefox profile, not on disk. `karabiner/spec.json` routes the Glove80's Alt key to that chord, but the chord itself has to be registered here first. |
+| Paste the **Tampermonkey** userscripts from `~/Projects/tampermonkey` | Tampermonkey stores its own copy in browser storage. There is no `@require file://`, so editing the files on disk changes nothing until you copy them across. `claude/claude.js` is the one the Glove80 Alt chords drive. |
 
 ## Things worth knowing
 
