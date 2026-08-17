@@ -70,6 +70,7 @@ readable version and `generate.py` produces the verbose one.
 | `Ctrl+Left/Right` (`+Shift`) | `Option+Left/Right` | not in terminals |
 | `Ctrl+Backspace` / `Ctrl+Delete` | `Option+` same | not in terminals |
 | `Ctrl+Home` / `Ctrl+End` (`+Shift`) | `Cmd+Up` / `Cmd+Down` | not in terminals |
+| `Home` / `End` (`+Shift`) | `Ctrl+A` / `Ctrl+E`, line start / end | not in terminals or VS Code |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | `Cmd+Option+Right/Left` | not in terminals |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | same, next / previous tab | not in terminals |
 | `Ctrl+1`..`Ctrl+9` | `Cmd+1`..`Cmd+9` | not in terminals |
@@ -202,10 +203,25 @@ outputs) never fires, because `c` carries Shift through to `Cmd+Shift+C`. Drop
 the `optional` on `c` if you want that binding back, at the cost of
 `Ctrl+Shift+C` inspect-element in browsers.
 
-Plain `Home`/`End` are **not** remapped to line start/end. In a browser outside
-a text field, `Cmd+Left` is Back, so `Home` would navigate away from the page
-instead of scrolling to the top. Add a group scoped to a specific editor if you
-want it somewhere narrow.
+Plain `Home`/`End` go to line start/end, but via `Ctrl+A`/`Ctrl+E`, not via
+`Cmd+Left`/`Cmd+Right`. That choice is the whole point of the mapping. macOS
+puts line-start on `Cmd+Left`, which is also Back in a browser, so a `Home` that
+emitted it would navigate off the page whenever focus was not in a text field.
+`Ctrl+A`/`Ctrl+E` are the Cocoa and Chromium editing bindings: they move the
+caret in a text field and do nothing at all outside one, so the failure mode is
+silence rather than losing your page.
+
+Two consequences worth knowing:
+
+- Outside a text field, `Home` no longer scrolls to the top of the page, which
+  is what stock macOS did with it. Document-top is `Ctrl+Home`, which is where
+  Windows and Linux put it anyway.
+- VS Code is excluded, via `["gui", "not_vscode"]`. It already implements PC
+  `Home`/`End` natively on macOS, including the Shift variants for selection.
+  Mapping them there would take a chord that works and hand it `Ctrl+Shift+A`,
+  which has no default binding. Same mistake as rewriting terminal chords.
+
+`Shift` carries through, so `Shift+Home` extends the selection to line start.
 
 ## Changing the keymap
 
