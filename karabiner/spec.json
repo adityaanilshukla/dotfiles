@@ -52,7 +52,7 @@
     "because the VS Code meaning is worth more than a launcher on a chord no",
     "other platform uses for that:",
     "  ctrl+shift+p -> command palette   (incognito moved to alt-i)",
-    "  ctrl+shift+d -> Run and Debug     (drag cancel moved to alt-shift-d)",
+    "  ctrl+shift+d -> Run and Debug     (drag cancel moved to alt-shift-c)",
     "  ctrl+shift+x -> Extensions        (dismiss notifs moved to alt-shift-x)",
     "`d` takes shift as mandatory so plain ctrl+d stays the browsers-only",
     "bookmark mapping.",
@@ -132,6 +132,17 @@
         { "from": "left_option", "optional": ["any"], "to": "left_command" },
         { "from": "right_command", "optional": ["any"], "to": "right_option" },
         { "from": "right_option", "optional": ["any"], "to": "right_command" }
+      ]
+    },
+
+    {
+      "description": "Glove80 in browsers: give the Alt key back its Option chords",
+      "scope": ["glove80", "browsers"],
+      "mappings": [
+        { "from": "open_bracket", "mods": ["command"], "to": "open_bracket", "to_mods": ["left_option"] },
+        { "from": "close_bracket", "mods": ["command"], "to": "close_bracket", "to_mods": ["left_option"] },
+        { "from": "e", "mods": ["command"], "to": "e", "to_mods": ["left_option"] },
+        { "from": "d", "mods": ["command", "shift"], "to": "d", "to_mods": ["left_option", "left_shift"] }
       ]
     },
 

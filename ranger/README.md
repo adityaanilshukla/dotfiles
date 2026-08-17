@@ -64,6 +64,6 @@ Optional:
   which is whatever `open -na Alacritty` handed it and does not include
   `~/.local/bin`.
 - On macOS the drag window closes itself once a drop lands. `Escape` closes it
-  when focused, and `alt-shift-d` (aerospace) closes it from anywhere, which
+  when focused, and `alt-shift-c` (aerospace) closes it from anywhere, which
   matters because after a drag the destination app holds focus. `q` is
   deliberately not bound: if the window is not really focused, `q` quits ranger.
