@@ -89,6 +89,20 @@
     "which wants that same physical key to stay Super. Karabiner is per-machine,",
     "so the keyboard keeps sending Super and only macOS reinterprets it.",
     "",
+    "Home/End emit ctrl+a and ctrl+e, not cmd+left and cmd+right. macOS puts",
+    "line-start on cmd+left, which is also Back in a browser, so Home would",
+    "navigate off the page whenever focus was not in a text field. ctrl+a and",
+    "ctrl+e are the Cocoa and Chromium editing bindings: they move the caret in a",
+    "text field and do nothing outside one. Cost: Home no longer scrolls to the",
+    "top of a page. That is ctrl+home, which is where Windows puts it anyway.",
+    "",
+    "VS Code is excluded from that group, hence the not_vscode scope. It already",
+    "implements PC Home/End natively on macOS, Shift variants included, so the",
+    "mapping would replace something that works with ctrl+shift+a, which nothing",
+    "binds. Karabiner emitting ctrl+a is safe from the ctrl+a -> cmd+a rule above:",
+    "`to` events are posted to the virtual keyboard and never re-enter the",
+    "manipulator list. If they did, Home would visibly select all.",
+    "",
     "Word navigation and delete-word are in the gui scope, NOT everywhere. They",
     "used to be everywhere, on the theory that Option+Arrow and Option+Backspace",
     "are useful in a shell. They are not, in this terminal: Alacritty defaults",
@@ -125,6 +139,13 @@
       "mode": "device_if",
       "identifiers": [
         { "vendor_id": 5824, "product_id": 10203, "is_keyboard": true }
+      ]
+    },
+
+    "not_vscode": {
+      "mode": "unless",
+      "bundle_identifiers": [
+        "^com\\.microsoft\\.VSCode$"
       ]
     },
 
@@ -224,6 +245,15 @@
       "mappings": [
         { "from": "home", "mods": ["control"], "optional": ["shift"], "to": "up_arrow", "to_mods": ["left_command"] },
         { "from": "end", "mods": ["control"], "optional": ["shift"], "to": "down_arrow", "to_mods": ["left_command"] }
+      ]
+    },
+
+    {
+      "description": "Home/End go to line start/end (not in terminals or VS Code)",
+      "scope": ["gui", "not_vscode"],
+      "mappings": [
+        { "from": "home", "optional": ["shift"], "to": "a", "to_mods": ["left_control"] },
+        { "from": "end", "optional": ["shift"], "to": "e", "to_mods": ["left_control"] }
       ]
     },
 
