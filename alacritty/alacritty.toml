@@ -20,11 +20,25 @@ decorations = "None"
 [bell]
 command = "None"
 
-# Ctrl+Shift+C used to be bound here to send SIGINT. Dropped: plain Ctrl+C
-# already does that. Karabiner's letter remaps skip terminals, so Ctrl+C
-# reaches the shell as a real Ctrl+C instead of becoming Cmd+C. Alacritty's
-# Ctrl+Shift+C = Copy default is Linux/Windows only, so on macOS this was a
-# second path to something that already worked.
+# Ctrl+Shift+C / Ctrl+Shift+V: the Linux terminal copy and paste pair.
+# Alacritty ships these on every platform EXCEPT macOS, where the defaults are
+# Cmd+C / Cmd+V, same story as the font zoom below. Karabiner cannot supply
+# them either: its letter remaps live in the "gui" scope, which excludes
+# terminals so that plain Ctrl+C stays a real SIGINT rather than becoming
+# Cmd+C. Shift is what separates the two: Ctrl+C interrupts, Ctrl+Shift+C
+# copies. Cmd+C / Cmd+V keep working.
+#
+# (Ctrl+Shift+C was previously bound here to send SIGINT, which was redundant
+# with plain Ctrl+C and cost the copy binding. This is that slot put to use.)
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control|Shift"
+action = "Paste"
 
 [[keyboard.bindings]]
 key = "Back"
