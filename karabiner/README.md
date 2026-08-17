@@ -7,10 +7,33 @@ PC-style text editing (`Ctrl+C/V/X`, `Ctrl+Arrow` word navigation,
 `Ctrl+Backspace` delete-word, `Ctrl+Tab` and `Ctrl+1..9` tab switching) plus the
 `fn+F7/F8` volume keys.
 
-**Terminals are excluded from the letter remaps**, so `Ctrl+C` still sends
-SIGINT in Alacritty, and tmux and Neovim bindings are untouched. Word navigation
-and delete-word are deliberately *not* excluded — they are useful in a shell and
-collide with nothing.
+**Terminals are excluded from every remap here**, so `Ctrl+C` still sends
+SIGINT in Alacritty, and tmux and Neovim bindings are untouched.
+
+That exclusion is total on purpose, word navigation and delete-word included.
+They were briefly mapped everywhere, on the theory that `Option+Arrow` and
+`Option+Backspace` are useful in a shell. They are not, in this one: Alacritty
+leaves `option_as_alt` at `None` on macOS, so `Option+Arrow` arrives as a bare
+arrow and `Option+Backspace` as a bare delete. The rewrite was taking a working
+chord and returning a broken one.
+
+Left alone, the terminal's own path works end to end:
+
+| Chord | What carries it |
+|---|---|
+| `Ctrl+Left/Right` | Alacritty sends `^[[1;5C/D`; oh-my-zsh binds both to word motion |
+| `Ctrl+Delete` | Alacritty sends `^[[3;5~`; oh-my-zsh binds it to `kill-word` |
+| `Ctrl+Backspace` | `alacritty.toml` sends `^W`; terminals cannot tell it from a plain backspace, so it needs the explicit binding |
+| `Ctrl+Shift+C/V` | `alacritty.toml`, copy and paste |
+| `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | `alacritty.toml`, font zoom |
+
+`^W` is also what makes `Ctrl+Backspace` work *inside* tmux. tmux's
+command-prompt (the `rename-window` line) binds `C-w` to `delete-word` and binds
+Meta-Backspace to nothing at all, measured rather than assumed, so `^W` is the
+only payload that deletes a word there.
+
+The last three are Alacritty defaults on Linux and Windows but not on macOS,
+which is why they have to be declared.
 
 ## Install
 
@@ -44,8 +67,8 @@ readable version and `generate.py` produces the verbose one.
 | `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
 | `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | zoom in / out / reset | not in terminals |
-| `Ctrl+Left/Right` (`+Shift`) | `Option+Left/Right` | everywhere, terminals included |
-| `Ctrl+Backspace` / `Ctrl+Delete` | `Option+` same | everywhere |
+| `Ctrl+Left/Right` (`+Shift`) | `Option+Left/Right` | not in terminals |
+| `Ctrl+Backspace` / `Ctrl+Delete` | `Option+` same | not in terminals |
 | `Ctrl+Home` / `Ctrl+End` (`+Shift`) | `Cmd+Up` / `Cmd+Down` | not in terminals |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | `Cmd+Option+Right/Left` | not in terminals |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | same, next / previous tab | not in terminals |
@@ -89,13 +112,11 @@ Three things worth knowing about it:
   Alt position on that board. That asymmetry between keyboards is inherent to
   wanting Super as the mod on one of them.
 - It applies to **every** Option shortcut on that keyboard, not only AeroSpace's.
-  Anything an app binds to Option now wants the Super-position key there. This
-  is easy to mistake for a broken app: the Tampermonkey userscript at
-  `~/Projects/tampermonkey/claude/claude.js` uses `Option+[`, `Option+]` and
-  `Option+E` on claude.ai, and it silently no-ops if you press the Alt-position
-  key, because its handler bails when Command is held. Nothing wrong with it;
-  press Super instead. The upside is consistency: on the Glove80 the Super key
-  is the one modifier for AeroSpace and app Option-chords alike.
+  Anything an app binds to Option wants the Super-position key there instead,
+  and it is easy to mistake that for a broken app rather than a moved key. A
+  second group, `Glove80 in browsers`, buys back the four that are used daily
+  (see below). Everywhere else on that board, press Super where you would have
+  pressed Alt.
 - Both sides are swapped, left and right. The board's layout is non-standard
   (its Ctrl reports as `right_control`), so which side its Super key uses is not
   worth assuming.
@@ -114,6 +135,38 @@ Get the identifiers for another keyboard with:
 ```sh
 karabiner_cli --list-connected-devices
 ```
+
+### Per-keyboard and per-app: giving the Glove80's Alt key back
+
+The swap above puts Command at the Alt position, which is correct for AeroSpace
+and wrong for the handful of app shortcuts that are reached by Alt on every
+other platform. The `Glove80 in browsers` group undoes it for exactly those,
+scoped to `["glove80", "browsers"]` so it needs both the keyboard **and** a
+browser to be frontmost:
+
+| Pressed on the Glove80 | Karabiner emits | Who wants it |
+|---|---|---|
+| `Alt+Shift+D` | `Option+Shift+D` | Dark Reader toggle |
+| `Alt+[` / `Alt+]` | `Option+[` / `Option+]` | `claude.js` previous/next message |
+| `Alt+E` | `Option+E` | `claude.js` edit nearest message |
+
+The result is one gesture on both keyboards: the key labelled Alt, in a browser,
+does the Alt thing. The userscript itself is untouched and still keys off plain
+Option, which is what the MacBook keyboard sends.
+
+This is why a `scope` may be a list. Karabiner ANDs every entry in a
+manipulator's `conditions` array, so `["glove80", "browsers"]` is a
+concatenation of the two condition blocks. `null` is rejected inside a list: it
+contributes nothing but reads as though it widens the scope.
+
+What it costs, on the Glove80 in browsers only: `Cmd+[` / `Cmd+]` back and
+forward (use `Alt+Left` / `Alt+Right`, which the swap turns into `Cmd+Arrow`),
+`Cmd+E`, and `Cmd+Shift+D` bookmark-all-tabs. All three are reachable from the
+menu bar and none is a daily chord.
+
+`Option+Shift+D` also had to be freed on the AeroSpace side: bindings there are
+global and consume the chord, so `alt-shift-d` was eating Dark Reader on **both**
+keyboards. It is now `alt-shift-c`.
 
 ### Chords deliberately left alone
 
@@ -137,7 +190,7 @@ meaning won, because no other platform uses those chords for a launcher:
 | Chord | Now does | The AeroSpace binding moved to |
 |---|---|---|
 | `ctrl+shift+p` | command palette | `alt-i` — Brave incognito |
-| `ctrl+shift+d` | Run and Debug | `alt-shift-d` — cancel a drag-mac drag |
+| `ctrl+shift+d` | Run and Debug | `alt-shift-c` — cancel a drag-mac drag |
 | `ctrl+shift+x` | Extensions | `alt-shift-x` — dismiss notifications |
 
 AeroSpace now has no `ctrl` bindings at all, which is worth keeping that way:
