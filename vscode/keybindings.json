@@ -24,5 +24,80 @@
         "key": "ctrl+alt+c",
         "command": "notebook.cellOutput.copy",
         "when": "notebookEditorFocused"
+    },
+
+    // ---- Integrated terminal: undo Karabiner's Ctrl-to-Cmd translation ----
+    //
+    // Karabiner scopes its letter remaps by frontmost APPLICATION and cannot
+    // see inside one. Alacritty is on its denylist; the terminal panel in here
+    // is not, because to Karabiner this is all just VS Code. So Ctrl+C arrives
+    // at the terminal as Cmd+C and never reaches the shell.
+    //
+    // VS Code's `when` clauses are the only thing in the stack that can tell
+    // the terminal from the editor, so the translation is undone here. These
+    // key off Cmd because Cmd is what Karabiner sends. If Karabiner is off (a
+    // fresh machine with permissions not yet granted) they simply never match,
+    // and the terminal falls back to stock behaviour where Ctrl+C already
+    // works. The fix degrades safely.
+    //
+    // Deliberately NOT taken, because the Cmd meaning is worth more here:
+    //   cmd+v  paste           (Ctrl+V passes straight through in Alacritty too)
+    //   cmd+f  terminal find
+    //   cmd+k  clear terminal  (costs Ctrl+K as kill-line; Ctrl+U and the
+    //                           cursor keys cover it, and taking cmd+k would
+    //                           break VS Code's chord prefix in this pane)
+    //   cmd+p  quick open      (^P is history-previous, which the Up arrow
+    //                           already does, so the shell loses nothing)
+    //   cmd+n  new file        (same, ^N is history-next and Down does it)
+    {
+        // SIGINT, interrupt the foreground job
+        "key": "cmd+c",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u0003" },
+        "when": "terminalFocus"
+    },
+    {
+        // EOF
+        "key": "cmd+d",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u0004" },
+        "when": "terminalFocus"
+    },
+    {
+        // suspend
+        "key": "cmd+z",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u001a" },
+        "when": "terminalFocus"
+    },
+    {
+        // beginning of line
+        "key": "cmd+a",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u0001" },
+        "when": "terminalFocus"
+    },
+    {
+        // delete the previous word. Without this, Ctrl+W in the
+        // terminal CLOSES THE EDITOR.
+        "key": "cmd+w",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u0017" },
+        "when": "terminalFocus"
+    },
+    {
+        // reverse history search
+        "key": "cmd+r",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\u0012" },
+        "when": "terminalFocus"
+    },
+    {
+        // The copy half of the Linux terminal pair, same as alacritty.toml:
+        // Ctrl+C interrupts, Ctrl+Shift+C copies. Karabiner carries the shift
+        // through, so this arrives as cmd+shift+c.
+        "key": "cmd+shift+c",
+        "command": "workbench.action.terminal.copySelection",
+        "when": "terminalFocus && terminalTextSelected"
     }
 ]
