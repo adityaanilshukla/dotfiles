@@ -237,7 +237,15 @@ Add your own by adding a key to `scopes` and referencing it from a group.
 
 Scoping cannot see inside an app: tmux inside Alacritty reads as Alacritty,
 which is what you want, but VS Code's integrated terminal reads as VS Code, so
-the letter remaps do apply in that pane.
+the letter remaps do apply in that pane. `Ctrl+C` arrived there as `Cmd+C` and
+never reached the shell, so it could not interrupt anything.
+
+That one is fixed, but not here. `vscode/keybindings.json` translates the six
+chords a shell actually needs back into their control characters, gated on
+`when: terminalFocus`, which is the only condition in the whole stack that can
+tell the terminal panel from the editor. Karabiner has no equivalent. Anything
+else that embeds a terminal will have the same problem and needs the same kind
+of app-side fix.
 
 ## How enabling works
 
