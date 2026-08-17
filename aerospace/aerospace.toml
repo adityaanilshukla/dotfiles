@@ -8,6 +8,37 @@ start-at-login = true
 default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
 
+# Both OFF so that `split` works, which is what makes alt-v behave like i3's
+# mod+v: mark the focused window, and the NEXT window opened lands below it,
+# leaving its siblings alone.
+#
+# i3 implements that by wrapping the focused window in a new container. So does
+# AeroSpace, but by default it then tidies the tree and deletes any container
+# holding a single child, which is exactly the container `split` just made. The
+# command knows this and refuses outright:
+#
+#   'split' has no effect when 'enable-normalization-flatten-containers'
+#   normalization enabled. My recommendation: keep the normalizations enabled,
+#   and prefer 'join-with' over 'split'.
+#
+# Overriding that recommendation deliberately. join-with is the AeroSpace way
+# and is still bound (alt-shift-v / alt-shift-b), but it is a different gesture:
+# open the window first, then pull it into place. The i3 gesture is to declare
+# the direction first, and that is the muscle memory being kept.
+#
+# What it costs: a container can outlive its contents. Close the window you
+# split away and the now single-child container stays, so the next window opens
+# into it rather than beside. That is i3's behaviour too, so it should feel
+# familiar rather than broken. `aerospace flatten-workspace-tree` resets a
+# workspace whose tree has got away from you.
+#
+# The second normalization force-flips nested containers to the opposite
+# orientation of their parent. Harmless on its own, but it would silently
+# override an explicit `split horizontal` inside a horizontal parent. i3 does no
+# such forcing, so it goes too.
+enable-normalization-flatten-containers = false
+enable-normalization-opposite-orientation-for-nested-containers = false
+
 # Open default apps on their starting workspaces once, at AeroSpace startup.
 # Soft placement — after launch, windows can be moved anywhere freely.
 after-startup-command = [
@@ -38,9 +69,29 @@ preset = 'qwerty'
 
 [mode.main.binding]
 
-# Focus windows (i3 hjkl)
+# Focus windows. Same four keys as the i3 config on brovo, which does not use
+# hjkl: the home row runs j-k-l-semicolon and the directions are laid over it as
+# left-right-up-down.
 alt-j = 'focus left'
 alt-k = 'focus right'
+alt-l = 'focus up'
+alt-semicolon = 'focus down'
+
+# i3 also binds mod+arrows for the same four. Only the vertical pair is mirrored
+# here, and the omission is deliberate rather than an oversight.
+#
+# karabiner/spec.json rewrites ctrl+arrow into OPTION+arrow for word navigation,
+# with shift carried through. AeroSpace bindings are global and consume the
+# chord, so alt-left or alt-right here would silently eat word navigation in
+# every GUI app. Option+Up and Option+Down are emitted by nothing, so they are
+# free to take.
+#
+# They do cost paragraph motion in macOS text fields, which is what Option+Up
+# and Option+Down natively do. Judged worth it: without vertical focus a window
+# split below with alt-v cannot be reached at all.
+alt-down = 'focus down'
+alt-up = 'focus up'
+
 alt-r = 'mode resize'
 
 # Reload config 
@@ -49,9 +100,15 @@ alt-ctrl-r = 'reload-config'
 # Take a screenshot and put it in the clipboard
 alt-shift-s = 'exec-and-forget screencapture -i -c'
 
-# Move windows
+# Move windows. Shift over the same four letters, as in i3. Arrows again only
+# vertical, for the word-selection reason above: ctrl+shift+arrow becomes
+# option+shift+arrow, so alt-shift-left here would eat select-by-word.
 alt-shift-j = 'move left'
 alt-shift-k = 'move right'
+alt-shift-l = 'move up'
+alt-shift-semicolon = 'move down'
+alt-shift-down = 'move down'
+alt-shift-up = 'move up'
 
 # Resize (optional but nice)
 alt-ctrl-h = 'resize width -50'
@@ -59,9 +116,42 @@ alt-ctrl-l = 'resize width +50'
 alt-ctrl-j = 'resize height +50'
 alt-ctrl-k = 'resize height -50'
 
-# Layout toggles
-alt-v = 'join-with right'
-alt-b = 'join-with down'
+# Split direction, exactly i3's mod+h and mod+v. These declare where the NEXT
+# window goes: alt-v then open something and it lands below the focused window,
+# alt-h and it lands beside. Siblings are untouched, which is the whole point.
+# Needs the normalizations disabled at the top of this file.
+alt-h = 'split horizontal'
+alt-v = 'split vertical'
+
+# Container layouts, i3's mod+s and mod+w. AeroSpace has no stacking or tabbed
+# layout by those names; accordion is the equivalent idea, where the focused
+# window takes the space and its siblings collapse to slivers. Vertical
+# accordion reads as i3 stacking, horizontal as tabbed. There are no title bars
+# on the collapsed windows, which is the one real difference.
+alt-s = 'layout v_accordion'
+alt-w = 'layout h_accordion'
+
+# i3 has mod+e for `layout toggle split`. NOT bound here, deliberately.
+# Option+E is the edit-message chord for ~/Projects/tampermonkey/claude/claude.js
+# on claude.ai, and karabiner/spec.json routes the Glove80's Alt key to it too.
+# An AeroSpace binding is global and would consume the chord before the browser
+# ever saw it. Put it on alt-shift-e if you want it:
+#   alt-shift-e = 'layout tiles horizontal vertical'
+#
+# i3's mod+a (focus parent) has no equivalent at all. AeroSpace does not expose
+# focus on containers, only on windows.
+
+# i3's mod+Shift+space. Its mod+space (focus mode_toggle, jump between the
+# tiling and floating sets) has no AeroSpace equivalent and is not bound.
+alt-shift-space = 'layout floating tiling'
+
+# join-with is the AeroSpace-native alternative to split and works the other way
+# round: the window already exists, and this pulls it under a shared parent with
+# its neighbour. No i3 counterpart, kept because it is the better tool when you
+# did not think about layout until after opening the window.
+alt-shift-v = 'join-with right'
+alt-shift-b = 'join-with down'
+
 alt-shift-f = "fullscreen"
 
 # Close window (i3 style) — closes only the focused window; quits the app if it was its last window
@@ -120,6 +210,7 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # here dead. See the ordering note on alt-i above.
 alt-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 
+
 # Dismiss ranger's dn drag window from anywhere, without focusing it first.
 # The window closes itself once a drop lands, so this is for the leftovers: a
 # fumbled drag, or launching it and changing your mind. It needs to be global
@@ -169,13 +260,25 @@ alt-shift-9 = 'move-node-to-workspace 9'
 alt-shift-0 = 'move-node-to-workspace 10'
 
 [mode.resize.binding]
-# Exit resize mode
+# Exit resize mode. i3 takes Return, Escape or mod+r.
+enter = 'mode main'
 esc = 'mode main'
 alt-r = 'mode main'
 
-# Use left/right arrow keys for horizontal resizing
-left = 'resize width -50'   # Left arrow: shrink width
-right = 'resize width +50'  # Right arrow: expand width
+# Same letters as the i3 resize mode, and the same directions on them: j and
+# semicolon change width, k and l change height. i3 uses 10ppt steps; AeroSpace
+# resizes in pixels, so 50 stands in.
+j = 'resize width -50'          # shrink width
+semicolon = 'resize width +50'  # grow width
+k = 'resize height +50'         # grow height
+l = 'resize height -50'         # shrink height
+
+# i3 binds the arrows to the same four. Bare keys inside a mode, so no modifier
+# and nothing for Karabiner to collide with.
+left = 'resize width -50'
+right = 'resize width +50'
+down = 'resize height +50'
+up = 'resize height -50'
 
 # ---------- App Workspace Rules ----------
 
