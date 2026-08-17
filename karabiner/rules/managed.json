@@ -1026,7 +1026,7 @@
       ]
     },
     {
-      "description": "dotfiles: Ctrl+Left/Right word navigation (everywhere, terminals included)",
+      "description": "dotfiles: Ctrl+Left/Right word navigation (not in terminals)",
       "manipulators": [
         {
           "type": "basic",
@@ -1046,6 +1046,20 @@
               "key_code": "left_arrow",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]
@@ -1070,12 +1084,26 @@
                 "left_option"
               ]
             }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
+              ]
+            }
           ]
         }
       ]
     },
     {
-      "description": "dotfiles: Ctrl+Backspace/Delete deletes a word (everywhere)",
+      "description": "dotfiles: Ctrl+Backspace/Delete deletes a word (not in terminals)",
       "manipulators": [
         {
           "type": "basic",
@@ -1092,6 +1120,20 @@
               "key_code": "delete_or_backspace",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]
@@ -1111,6 +1153,20 @@
               "key_code": "delete_forward",
               "modifiers": [
                 "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
               ]
             }
           ]

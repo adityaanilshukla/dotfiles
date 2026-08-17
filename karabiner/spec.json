@@ -84,7 +84,22 @@
     "",
     "Fixing this in the Glove80's ZMK firmware instead would break i3 on Arch,",
     "which wants that same physical key to stay Super. Karabiner is per-machine,",
-    "so the keyboard keeps sending Super and only macOS reinterprets it."
+    "so the keyboard keeps sending Super and only macOS reinterprets it.",
+    "",
+    "Word navigation and delete-word are in the gui scope, NOT everywhere. They",
+    "used to be everywhere, on the theory that Option+Arrow and Option+Backspace",
+    "are useful in a shell. They are not, in this terminal: Alacritty defaults",
+    "option_as_alt to None on macOS, so Option+Arrow arrives as a bare arrow and",
+    "Option+Backspace as a bare delete. Worse, the rewrite was stealing chords",
+    "the terminal already handles correctly on its own. Excluded from terminals,",
+    "the native path works end to end:",
+    "  ctrl+arrow     -> alacritty sends ^[[1;5C/D, oh-my-zsh binds both",
+    "  ctrl+delete    -> alacritty sends ^[[3;5~, oh-my-zsh binds it to kill-word",
+    "  ctrl+backspace -> alacritty.toml sends ^W (terminals cannot tell it from a",
+    "                    plain backspace, so it needs the explicit binding)",
+    "^W is also what makes this work inside tmux: tmux's command-prompt binds C-w",
+    "to delete-word, and binds Meta-Backspace to nothing at all (measured), so a",
+    "rename-window prompt only deletes a word if ^W is what reaches it."
   ],
 
   "scopes": {
@@ -183,8 +198,8 @@
     },
 
     {
-      "description": "Ctrl+Left/Right word navigation (everywhere, terminals included)",
-      "scope": "everywhere",
+      "description": "Ctrl+Left/Right word navigation (not in terminals)",
+      "scope": "gui",
       "mappings": [
         { "from": "left_arrow", "mods": ["control"], "optional": ["shift"], "to": "left_arrow", "to_mods": ["left_option"] },
         { "from": "right_arrow", "mods": ["control"], "optional": ["shift"], "to": "right_arrow", "to_mods": ["left_option"] }
@@ -192,8 +207,8 @@
     },
 
     {
-      "description": "Ctrl+Backspace/Delete deletes a word (everywhere)",
-      "scope": "everywhere",
+      "description": "Ctrl+Backspace/Delete deletes a word (not in terminals)",
+      "scope": "gui",
       "mappings": [
         { "from": "delete_or_backspace", "mods": ["control"], "to": "delete_or_backspace", "to_mods": ["left_option"] },
         { "from": "delete_forward", "mods": ["control"], "to": "delete_forward", "to_mods": ["left_option"] }

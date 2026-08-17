@@ -81,9 +81,15 @@ rw() {
 # Keybinds (non-autosuggest)
 # --------------------
 # Ctrl+Left/Right word navigation used to be bound here as '^[[1;5C' and
-# '^[[1;5D'. Karabiner now rewrites Ctrl+Arrow to Option+Arrow before Alacritty
-# sees it (karabiner/spec.json, "everywhere" scope), so those sequences never
-# arrive and the binds were dead. zsh handles the Option+Arrow form itself.
+# '^[[1;5D'. Removed as redundant, not as broken: oh-my-zsh's key-bindings.zsh
+# already binds both, along with '^[[3;5~' (Ctrl+Delete) to kill-word and '^W'
+# (which alacritty.toml sends for Ctrl+Backspace) to backward-kill-word. Check
+# with: bindkey '^[[1;5C'
+#
+# Karabiner does NOT touch these in a terminal. It briefly did, rewriting
+# Ctrl+Arrow to Option+Arrow everywhere, which broke them: alacritty leaves
+# option_as_alt at None on macOS, so what arrived was a bare arrow key. Those
+# groups are in the "gui" scope now, which excludes terminals.
 
 # --------------------
 # macOS nosleep (replaces systemd-inhibit)
