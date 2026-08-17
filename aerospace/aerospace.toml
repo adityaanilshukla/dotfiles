@@ -77,20 +77,23 @@ alt-k = 'focus right'
 alt-l = 'focus up'
 alt-semicolon = 'focus down'
 
-# i3 also binds mod+arrows for the same four. Only the vertical pair is mirrored
-# here, and the omission is deliberate rather than an oversight.
+# i3 also binds mod+arrows for these four. NOT mirrored, and not by oversight.
+# The letters above are the ones actually used, and every arrow chord costs
+# something real here:
 #
-# karabiner/spec.json rewrites ctrl+arrow into OPTION+arrow for word navigation,
-# with shift carried through. AeroSpace bindings are global and consume the
-# chord, so alt-left or alt-right here would silently eat word navigation in
-# every GUI app. Option+Up and Option+Down are emitted by nothing, so they are
-# free to take.
+#   alt-left / alt-right              karabiner/spec.json rewrites ctrl+arrow
+#   alt-shift-left / alt-shift-right  into OPTION+arrow for word navigation,
+#                                     shift carried through. AeroSpace consumes
+#                                     globally, so these would silently eat word
+#                                     motion and select-by-word in every app.
 #
-# They do cost paragraph motion in macOS text fields, which is what Option+Up
-# and Option+Down natively do. Judged worth it: without vertical focus a window
-# split below with alt-v cannot be reached at all.
-alt-down = 'focus down'
-alt-up = 'focus up'
+#   alt-up / alt-down                 free of Karabiner, but they are what macOS
+#   alt-shift-up / alt-shift-down     text fields use for paragraph motion. Not
+#                                     worth paying for a duplicate of alt-l and
+#                                     alt-semicolon.
+#
+# The bare arrows inside the resize mode below are a different matter: no
+# modifier, nothing global, so they are mirrored there.
 
 alt-r = 'mode resize'
 
@@ -100,15 +103,12 @@ alt-ctrl-r = 'reload-config'
 # Take a screenshot and put it in the clipboard
 alt-shift-s = 'exec-and-forget screencapture -i -c'
 
-# Move windows. Shift over the same four letters, as in i3. Arrows again only
-# vertical, for the word-selection reason above: ctrl+shift+arrow becomes
-# option+shift+arrow, so alt-shift-left here would eat select-by-word.
+# Move windows. Shift over the same four letters, as in i3. No arrow variants,
+# for the reasons in the focus block above.
 alt-shift-j = 'move left'
 alt-shift-k = 'move right'
 alt-shift-l = 'move up'
 alt-shift-semicolon = 'move down'
-alt-shift-down = 'move down'
-alt-shift-up = 'move up'
 
 # Resize (optional but nice)
 alt-ctrl-h = 'resize width -50'
