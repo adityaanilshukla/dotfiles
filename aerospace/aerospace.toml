@@ -123,13 +123,19 @@ alt-ctrl-k = 'resize height -50'
 alt-h = 'split horizontal'
 alt-v = 'split vertical'
 
-# Container layouts, i3's mod+s and mod+w. AeroSpace has no stacking or tabbed
-# layout by those names; accordion is the equivalent idea, where the focused
-# window takes the space and its siblings collapse to slivers. Vertical
-# accordion reads as i3 stacking, horizontal as tabbed. There are no title bars
-# on the collapsed windows, which is the one real difference.
-alt-s = 'layout v_accordion'
-alt-w = 'layout h_accordion'
+# i3's mod+s and mod+w (stacking and tabbed) are NOT bound. AeroSpace's nearest
+# equivalent is accordion, where the focused window takes the container and its
+# siblings collapse to slivers behind it. Tried and dropped: it is not a layout
+# used here, and it was a one-way door. Nothing else in this file returns a
+# container to tiles, so a stray alt-s left a whole workspace looking like the
+# windows were opening on top of each other, with the only way out being
+# `aerospace layout --workspace N --root tiles` from a shell.
+#
+# Ordinary horizontal and vertical tiling is what alt-h and alt-v above already
+# do. If you ever want accordion back, bind it away from a single unshifted
+# letter and pair it with an escape:
+#   alt-shift-a = 'layout v_accordion'
+#   alt-shift-e = 'layout tiles horizontal vertical'
 
 # i3 has mod+e for `layout toggle split`. NOT bound here, deliberately.
 # Option+E is the edit-message chord for ~/Projects/tampermonkey/claude/claude.js
