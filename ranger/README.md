@@ -20,9 +20,15 @@ Required:
 
 - `ranger`
 - A Nerd Font in the terminal, for the devicons glyphs
-- `trash-cli`, for `dT`. On macOS Homebrew this formula is **keg-only**, so its
-  binaries are never linked onto PATH and `rc.conf` calls `trash-put` by its
-  full keg path. macOS also ships its own unrelated `/usr/bin/trash`.
+- `trash-cli`, for `dT`. On macOS Homebrew this formula is **keg-only**, so
+  `brew install` never links it, and `rc.conf` calls `trash-put` by its full
+  keg path so the binding does not depend on shell startup at all. macOS also
+  ships its own unrelated `/usr/bin/trash`, which is the collision that makes
+  the formula keg-only in the first place. `zsh/zshrc` separately prepends
+  `/opt/homebrew/opt/trash-cli/bin` so the commands are reachable by name in an
+  interactive shell; that is what makes `rifle.conf`'s `has trash-put` branch
+  match, and it deliberately shadows `/usr/bin/trash`. `rc.conf` keeps the full
+  path regardless, since it is the more robust form.
 
 Clipboard backend for `yp` / `yd` / `yn` / `y.`:
 
