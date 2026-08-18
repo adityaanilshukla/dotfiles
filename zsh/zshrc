@@ -64,6 +64,23 @@ alias l="ls -CF"
 export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"
 export PATH="$HOME/Scripts:$PATH"
 
+# trash-cli is keg-only on Homebrew, so `brew install` never links it and the
+# shell cannot see trash-put, trash-list, trash-restore or trash-empty. It is
+# keg-only because macOS ships its own unrelated /usr/bin/trash and the two
+# formulae collide on the name. Prepending the keg puts all six binaries on
+# PATH, which also means trash-cli's `trash` now shadows /usr/bin/trash.
+#
+# That shadow is deliberate. The two write to different places: trash-cli uses
+# the freedesktop location ~/.local/share/Trash, /usr/bin/trash uses the Finder
+# trash at ~/.Trash. Everything else here is already on the trash-cli side,
+# ranger's dT (rc.conf) and gT (which cds to ~/.local/share/Trash/files), so
+# letting /usr/bin/trash win would mean `trash foo` put a file somewhere
+# `trash-list` could not see. One trash, matching the Linux side on brovo.
+#
+# Reach the macOS one explicitly with /usr/bin/trash if you ever need Finder to
+# show the file. Uses the opt path, not Cellar, so it survives version bumps.
+export PATH="/opt/homebrew/opt/trash-cli/bin:$PATH"
+
 # --------------------
 # Ranger helper
 # --------------------

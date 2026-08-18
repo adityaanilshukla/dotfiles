@@ -54,7 +54,7 @@ brew "ranger"
 brew "python"
 brew "fzf"                            # readbook book picker + ranger
 brew "fd"                             # fast file search for ranger
-brew "trash-cli"                      # ranger's dT binding (see rc.conf)
+brew "trash-cli"                      # ranger's dT binding (rc.conf); keg-only, zshrc puts it on PATH
 brew "bat"                            # cat with highlighting
 brew "tree"
 brew "dysk"                           # disk usage
