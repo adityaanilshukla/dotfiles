@@ -33,6 +33,27 @@
     "Find a bundle id with: osascript -e 'id of app \"AppName\"'",
     "or use Karabiner-EventViewer > Frontmost Application tab.",
     "",
+    "An app scope can also carry `file_paths`, a list of regexes matched against",
+    "the frontmost application's executable path. Karabiner joins every entry",
+    "across BOTH lists with 'or', so an unless-scope listing both suppresses",
+    "when either one matches.",
+    "",
+    "This is not a convenience: a bundle_identifiers denylist CANNOT exclude an",
+    "app that has no bundle identifier, and a bare unix binary has none. zathura",
+    "is installed by Homebrew as /opt/homebrew/bin/zathura, not as an .app, and",
+    "NSWorkspace reports its bundleIdentifier as null. So it fell through the gui",
+    "denylist and got the full Ctrl+letter to Cmd+letter treatment, which is",
+    "exactly wrong for it: zathura is vim-keyed, like a terminal. ctrl+r (recolor)",
+    "became cmd+r and did nothing, and so did ctrl+d, ctrl+u, ctrl+f and ctrl+b.",
+    "Hence the `/zathura$` entry. It is anchored on the basename rather than the",
+    "full path because zathura is launched three ways here (directly, through",
+    "~/.local/bin/zp, and through online-zathura) and Karabiner may report either",
+    "the Homebrew symlink or the resolved Cellar path, which changes on upgrade.",
+    "",
+    "Fixing this zathura-side was not an option: girara's shortcut parser knows",
+    "<S->, <C-> and <A-> and has no Super modifier, so zathurarc cannot bind the",
+    "cmd+r that Karabiner was sending.",
+    "",
     "Deliberately NOT mapped, because something else already owns the chord:",
     "  ctrl+shift+r  -> vscode/keybindings.json runs all notebook cells",
     "Adding `optional: [\"shift\"]` to r would swallow that before VS Code sees",
@@ -132,6 +153,9 @@
         "^net\\.kovidgoyal\\.kitty$",
         "^com\\.mitchellh\\.ghostty$",
         "^com\\.github\\.wez\\.wezterm$"
+      ],
+      "file_paths": [
+        "/zathura$"
       ]
     },
 

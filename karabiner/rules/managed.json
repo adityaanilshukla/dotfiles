@@ -357,6 +357,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -393,6 +396,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -429,6 +435,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -464,6 +473,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -500,6 +512,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -534,6 +549,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -567,6 +585,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -600,6 +621,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -633,6 +657,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -668,6 +695,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -704,6 +734,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -740,6 +773,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -776,6 +812,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -809,6 +848,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -842,6 +884,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -878,6 +923,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -914,6 +962,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -950,6 +1001,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -986,6 +1040,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1019,6 +1076,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1060,6 +1120,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1096,6 +1159,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1134,6 +1200,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1167,6 +1236,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1208,6 +1280,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1244,6 +1319,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1282,6 +1360,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             },
             {
@@ -1321,6 +1402,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             },
             {
@@ -1366,6 +1450,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1401,6 +1488,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1435,6 +1525,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1469,6 +1562,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1510,6 +1606,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1543,6 +1642,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1576,6 +1678,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1614,6 +1719,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1647,6 +1755,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1680,6 +1791,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1713,6 +1827,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1746,6 +1863,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1779,6 +1899,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1812,6 +1935,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1845,6 +1971,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
@@ -1878,6 +2007,9 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
               ]
             }
           ]
