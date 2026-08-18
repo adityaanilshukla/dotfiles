@@ -31,9 +31,17 @@ def build_conditions(spec: dict) -> dict:
     """Resolve spec.scopes into {name: conditions-list-or-None}.
 
     Two kinds of scope. An app scope ('if'/'unless') keys off the frontmost
-    application and carries `bundle_identifiers`. A device scope ('device_if'/
-    'device_unless') keys off which keyboard the event came from and carries
-    `identifiers` (vendor_id/product_id, or is_built_in_keyboard).
+    application and carries `bundle_identifiers` and/or `file_paths`. A device
+    scope ('device_if'/'device_unless') keys off which keyboard the event came
+    from and carries `identifiers` (vendor_id/product_id, or
+    is_built_in_keyboard).
+
+    An app scope needs at least one of the two lists, and may carry both.
+    Karabiner joins every entry across BOTH lists with 'or', so an unless-scope
+    listing both suppresses when either one matches. `file_paths` exists because
+    a bundle identifier only exists for a real .app: a bare unix binary like
+    zathura reports none at all, and no bundle_identifiers denylist can ever
+    exclude it.
 
     A scope of null means "no conditions", i.e. the rule fires everywhere. That
     is a different thing from a scope with an empty list, which would be a typo,
@@ -56,19 +64,18 @@ def build_conditions(spec: dict) -> dict:
             resolved[name] = [{"type": mode, "identifiers": identifiers}]
             continue
 
-        bundle_ids = scope.get("bundle_identifiers") or []
-        if not bundle_ids:
+        condition: dict = {"type": f"frontmost_application_{mode}"}
+        for key in ("bundle_identifiers", "file_paths"):
+            if scope.get(key):
+                condition[key] = scope[key]
+
+        if len(condition) == 1:
             sys.exit(
-                f"error: scope {name!r} lists no bundle_identifiers. Use null for a "
-                f"rule that should fire everywhere."
+                f"error: scope {name!r} lists neither bundle_identifiers nor "
+                f"file_paths. Use null for a rule that should fire everywhere."
             )
 
-        resolved[name] = [
-            {
-                "type": f"frontmost_application_{mode}",
-                "bundle_identifiers": bundle_ids,
-            }
-        ]
+        resolved[name] = [condition]
     return resolved
 
 

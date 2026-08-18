@@ -8,7 +8,10 @@ PC-style text editing (`Ctrl+C/V/X`, `Ctrl+Arrow` word navigation,
 `fn+F7/F8` volume keys.
 
 **Terminals are excluded from every remap here**, so `Ctrl+C` still sends
-SIGINT in Alacritty, and tmux and Neovim bindings are untouched.
+SIGINT in Alacritty, and tmux and Neovim bindings are untouched. zathura is
+excluded on the same grounds — it is vim-keyed, and `Ctrl+R`, `Ctrl+D` and
+`Ctrl+F` mean recolor and scrolling there, not reload and find. Wherever this
+file says "not in terminals" below, read it as "not in terminals or zathura".
 
 That exclusion is total on purpose, word navigation and delete-word included.
 They were briefly mapped everywhere, on the theory that `Option+Arrow` and
@@ -246,10 +249,49 @@ Or open Karabiner-EventViewer, Frontmost Application tab.
 `scopes` is a named map, and each group picks one by name:
 
 - `everywhere` — no condition at all
-- `gui` — `unless` the listed terminals (the default)
+- `gui` — `unless` the listed terminals, plus zathura (the default)
 - `browsers` — `if` one of the listed browsers
 
 Add your own by adding a key to `scopes` and referencing it from a group.
+
+### Apps with no bundle identifier
+
+A bundle identifier only exists for a real `.app`. A bare unix binary has none,
+so **no `bundle_identifiers` denylist can ever exclude one** — it will always
+fall through and get the mapping.
+
+zathura is the case that bit. Homebrew installs it as `/opt/homebrew/bin/zathura`
+with no bundle at all, so the `gui` denylist did not cover it and every
+`Ctrl+letter` chord was rewritten to `Cmd+letter`. zathura is vim-keyed, so that
+broke `Ctrl+R` (recolor), `Ctrl+D`/`Ctrl+U` (half-page scroll) and
+`Ctrl+F`/`Ctrl+B` (full page) all at once.
+
+The escape hatch is `file_paths`, a sibling of `bundle_identifiers` on any app
+scope. It is a list of regexes matched against the frontmost application's
+executable path, and Karabiner joins every entry across **both** lists with
+`or`, so one `unless` scope can deny by either:
+
+```json
+"gui": {
+  "mode": "unless",
+  "bundle_identifiers": ["^io\\.alacritty$", "..."],
+  "file_paths": ["/zathura$"]
+}
+```
+
+Anchor on the basename, not the full path. zathura is launched three ways here
+(directly, via `zp`, via `online-zathura`), and the Homebrew symlink and the
+resolved Cellar path differ — the latter carrying a version number that changes
+on upgrade.
+
+Check whether an app has a bundle id before assuming it does:
+
+```sh
+osascript -e 'id of app "zathura"'   # errors — there is no app to ask about
+```
+
+Karabiner-EventViewer's Frontmost Application tab shows both fields, and is the
+honest answer when `osascript` cannot find the app at all.
 
 Scoping cannot see inside an app: tmux inside Alacritty reads as Alacritty,
 which is what you want, but VS Code's integrated terminal reads as VS Code, so
@@ -314,3 +356,8 @@ and Nightly too. Confirm the live value in Karabiner-EventViewer.
 
 **Ctrl+C stopped working in my terminal.** Your terminal is missing from the
 `gui` scope's denylist in `spec.json`.
+
+**I added it to the denylist and it still fires.** Check whether the app has a
+bundle identifier at all. If `osascript -e 'id of app "name"'` errors, it is a
+bare binary and `bundle_identifiers` cannot match it — deny it by `file_paths`
+instead. See [Apps with no bundle identifier](#apps-with-no-bundle-identifier).
