@@ -212,7 +212,26 @@ alt-i = 'exec-and-forget open -na "Brave Browser" --args --incognito'
 # Launch ranger
 # ranger with no path arg reads the stale PWD env var (which launchd/open leaves
 # as "/"), so it opened at root instead of home. Pass $HOME explicitly to fix it.
-alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -e ranger "$HOME"'
+#
+# Through `zsh -lic`, not by exec'ing ranger directly. `open` hands the new
+# process the launchd environment, which here is PATH=/usr/bin:/bin and no
+# EDITOR, VISUAL or PAGER at all, and ranger passes that straight down to
+# anything it opens. Measured symptom: opening a markdown file gave a nvim that
+# had loaded the config (colorscheme and all 46 runtimepath entries were there)
+# but could not spawn ltex-ls-plus or marksman, both of which live in
+# /opt/homebrew/bin. Two LSP errors and a "Press ENTER" prompt, which reads as a
+# broken or stock nvim.
+#
+# Both flags are needed and neither is enough:
+#   -l  runs /etc/zprofile, so path_helper puts /opt/homebrew/bin on PATH
+#   -i  runs ~/.zshrc, which prepends the bob nvim dir and ~/.local/bin, and
+#       exports EDITOR and VISUAL
+# Verified from a stripped caller environment: -lc alone has no EDITOR and no
+# bob path, -ic alone has no /opt/homebrew/bin, -lic has all of it.
+#
+# Cost is one full interactive zsh startup, ~0.37s, before ranger appears. The
+# conda hook is lazy-loaded (see zsh/zshrc) so that number is the whole of it.
+alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -e /bin/zsh -lic "exec ranger ~"'
 
 # Dismiss notification banners. killall NotificationCenter (the previous
 # approach here) doesn't actually dismiss anything; it crash-restarts the

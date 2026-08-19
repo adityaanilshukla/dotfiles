@@ -108,18 +108,35 @@ sketchybar --add item volume right \
 # current output (headphones, monitor, built-in). Added after volume so it
 # renders immediately to volume's left, matching the polybar module order.
 #
-# 5s rather than polybar's 2s: the macOS source is system_profiler, which costs
-# ~0.08s of CPU per call against a few milliseconds for pactl. There is no
-# sketchybar event for an output-device change, so polling is the only option.
+# 1s, faster than polybar's 2s, and affordable because audio-sink.sh does the
+# cheap check first: SwitchAudioSource -c (~20ms) reads the device name, and it
+# exits without touching sketchybar unless that name changed since the last
+# tick. The ~130ms system_profiler call that resolves the transport runs only
+# on an actual switch. This used to be 5s of flat system_profiler polling,
+# which meant the glyph could lag a device change by five seconds.
+#
+# There is still no sketchybar event for an output-device change, so this also
+# subscribes to volume_change: switching output almost always moves the
+# reported volume, which fires that event and gets the redraw out before the
+# next poll tick. It is a free head start, not a substitute for polling, and
+# the cheap path makes the extra invocations cost nothing.
+#
 # updates=on for the same reason as wifi: the plugin can hide itself.
 #
 # Click opens the Raycast output picker (benvp/audio-device), which stands in
 # for polybar's pavucontrol and for the rofi sink menu that mod+ctrl+z ran on
 # i3. aerospace.toml binds alt-ctrl-z to the same deeplink.
+# Drop the plugin's change-detection cache first. It lives in /tmp and survives
+# a reload, but a reload rebuilds this item with no icon, so a cache hit on the
+# first tick would skip the redraw and leave the module blank until the next
+# time the output device changed.
+rm -f /tmp/sketchybar_audio_sink
+
 sketchybar --add item audio_sink right \
+           --subscribe audio_sink volume_change system_woke \
            --set audio_sink \
                  updates=on \
-                 update_freq=5 \
+                 update_freq=1 \
                  script="$PLUGIN_DIR/audio-sink.sh" \
                  click_script='open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
