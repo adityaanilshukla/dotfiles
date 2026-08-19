@@ -2,6 +2,23 @@
 # AeroSpace i3-style config
 # =========================
 
+# Version 2 of the config schema. Absent, this defaults to 1, and AeroSpace
+# printed an "outdated" warning on every single reload-config.
+#
+# Exactly one thing changes between 1 and 2. Under version 1 the fallback for
+# persistent-workspaces was inferred from the keybindings, so the ten
+# workspaces bound below stayed alive when their last window closed. Under
+# version 2 that fallback becomes an empty array, and a workspace is destroyed
+# the moment it empties.
+#
+# The list below is therefore not a new preference, it is the inferred value
+# written down. Same ten workspaces the alt-1..alt-0 bindings name. Without it
+# the bump would silently change behaviour: sketchybar draws a number for every
+# workspace that exists, so empty ones would start vanishing from the bar.
+config-version = 2
+
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
 start-at-login = true
 
 # Use alt as mod (closest to i3 mod key feel)
