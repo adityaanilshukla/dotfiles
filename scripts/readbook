@@ -9,8 +9,15 @@
 # The full path is always the second (hidden) field, so selection is
 # unambiguous even when two books share a filename.
 if [[ "${1:-}" == "--list" ]]; then
+  # The formats zathura can actually render here, which is what the two
+  # installed plugins declare: poppler does application/pdf, and mupdf adds
+  # epub, mobipocket, fictionbook and oxps. djvu used to be in this list and
+  # was never openable: nothing registers image/vnd.djvu, so picking one got a
+  # blank window rather than an error. Keep this in step with the `zp` rule in
+  # ranger/rifle.conf, which gates on the same set.
   find "$HOME/Documents" \
-    -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" -o -iname "*.djvu" \) \
+    -type f \( -iname "*.pdf" -o -iname "*.epub" -o -iname "*.mobi" \
+               -o -iname "*.fb2" -o -iname "*.oxps" \) \
     2>/dev/null | while IFS= read -r p; do
       if [[ "${2:-name}" == path ]]; then disp="${p#*/Documents/}"; else disp="${p##*/}"; fi
       printf '%s\t%s\n' "$disp" "$p"

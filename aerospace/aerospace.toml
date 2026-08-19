@@ -202,7 +202,13 @@ alt-p = 'exec-and-forget open -g "raycast://extensions/raycast/clipboard-history
 # deeplink, so the bar glyph and the keybind land in the same place.
 alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
-alt-x = 'exec-and-forget alacritty -e zsh -lc "~/Scripts/readbook; "sleep 0.3'
+# readbook picker. `zsh -lic`, not `-lc`: -l runs /etc/zprofile so path_helper
+# adds /opt/homebrew/bin, and -i runs ~/.zshrc for the bob nvim dir,
+# ~/.local/bin and the EDITOR exports. Same fix as the ranger launcher above,
+# and the same reason: a GUI launch inherits PATH=/usr/bin:/bin and nothing
+# else. This one merely looked fine, because scripts/zp resolves zathura by
+# full path rather than trusting PATH.
+alt-x = 'exec-and-forget alacritty -e zsh -lic "~/Scripts/readbook; "sleep 0.3'
 
 # Launch Alacritty with tmux
 # alt-enter = 'exec-and-forget open -na Alacritty --args -e tmux'
@@ -210,7 +216,9 @@ alt-x = 'exec-and-forget alacritty -e zsh -lc "~/Scripts/readbook; "sleep 0.3'
 # Launch Alacritty 
 alt-enter = 'exec-and-forget open -na Alacritty'
 
-# Launch Firefox
+# Launch a normal Brave window on the Arch homepage. The heading here said
+# Firefox for a long time, left over from the Linux branch where this chord
+# does open Firefox.
 alt-f = 'exec-and-forget open -na "Brave Browser" --args --new-window "https://archlinux.org/"'
 
 # Launch Brave incognito window (plain incognito, never Tor)
