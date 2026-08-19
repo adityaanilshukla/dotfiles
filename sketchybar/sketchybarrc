@@ -2,7 +2,7 @@
 
 # ============================================================================
 # SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
-# Layout: [workspaces 1-10] [front_app]  <center>  [wifi] [timer] [volume] [battery] [clock]
+# Layout: [workspaces 1-10]  <center>  [wifi] [timer] [audio_sink] [volume] [battery] [clock]
 # ============================================================================
 
 export CONFIG_DIR="$HOME/.config/sketchybar"
@@ -102,6 +102,26 @@ sketchybar --add item volume right \
            --set volume \
                  update_freq=1 \
                  script="$PLUGIN_DIR/volume.sh"
+
+# ----- Audio output device (right) -----
+# Port of polybar's [module/audio-sink]: a purple glyph for the category of the
+# current output (headphones, monitor, built-in). Added after volume so it
+# renders immediately to volume's left, matching the polybar module order.
+#
+# 5s rather than polybar's 2s: the macOS source is system_profiler, which costs
+# ~0.08s of CPU per call against a few milliseconds for pactl. There is no
+# sketchybar event for an output-device change, so polling is the only option.
+# updates=on for the same reason as wifi: the plugin can hide itself.
+#
+# Click opens the Raycast output picker (benvp/audio-device), which stands in
+# for polybar's pavucontrol and for the rofi sink menu that mod+ctrl+z ran on
+# i3. aerospace.toml binds alt-ctrl-z to the same deeplink.
+sketchybar --add item audio_sink right \
+           --set audio_sink \
+                 updates=on \
+                 update_freq=5 \
+                 script="$PLUGIN_DIR/audio-sink.sh" \
+                 click_script='open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
 # ----- Timer (right) -----
 # Countdown started via `t <minutes> [b <break_minutes>]` (scripts/t, on PATH

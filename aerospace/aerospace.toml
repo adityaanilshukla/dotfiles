@@ -171,6 +171,20 @@ alt-d = 'exec-and-forget open -g "raycast://extensions/raycast/raycast/launcher"
 # Open Raycast clipboard history
 alt-p = 'exec-and-forget open -g "raycast://extensions/raycast/clipboard-history/clipboard-history"'
 
+# Audio output picker, the macOS answer to i3's mod+ctrl+z, which ran a rofi
+# menu over `pactl list sinks` and set the default with `pactl set-default-sink`.
+# There is no pactl here and no rofi, but the Set Audio Device extension
+# (benvp/audio-device) is the same thing: a filterable list of outputs that
+# switches on Enter. Same chord, same job, one less script to maintain.
+#
+# Safe against karabiner/spec.json, which rewrites Ctrl+Z to Cmd+Z for undo:
+# that rule lists control as mandatory and only shift as optional, so the extra
+# alt here means it does not match and the chord reaches AeroSpace intact.
+#
+# sketchybar/sketchybarrc points the audio_sink module's click at the same
+# deeplink, so the bar glyph and the keybind land in the same place.
+alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/set-output-device"'
+
 alt-x = 'exec-and-forget alacritty -e zsh -lc "~/Scripts/readbook; "sleep 0.3'
 
 # Launch Alacritty with tmux
