@@ -108,6 +108,12 @@ cask "visual-studio-code"             # install.sh installs its extensions
 cask "claude-code"
 
 # ----- Helpers the tracked configs invoke -----
+# The fast path in sketchybar's audio-sink plugin. `SwitchAudioSource -c` reads
+# the current output device in ~20ms, against ~130ms for system_profiler, which
+# is what lets that module poll every second. Optional: the plugin falls back to
+# system_profiler alone if this is missing, just with a laggier glyph.
+brew "switchaudio-osx"                # sketchybar audio-sink plugin fast path
+
 cask "betterdisplay"                  # sketchybar volume plugin + display scaling
 cask "raycast"                        # aerospace alt-d / alt-p bindings
 cask "karabiner-elements"             # keyboard remaps; see karabiner/README.md
