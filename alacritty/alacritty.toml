@@ -1,5 +1,23 @@
-[font]
-size = 20.0
+# The font size is NOT set here. It lives in the imported file below, which
+# scripts/alacritty-font-size regenerates to suit whichever screen is attached:
+# the built-in display and the ultrawide want very different numbers, and the
+# gap is big enough that the wrong one is unusable rather than just annoying.
+#
+# It has to be an import rather than a value here, because an importing file
+# wins over everything it imports. Verified: with `size = 20` here and 15 in
+# the import, the window came up at 20. So a size here would silently make the
+# generated file dead weight.
+#
+# Alacritty watches imported files too, not just this one, so a regenerated
+# file re-sizes every window already open, no restart. Also verified: editing
+# only the import took a running window from 11 to 15.
+#
+# If the generated file is missing, alacritty skips it and falls back to its
+# own default of 11.25, which is tiny. install.sh writes it, and sketchybar
+# regenerates it at every startup, so that state does not last. Regenerate by
+# hand any time with: alacritty-font-size
+[general]
+import = ["~/.config/alacritty/font-size.toml"]
 
 [font.normal]
 family = "Hack Nerd Font"

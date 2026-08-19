@@ -187,6 +187,12 @@ files=(
   # X11-only. Needs the venv built below.
   "scripts/drag-mac:$HOME/.local/bin/drag-mac"
 
+  # alacritty font size per screen. Run by sketchybar's display_change event
+  # (sketchybar/plugins/alacritty-font.sh) and by hand after changing the two
+  # sizes inside it. Reads scripts/display-info.swift from beside itself, which
+  # is why the link target keeps the same basename.
+  "scripts/alacritty-font-size:$HOME/.local/bin/alacritty-font-size"
+
   # VS Code (macOS config path)
   "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"
   "vscode/keybindings.json:$HOME/Library/Application Support/Code/User/keybindings.json"
@@ -200,6 +206,18 @@ dirs=(
   "aerospace:$HOME/.config/aerospace"
   "ranger:$HOME/.config/ranger"
 )
+
+# --- alacritty font size --------------------------------------------------
+# alacritty.toml deliberately sets no font size; it imports one from
+# ~/.config/alacritty/font-size.toml, which this script generates to suit
+# whichever screen is attached. Generate it now, because until it exists
+# alacritty falls back to its own default of 11.25, which is unreadably small
+# on both screens here. sketchybar regenerates it on every display change.
+if [[ -x "$DOTFILES_DIR/scripts/alacritty-font-size" ]]; then
+  echo "Setting alacritty font size for the current display..."
+  "$DOTFILES_DIR/scripts/alacritty-font-size" \
+    || echo "  couldn't set the alacritty font size — run alacritty-font-size by hand."
+fi
 
 # --- git hooks ------------------------------------------------------------
 # Hooks live in .git/hooks, which git does not track, so they never arrive with
@@ -303,6 +321,13 @@ echo "  - macfuse needs a kernel extension approved in System Settings, then a"
 echo "    reboot."
 echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"
 echo "    once on this machine to mint its Turso token."
+echo "  - Install the Raycast extension 'Set Audio Device' (benvp/audio-device)."
+echo "    aerospace's alt-ctrl-z and the sketchybar audio glyph both deeplink"
+echo "    straight into it, and both do nothing until it is installed:"
+echo "      open 'raycast://extensions/benvp/audio-device'"
+echo "  - Import $DOTFILES_DIR/vimium_c-*.json into Vimium C (Options > Backup"
+echo "    and restore). The extension keeps its settings in browser storage, so"
+echo "    the file in this repo is a backup, not a live config."
 echo "  - Browser-side keyboard config lives in the browser profile, not on disk:"
 echo "    set Dark Reader to Alt+Shift+D in about:addons > Manage Extension"
 echo "    Shortcuts, and paste the userscripts from ~/Projects/tampermonkey into"

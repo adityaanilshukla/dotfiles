@@ -37,6 +37,11 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
   self-tests it. Self-healing: a Homebrew python upgrade breaks a venv, so it
   checks whether the venv can actually import its frameworks, not merely
   whether the directory exists.
+- **Alacritty font size** — writes `~/.config/alacritty/font-size.toml` to suit
+  the screen currently attached. `alacritty.toml` sets no size of its own, it
+  imports that file, so without this step alacritty falls back to its own
+  default of 11.25 and every terminal is unreadably small. Regenerated
+  afterwards by sketchybar whenever a monitor is plugged in or unplugged.
 - **Symlinks** every tracked config into place, and the git hooks.
 - **Starts** the sketchybar and syncthing services.
 - **VS Code extensions** and the macOS `defaults`.
@@ -55,6 +60,8 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 | `tailscale up` | per-device auth; links this machine to `brovo` |
 | `make -C ~/Projects/online-zathura join` | mints this device's Turso token for reading-state sync |
 | Import your **GPG key**, then `scripts/secrets.sh decrypt` | The private key is deliberately not in this repo. Without it `secrets.gpg` cannot be opened. |
+| Install the Raycast extension **Set Audio Device** (`benvp/audio-device`): `open 'raycast://extensions/benvp/audio-device'` | AeroSpace's `alt-ctrl-z` and the sketchybar audio glyph both deeplink into it. Until it is installed, both silently do nothing. |
+| Import `vimium_c-*.json` into **Vimium C** (Options > Backup and restore) | The extension stores its settings in browser storage. The file in this repo is a backup, not a live config. |
 | Set **Dark Reader** to `Alt+Shift+D` in `about:addons` > Manage Extension Shortcuts | Browser extension shortcuts live in the Firefox profile, not on disk. `karabiner/spec.json` routes the Glove80's Alt key to that chord, but the chord itself has to be registered here first. |
 | Paste the **Tampermonkey** userscripts from `~/Projects/tampermonkey` | Tampermonkey stores its own copy in browser storage. There is no `@require file://`, so editing the files on disk changes nothing until you copy them across. `claude/claude.js` is the one the Glove80 Alt chords drive. |
 

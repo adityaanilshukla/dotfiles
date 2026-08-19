@@ -168,5 +168,31 @@ sketchybar --add item wifi right \
                  update_freq=30 \
                  script="$PLUGIN_DIR/wifi.sh"
 
+# ----- Alacritty font size (no visual item) -----
+# The built-in display and the ultrawide want very different alacritty font
+# sizes. scripts/alacritty-font-size measures which screen is attached and
+# regenerates ~/.config/alacritty/font-size.toml, which alacritty.toml imports
+# and alacritty live-reloads into every open window.
+#
+# sketchybar is here purely as the event source. display_change is the only
+# ready-made notification on this machine for a monitor being plugged in or
+# unplugged, and the bar is already running, so this costs no new daemon and no
+# polling. system_woke too, since a dock can change while the lid is shut.
+#
+# updates=on is mandatory, not decoration: this item is never drawn, and the
+# default updates=when_shown gates subscribed events on the item being visible,
+# so with the default it would receive nothing, ever. Same trap the wifi item
+# hit, where a self-hidden item could never run its own script again.
+sketchybar --add item alacritty_font right \
+           --subscribe alacritty_font display_change system_woke \
+           --set alacritty_font \
+                 drawing=off \
+                 updates=on \
+                 script="$PLUGIN_DIR/alacritty-font.sh"
+
+# Once at startup, so a config that went missing is rebuilt without waiting for
+# the next dock. Absolute path: launchd gives this process PATH=/usr/bin:/bin.
+"$HOME/.local/bin/alacritty-font-size" 2>/dev/null || true
+
 # ----- Finalize -----
 sketchybar --update
