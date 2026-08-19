@@ -51,7 +51,7 @@ Optional:
 | --- | --- |
 | `yp` / `yd` / `yn` / `y.` | Yank path / dir / name / name-without-ext to clipboard, with statusbar notification |
 | `dn` | Drag the selection out to another app |
-| `r` | Stock open-with picker. For any format zathura can open (pdf, epub, mobi, fb2, oxps) the list includes `zp`, which opens it with no reading state stored (see `rifle.conf`). The list ranger draws shows each rule's command, never its label, so the row reads `3 \| "$HOME/.local/bin/zp" "$@"` and gives no hint that `zp` is a name you can type. Both the label and the number work. |
+| `r` | Stock open-with picker. Names that work on any file: `nvim`, `editor`, `pager`, `open`, `brave`, `trash`. On any format zathura can open (pdf, epub, mobi, fb2, oxps) the list also includes `zp`, which opens it with no reading state stored (see `rifle.conf`). The list ranger draws shows each rule's command, never its label, so the row reads `3 \| "$HOME/.local/bin/zp" "$@"` and gives no hint that `zp` is a name you can type. Both the label and the number work. |
 | `<C-r>` | `reset`. Re-reads `rifle.conf`, which nothing else does; see Notes. |
 | `cW` | Rename via sudo |
 | `dT` | Move selection to trash |
@@ -59,6 +59,23 @@ Optional:
 | `g{P,C,S,e,M,p,D,b,l,i,…}` | Quick-cd shortcuts, see `rc.conf` for the full list |
 
 ## Notes
+
+- **An unconditioned rule becomes the default for every file.** rifle takes
+  the first matching rule as the default action, so a rule with no `ext` or
+  `mime` condition, placed early, wins for everything. The Brave rule was
+  written that way, at the top, purely so `r` then `brave` would work on any
+  file. The side effect was that plain Enter opened Brave for markdown, python,
+  json and plain text. Label-only openers belong at the bottom of the file
+  where they cannot win a default; `nvim`, `brave` and `zp` all live there now.
+
+- **Neither `$EDITOR` nor `$VISUAL` is guaranteed to be set.** `zsh/zshrc`
+  exports both, but the `alt-n` launcher is `open -na Alacritty --args ... -e
+  ranger`, which execs ranger with no shell in between, so zshrc never runs.
+  Measured on a clean launch: no EDITOR, no VISUAL, no PAGER, and `PATH` is
+  just `/usr/bin:/bin`, which has no nvim in it either. The stock
+  `${VISUAL:-$EDITOR} -- "$@"` then expands to `-- somefile` and opening a text
+  file silently does nothing. The rules here fall back to nvim's full bob path,
+  same reasoning as `rc.conf` calling `trash-put` by full keg path.
 
 - **A label only exists for files a rule matches.** rifle considers only the
   rules whose conditions fit the selected file, so `r` then `zp` on an epub
