@@ -51,13 +51,41 @@ Optional:
 | --- | --- |
 | `yp` / `yd` / `yn` / `y.` | Yank path / dir / name / name-without-ext to clipboard, with statusbar notification |
 | `dn` | Drag the selection out to another app |
-| `r` | Stock open-with picker. For a PDF the list includes `zp`, which opens it in zathura with no reading state stored (see `rifle.conf`). |
+| `r` | Stock open-with picker. For any format zathura can open (pdf, epub, mobi, fb2, oxps) the list includes `zp`, which opens it with no reading state stored (see `rifle.conf`). The list ranger draws shows each rule's command, never its label, so the row reads `3 \| "$HOME/.local/bin/zp" "$@"` and gives no hint that `zp` is a name you can type. Both the label and the number work. |
+| `<C-r>` | `reset`. Re-reads `rifle.conf`, which nothing else does; see Notes. |
 | `cW` | Rename via sudo |
 | `dT` | Move selection to trash |
 | `gT` | cd to trash dir |
 | `g{P,C,S,e,M,p,D,b,l,i,…}` | Quick-cd shortcuts, see `rc.conf` for the full list |
 
 ## Notes
+
+- **A label only exists for files a rule matches.** rifle considers only the
+  rules whose conditions fit the selected file, so `r` then `zp` on an epub
+  reported `Label 'zp' is undefined` for as long as the rule read `ext pdf`.
+  The message is easy to misread: it means undefined *for this file*, not
+  undefined in the config. When a label works on one file type and not another,
+  check the rule's `ext` list before anything else.
+
+- **`rifle.conf` is read once, at startup.** ranger builds its Rifle object in
+  `core/fm.py` and calls `reload_config()` there and nowhere else; neither
+  `Rifle.execute` nor `list_commands` ever re-reads the file. So a ranger
+  window that was already open when `rifle.conf` changed keeps serving the
+  rules it parsed at launch, for as long as that window lives. Editing the file
+  changes nothing in it, and neither does `R`, which is bound to `reload_cwd`
+  here and does not touch rifle.
+
+  This is what bit `dT` once: it was reported broken against a long-lived
+  ranger that predated the fix, and it "fixed itself" when that window was
+  eventually restarted. Worth ruling out early, but rule it out by restarting
+  and retrying, not by assuming, since a rule that never matched the file in
+  the first place looks identical from the outside.
+
+  `Ctrl+R` (`reset`) re-reads it in place. Reach for that after editing
+  `rifle.conf`, and after any branch switch, since `~/.config/ranger` is a
+  symlink into this repo and the checked-out branch *is* the live config. The
+  `post-checkout` hook warns about the branch half of that; nothing can warn
+  about the already-running-window half.
 
 - The `yank` command in `commands.py` overrides the stock one. It notifies on
   success and, inside tmux, falls back to tmux's server-global `DISPLAY` /
