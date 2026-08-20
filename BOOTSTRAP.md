@@ -61,6 +61,7 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 | `make -C ~/Projects/online-zathura join` | mints this device's Turso token for reading-state sync |
 | Import your **GPG key**, then `scripts/secrets.sh decrypt` | The private key is deliberately not in this repo. Without it `secrets.gpg` cannot be opened. |
 | Install the Raycast extension **Set Audio Device** (`benvp/audio-device`): `open 'raycast://extensions/benvp/audio-device'` | AeroSpace's `alt-ctrl-z` and the sketchybar audio glyph both deeplink into it. Until it is installed, both silently do nothing. |
+| Install the Raycast extension **Night Light** (`devmoath/night-light`): `open 'raycast://extensions/devmoath/night-light'` | macOS has no CLI for Night Shift, so `scripts/nightlight` is a wrapper around this extension. The `alt-x` launcher's nightlight entry does nothing until it is installed. |
 | Import `vimium_c-*.json` into **Vimium C** (Options > Backup and restore) | The extension stores its settings in browser storage. The file in this repo is a backup, not a live config. |
 | Set **Dark Reader** to `Alt+Shift+D` in `about:addons` > Manage Extension Shortcuts | Browser extension shortcuts live in the Firefox profile, not on disk. `karabiner/spec.json` routes the Glove80's Alt key to that chord, but the chord itself has to be registered here first. |
 | Paste the **Tampermonkey** userscripts from `~/Projects/tampermonkey` | Tampermonkey stores its own copy in browser storage. There is no `@require file://`, so editing the files on disk changes nothing until you copy them across. `claude/claude.js` is the one the Glove80 Alt chords drive. |
@@ -79,6 +80,12 @@ a `sudo` password and fails non-interactively. Observed with WhatsApp and
 Outlook. To hand ownership to brew: `brew install --cask --adopt <name>`.
 Manually installed fonts are worse: a version mismatch can leave brew having
 deleted some faces before it aborts. Neither affects a genuinely fresh machine.
+
+**`~/Scripts` is the `alt-x` menu.** The launcher lists that directory and runs
+what you pick, exactly as the i3 version does on Arch, so anything symlinked in
+there becomes a menu entry and nothing else needs editing. `install.sh` decides
+what goes in; the launcher itself lives in `~/.local/bin` so it does not list
+itself. Support files can sit alongside as dotfiles, which `ls` skips.
 
 **Deliberately not tracked:** qbittorrent (`install.sh` still de-quarantines it
 if installed by hand, since its cask is ad-hoc signed), Discord, and

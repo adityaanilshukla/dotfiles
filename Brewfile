@@ -52,7 +52,7 @@ brew "ranger"
 # drag-mac venv (see install.sh) needs a python3 that is actually guaranteed
 # to be here.
 brew "python"
-brew "fzf"                            # readbook book picker + ranger
+brew "fzf"                            # alt-x launcher menu, readbook picker, ranger
 brew "fd"                             # fast file search for ranger
 brew "trash-cli"                      # ranger's dT binding (rc.conf); keg-only, zshrc puts it on PATH
 brew "bat"                            # cat with highlighting

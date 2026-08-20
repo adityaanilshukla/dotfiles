@@ -170,8 +170,13 @@ files=(
   # Karabiner is deliberately absent here: karabiner.json is generated and
   # merged by karabiner/install.sh, not symlinked. See karabiner/README.md.
 
-  # zathura launcher — aerospace's alt-x binding runs ~/Scripts/readbook.
+  # ~/Scripts is the alt-x launcher's menu: whatever is linked in here is what
+  # it offers. Keep that in mind before adding to it.
   "scripts/readbook:$HOME/Scripts/readbook"
+
+  # Night Shift toggle, a thin wrapper over the Raycast extension so the
+  # launcher has a file to list. Needs devmoath/night-light installed.
+  "scripts/nightlight:$HOME/Scripts/nightlight"
 
   # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
   "scripts/t:$HOME/.local/bin/t"
@@ -182,6 +187,10 @@ files=(
 
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
+
+  # the alt-x launcher itself. Deliberately NOT in ~/Scripts, or it would list
+  # itself in its own menu.
+  "scripts/launcher:$HOME/.local/bin/launcher"
 
   # macOS drag source — ranger's dn binding runs this, since dragon-drop is
   # X11-only. Needs the venv built below.
@@ -325,6 +334,10 @@ echo "  - Install the Raycast extension 'Set Audio Device' (benvp/audio-device).
 echo "    aerospace's alt-ctrl-z and the sketchybar audio glyph both deeplink"
 echo "    straight into it, and both do nothing until it is installed:"
 echo "      open 'raycast://extensions/benvp/audio-device'"
+echo "  - Install the Raycast extension 'Night Light' (devmoath/night-light)."
+echo "    The alt-x launcher's nightlight entry is a wrapper around it, and"
+echo "    does nothing at all until it is installed:"
+echo "      open 'raycast://extensions/devmoath/night-light'"
 echo "  - Import $DOTFILES_DIR/vimium_c-*.json into Vimium C (Options > Backup"
 echo "    and restore). The extension keeps its settings in browser storage, so"
 echo "    the file in this repo is a backup, not a live config."

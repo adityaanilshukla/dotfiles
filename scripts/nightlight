@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# The macOS half of the Linux ~/Scripts/nightlight. There, redshift is driven
+# directly and the script owns the state file; here Night Shift is a system
+# feature with no supported CLI, so the toggle is handed to the Raycast
+# extension devmoath/night-light, which knows how to talk to it.
+#
+# That makes this a two-line script whose only job is to be a file in
+# ~/Scripts, because that is what the launcher lists. A Raycast deeplink is not
+# something `ls` can find.
+#
+# `open -g` keeps the toggle in the background so focus stays where it is; the
+# extension runs its command and Raycast never comes to the front. Nothing is
+# printed and nothing waits, so the launcher window closes immediately.
+#
+# Silently does nothing until the extension is installed:
+#   open 'raycast://extensions/devmoath/night-light'
+
+exec /usr/bin/open -g 'raycast://extensions/devmoath/night-light/toggle-night-shift'
