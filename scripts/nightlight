@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Night Shift toggle, the ~/Scripts entry that the alt-x launcher lists. The
+# Linux script of this name drives redshift and owns a state file; here the
+# work is done by the nightlight CLI (smudge/smudge/nightlight), which is
+# already in the Brewfile and talks to CoreBrightness directly. No UI appears
+# and nothing is launched.
+#
+# Two things about the name, which is deliberately the same as the CLI's:
+#
+#   1. ~/Scripts comes before /opt/homebrew/bin on PATH (zsh/zshrc), so this
+#      file shadows the binary it wraps. That is harmless only because it
+#      forwards every argument, so `nightlight status`, `nightlight temp 40`
+#      and the rest still behave exactly as the CLI documents.
+#   2. The absolute path below is mandatory. A bare `nightlight` here would
+#      find this script again and recurse.
+#
+# Called with no arguments, which is what the launcher does, the CLI toggles.
+
+CLI=/opt/homebrew/bin/nightlight
+
+# Bootstrap on a fresh machine can reach the symlinks before the tap is
+# installed. Say so rather than closing the launcher window on a blank error.
+if [ ! -x "$CLI" ]; then
+  printf 'nightlight: %s missing; re-run install.sh\n' "$CLI" >&2
+  sleep 3
+  exit 1
+fi
+
+exec "$CLI" "$@"

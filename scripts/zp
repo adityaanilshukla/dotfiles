@@ -14,7 +14,7 @@
 # The config dir is untouched, so zathurarc theming still applies. Cost: no
 # page-resume for this document, which is the point.
 #
-# Takes a path, so unlike readbook it works on files anywhere, not only the
+# Takes a path, so unlike library it works on files anywhere, not only the
 # books under ~/Documents.
 
 set -u
@@ -29,7 +29,7 @@ position, no bookmarks, nothing pushed to Turso. Relative paths are fine.
   -h, --help   show this message
 
 For a synced read, where the page position is remembered and follows you
-across machines, use `readbook` or `online-zathura` instead.
+across machines, use `library` or `online-zathura` instead.
 EOF
 }
 
@@ -43,7 +43,7 @@ for f in "$@"; do
 done
 
 # --- environment ---
-# Usually run from an interactive shell, but readbook execs it too and a GUI
+# Usually run from an interactive shell, but library execs it too and a GUI
 # launch inherits no environment, so resolve everything defensively.
 ZATHURA="${ZATHURA:-$(command -v zathura || true)}"
 ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
@@ -80,7 +80,7 @@ fi
 # --- launch ---
 TMPDATA=$(mktemp -d "${TMPDIR:-/tmp}"/zp.XXXXXX) || exit 1
 
-# Detached, so the shell (or the alacritty window readbook runs in) is free
+# Detached, so the shell (or the alacritty window library runs in) is free
 # immediately and nohup keeps zathura alive when that terminal closes. The temp
 # dir is removed by the same wrapper once zathura exits. Arguments are passed
 # positionally so paths with spaces survive and the inner shell expands nothing

@@ -80,6 +80,12 @@ Outlook. To hand ownership to brew: `brew install --cask --adopt <name>`.
 Manually installed fonts are worse: a version mismatch can leave brew having
 deleted some faces before it aborts. Neither affects a genuinely fresh machine.
 
+**`~/Scripts` is the `alt-x` menu.** The launcher lists that directory and runs
+what you pick, exactly as the i3 version does on Arch, so anything symlinked in
+there becomes a menu entry and nothing else needs editing. `install.sh` decides
+what goes in; the launcher itself lives in `~/.local/bin` so it does not list
+itself. Support files can sit alongside as dotfiles, which `ls` skips.
+
 **Deliberately not tracked:** qbittorrent (`install.sh` still de-quarantines it
 if installed by hand, since its cask is ad-hoc signed), Discord, and
 Progress-tracker.

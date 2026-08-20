@@ -89,7 +89,7 @@ if [[ ! -d "$NVIM_CONFIG_DIR" ]]; then
 fi
 
 # --- online-zathura -------------------------------------------------------
-# Reading-state sync used by scripts/readbook. It's its own repo, built with
+# Reading-state sync used by scripts/library. It's its own repo, built with
 # its Makefile into ~/.local/bin. Needs `go` (Brewfile). Actual Turso sync also
 # needs a one-time `make join` per machine to mint this device's token — that
 # step is manual because it writes credentials.
@@ -170,18 +170,28 @@ files=(
   # Karabiner is deliberately absent here: karabiner.json is generated and
   # merged by karabiner/install.sh, not symlinked. See karabiner/README.md.
 
-  # zathura launcher — aerospace's alt-x binding runs ~/Scripts/readbook.
-  "scripts/readbook:$HOME/Scripts/readbook"
+  # ~/Scripts is the alt-x launcher's menu: whatever is linked in here is what
+  # it offers. Keep that in mind before adding to it.
+  "scripts/library:$HOME/Scripts/library"
+
+  # Night Shift toggle. A pass-through to the nightlight CLI from the Brewfile,
+  # which exists so the launcher has a file to list; ~/Scripts is not something
+  # a brew binary lands in.
+  "scripts/nightlight:$HOME/Scripts/nightlight"
 
   # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
   "scripts/t:$HOME/.local/bin/t"
 
   # zathura, privately: open any document with no reading state stored and
-  # nothing synced to Turso. Also what readbook's ctrl-o hands off to.
+  # nothing synced to Turso. Also what library's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
+
+  # the alt-x launcher itself. Deliberately NOT in ~/Scripts, or it would list
+  # itself in its own menu.
+  "scripts/launcher:$HOME/.local/bin/launcher"
 
   # macOS drag source — ranger's dn binding runs this, since dragon-drop is
   # X11-only. Needs the venv built below.

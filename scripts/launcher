@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# The common-commands launcher, bound to alt-x. A port of the four-line i3
+# version:
+#
+#   selected=$(ls ~/Scripts | rofi -dmenu -i -p "Run")
+#   [ -n "$selected" ] && bash ~/Scripts/"$selected"
+#
+# The contract is the same and worth keeping: the directory IS the menu. There
+# is no list to maintain here, so a new command is a new file in ~/Scripts and
+# nothing else. Support files stay out of the menu by starting with a dot,
+# since `ls` without -a skips them.
+#
+# rofi has no macOS equivalent, so fzf stands in. It is already a dependency
+# (library's book picker, ranger), and the shape of the pipe is unchanged. The
+# visible difference is that this draws inside a terminal window rather than
+# floating over the screen, because alt-x opens an Alacritty window to hold it.
+
+set -euo pipefail
+
+SCRIPTS_DIR="$HOME/Scripts"
+
+# GUI keybind invocations inherit PATH=/usr/bin:/bin, so fzf is not
+# necessarily findable. aerospace's alt-x runs this under `zsh -lic`, which
+# fixes that, but the guard makes the failure legible instead of a window that
+# blinks out.
+if ! command -v fzf >/dev/null 2>&1; then
+  printf 'launcher: fzf not on PATH\n' >&2
+  sleep 3
+  exit 1
+fi
+
+[ -d "$SCRIPTS_DIR" ] || { printf 'launcher: no %s\n' "$SCRIPTS_DIR" >&2; sleep 3; exit 1; }
+
+# --no-sort keeps ls's alphabetical order rather than fzf's match ranking, so
+# entries sit where muscle memory expects them until you start typing.
+SELECTED=$(ls "$SCRIPTS_DIR" | fzf -i --no-sort --reverse --prompt='Run ' \
+  --header='enter: run   esc: cancel') || exit 0
+
+[ -n "$SELECTED" ] || exit 0
+
+TARGET="$SCRIPTS_DIR/$SELECTED"
+[ -x "$TARGET" ] || { printf 'launcher: not executable: %s\n' "$TARGET" >&2; sleep 3; exit 1; }
+
+# exec, so the chosen command inherits this terminal. That matters for the
+# entries that are themselves interactive: library draws its own fzf picker in
+# this same window once the menu is gone.
+exec "$TARGET"
