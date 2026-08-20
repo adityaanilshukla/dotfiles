@@ -203,9 +203,9 @@ alt-p = 'exec-and-forget open -g "raycast://extensions/raycast/clipboard-history
 alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
 # Common-commands launcher, the port of i3's `ls ~/Scripts | rofi -dmenu`. It
-# lists ~/Scripts and runs what you pick, so this chord is no longer the
-# readbook shortcut specifically; readbook is simply one of the entries. Adding
-# a command means adding a file to ~/Scripts, not editing this line. See
+# lists ~/Scripts and runs what you pick, so this chord is no longer a shortcut
+# to one command; the book picker is simply one of the entries. Adding a
+# command means adding a file to ~/Scripts, not editing this line. See
 # scripts/launcher.
 #
 # `zsh -lic`, not `-lc`: -l runs /etc/zprofile so path_helper adds
@@ -213,7 +213,7 @@ alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/s
 # and the EDITOR exports. Same fix as the ranger launcher above, and the same
 # reason: a GUI launch inherits PATH=/usr/bin:/bin and nothing else. The
 # launcher needs fzf from /opt/homebrew/bin before it can draw anything, and
-# readbook needs the rest of it once picked.
+# library needs the rest of it once picked.
 alt-x = 'exec-and-forget alacritty -e zsh -lic "~/.local/bin/launcher; "sleep 0.3'
 
 # Launch Alacritty with tmux

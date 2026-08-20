@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
 
-# The macOS half of the Linux ~/Scripts/nightlight. There, redshift is driven
-# directly and the script owns the state file; here Night Shift is a system
-# feature with no supported CLI, so the toggle is handed to the Raycast
-# extension devmoath/night-light, which knows how to talk to it.
+# Night Shift toggle, the ~/Scripts entry that the alt-x launcher lists. The
+# Linux script of this name drives redshift and owns a state file; here the
+# work is done by the nightlight CLI (smudge/smudge/nightlight), which is
+# already in the Brewfile and talks to CoreBrightness directly. No UI appears
+# and nothing is launched.
 #
-# That makes this a two-line script whose only job is to be a file in
-# ~/Scripts, because that is what the launcher lists. A Raycast deeplink is not
-# something `ls` can find.
+# Two things about the name, which is deliberately the same as the CLI's:
 #
-# `open -g` keeps the toggle in the background so focus stays where it is; the
-# extension runs its command and Raycast never comes to the front. Nothing is
-# printed and nothing waits, so the launcher window closes immediately.
+#   1. ~/Scripts comes before /opt/homebrew/bin on PATH (zsh/zshrc), so this
+#      file shadows the binary it wraps. That is harmless only because it
+#      forwards every argument, so `nightlight status`, `nightlight temp 40`
+#      and the rest still behave exactly as the CLI documents.
+#   2. The absolute path below is mandatory. A bare `nightlight` here would
+#      find this script again and recurse.
 #
-# Silently does nothing until the extension is installed:
-#   open 'raycast://extensions/devmoath/night-light'
+# Called with no arguments, which is what the launcher does, the CLI toggles.
 
-exec /usr/bin/open -g 'raycast://extensions/devmoath/night-light/toggle-night-shift'
+CLI=/opt/homebrew/bin/nightlight
+
+# Bootstrap on a fresh machine can reach the symlinks before the tap is
+# installed. Say so rather than closing the launcher window on a blank error.
+if [ ! -x "$CLI" ]; then
+  printf 'nightlight: %s missing; re-run install.sh\n' "$CLI" >&2
+  sleep 3
+  exit 1
+fi
+
+exec "$CLI" "$@"

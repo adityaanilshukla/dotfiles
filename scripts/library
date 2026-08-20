@@ -40,7 +40,7 @@ BOOK_ARG=""
 
 usage() {
   cat <<'EOF'
-usage: readbook [-p|--private] [FILE]
+usage: library [-p|--private] [FILE]
 
   (no args)        fzf-pick a book under ~/Documents and open it synced
   -p, --private    open without sync: no reading state is stored anywhere
@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
     -p|--private) PRIVATE=1 ;;
     -h|--help)    usage; exit 0 ;;
     --)           shift; BOOK_ARG="${1:-}"; break ;;
-    -*)           printf 'readbook: unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    -*)           printf 'library: unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     *)            BOOK_ARG="$1" ;;
   esac
   shift
@@ -88,7 +88,7 @@ export ZATHURA_PLUGINS_PATH="$PDF_POPPLER:$PDF_MUPDF"
 # Skipped entirely when a FILE was given on the command line.
 if [[ -n "$BOOK_ARG" ]]; then
   BOOK="$BOOK_ARG"
-  [[ -f "$BOOK" ]] || { printf 'readbook: no such file: %s\n' "$BOOK" >&2; exit 1; }
+  [[ -f "$BOOK" ]] || { printf 'library: no such file: %s\n' "$BOOK" >&2; exit 1; }
 else
   # The list shows each book's filename. Press Tab to switch the whole list to
   # show paths relative to ~/Documents instead, so you can fuzzy-match on a
@@ -135,7 +135,7 @@ fi
 if (( PRIVATE )); then
   ZP="${ZP:-$HOME/.local/bin/zp}"
   [[ -x "$ZP" ]] || {
-    printf 'readbook: %s missing; re-run install.sh\n' "$ZP" >&2
+    printf 'library: %s missing; re-run install.sh\n' "$ZP" >&2
     exit 1
   }
   exec "$ZP" "$BOOK"
