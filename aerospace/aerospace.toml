@@ -91,8 +91,8 @@ preset = 'qwerty'
 # left-right-up-down.
 alt-j = 'focus left'
 alt-k = 'focus right'
-alt-l = 'focus up'
-alt-semicolon = 'focus down'
+alt-l = 'focus down'
+alt-semicolon = 'focus up'
 
 # i3 also binds mod+arrows for these four. NOT mirrored, and not by oversight.
 # The letters above are the ones actually used, and every arrow chord costs
@@ -166,7 +166,7 @@ alt-v = 'split vertical'
 
 # i3's mod+Shift+space. Its mod+space (focus mode_toggle, jump between the
 # tiling and floating sets) has no AeroSpace equivalent and is not bound.
-alt-shift-space = 'layout floating tiling'
+# alt-shift-space = 'layout floating tiling'
 
 # join-with is the AeroSpace-native alternative to split and works the other way
 # round: the window already exists, and this pulls it under a shared parent with
