@@ -110,6 +110,18 @@
     "which wants that same physical key to stay Super. Karabiner is per-machine,",
     "so the keyboard keeps sending Super and only macOS reinterprets it.",
     "",
+    "The same Alt-key-back exception exists for VS Code, one chord wide.",
+    "vscode/keybindings.json binds ctrl+alt+c to notebook.cellOutput.copy, and",
+    "that file is shared with Arch, so the fix cannot live there. On the Glove80",
+    "the swap turns the Alt-position key into Command, so ctrl+alt+c leaves the",
+    "keyboard as ctrl+cmd+c and reaches nothing at all. This mapping catches",
+    "exactly that and re-emits ctrl+alt+c. It cannot disturb the gui `c` rule:",
+    "that one takes control as mandatory and shift as optional, so a held",
+    "command already means no match, and plain ctrl+c still becomes cmd+c. Ctrl",
+    "plus the Command-position key keeps working too, because the swap already",
+    "makes it ctrl+alt+c before any rule sees it. Cost: ctrl+cmd+c is",
+    "undeliverable on the Glove80 in VS Code, and nothing binds it.",
+    "",
     "Home/End emit ctrl+a and ctrl+e, not cmd+left and cmd+right. macOS puts",
     "line-start on cmd+left, which is also Back in a browser, so Home would",
     "navigate off the page whenever focus was not in a text field. ctrl+a and",
@@ -173,6 +185,13 @@
       ]
     },
 
+    "vscode": {
+      "mode": "if",
+      "bundle_identifiers": [
+        "^com\\.microsoft\\.VSCode$"
+      ]
+    },
+
     "browsers": {
       "mode": "if",
       "bundle_identifiers": [
@@ -206,6 +225,14 @@
         { "from": "close_bracket", "mods": ["command"], "to": "close_bracket", "to_mods": ["left_option"] },
         { "from": "e", "mods": ["command"], "to": "e", "to_mods": ["left_option"] },
         { "from": "d", "mods": ["command", "shift"], "to": "d", "to_mods": ["left_option", "left_shift"] }
+      ]
+    },
+
+    {
+      "description": "Glove80 in VS Code: give the Alt key back ctrl+alt+c",
+      "scope": ["glove80", "vscode"],
+      "mappings": [
+        { "from": "c", "mods": ["control", "command"], "to": "c", "to_mods": ["left_control", "left_option"] }
       ]
     },
 
