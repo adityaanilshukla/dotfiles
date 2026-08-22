@@ -172,6 +172,21 @@ menu bar and none is a daily chord.
 global and consume the chord, so `alt-shift-d` was eating Dark Reader on **both**
 keyboards. It is now `alt-shift-c`.
 
+The same shape, one chord wide, exists for VS Code. `vscode/keybindings.json`
+binds `ctrl+alt+c` to `notebook.cellOutput.copy`, and that file is shared with
+Arch, so the fix cannot live there:
+
+| Pressed on the Glove80 | Karabiner emits | Who wants it |
+|---|---|---|
+| `Ctrl+Alt+C` | `Ctrl+Option+C` | `notebook.cellOutput.copy`, copy a cell's output |
+
+Scoped `["glove80", "vscode"]`. It cannot disturb the `Ctrl+letter to Cmd+letter`
+group: that rule takes control as mandatory and shift as optional, so a held
+Command already means no match, and plain `Ctrl+C` still becomes `Cmd+C`. Ctrl
+plus the Command-position key keeps working too, because the swap already turns
+it into `ctrl+alt+c` before any rule sees it. Cost, on the Glove80 in VS Code
+only: `Ctrl+Cmd+C`, which nothing binds.
+
 ### Chords deliberately left alone
 
 Something else already owns these, and mapping them would swallow the event
