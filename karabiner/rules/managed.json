@@ -330,6 +330,50 @@
       ]
     },
     {
+      "description": "dotfiles: Glove80 in VS Code: give the Alt key back ctrl+alt+c",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "c",
+            "modifiers": {
+              "mandatory": [
+                "control",
+                "command"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "c",
+              "modifiers": [
+                "left_control",
+                "left_option"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.microsoft\\.VSCode$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "description": "dotfiles: fn+F7/F8 volume down/up",
       "manipulators": [
         {

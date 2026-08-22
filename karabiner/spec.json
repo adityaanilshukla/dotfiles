@@ -123,6 +123,17 @@
     "than here. So in VS Code the chord still opens Extensions; everywhere else on",
     "this keyboard it clears banners. aerospace's own alt-shift-x is untouched and",
     "remains the only route on the built-in keyboard.",
+    "The same Alt-key-back exception exists for VS Code, one chord wide.",
+    "vscode/keybindings.json binds ctrl+alt+c to notebook.cellOutput.copy, and",
+    "that file is shared with Arch, so the fix cannot live there. On the Glove80",
+    "the swap turns the Alt-position key into Command, so ctrl+alt+c leaves the",
+    "keyboard as ctrl+cmd+c and reaches nothing at all. This mapping catches",
+    "exactly that and re-emits ctrl+alt+c. It cannot disturb the gui `c` rule:",
+    "that one takes control as mandatory and shift as optional, so a held",
+    "command already means no match, and plain ctrl+c still becomes cmd+c. Ctrl",
+    "plus the Command-position key keeps working too, because the swap already",
+    "makes it ctrl+alt+c before any rule sees it. Cost: ctrl+cmd+c is",
+    "undeliverable on the Glove80 in VS Code, and nothing binds it.",
     "",
     "Home/End emit ctrl+a and ctrl+e, not cmd+left and cmd+right. macOS puts",
     "line-start on cmd+left, which is also Back in a browser, so Home would",
@@ -187,6 +198,13 @@
       ]
     },
 
+    "vscode": {
+      "mode": "if",
+      "bundle_identifiers": [
+        "^com\\.microsoft\\.VSCode$"
+      ]
+    },
+
     "browsers": {
       "mode": "if",
       "bundle_identifiers": [
@@ -228,6 +246,14 @@
       "scope": ["glove80", "not_vscode"],
       "mappings": [
         { "from": "x", "mods": ["control", "shift"], "to": "x", "to_mods": ["left_option", "left_shift"] }
+      ]
+    },
+
+    {
+      "description": "Glove80 in VS Code: give the Alt key back ctrl+alt+c",
+      "scope": ["glove80", "vscode"],
+      "mappings": [
+        { "from": "c", "mods": ["control", "command"], "to": "c", "to_mods": ["left_control", "left_option"] }
       ]
     },
 
