@@ -284,6 +284,16 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # actually fires. Nothing to change here: that rewrite happens before AeroSpace
 # ever sees the event.
 alt-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
+# Open Notification Center, to read what alt-shift-x would have thrown away.
+# There is no macOS shortcut for this and nothing to `open`; the panel is
+# NotificationCenter.app's and ignores activation. scripts/notification-center
+# clicks the clock, a ControlCenter menu bar extra, through System Events, so
+# the same Accessibility grant that alt-shift-x needs covers this too. Clicking
+# again closes it, so this toggles.
+#
+# Paired with alt-shift-x on purpose: x clears banners permanently, since it
+# presses each one's real Close action, so this is how you look before clearing.
+alt-shift-n = 'exec-and-forget $HOME/Scripts/notification-center'
 
 
 # Dismiss ranger's dn drag window from anywhere, without focusing it first.
