@@ -23,6 +23,11 @@ source "$CONFIG_DIR/colors.sh"
 # be visible, not inferred, so it is shown as loudly as a message count.
 #
 # No pinning to the Dock is required. A running app always has a Dock item.
+#
+# Every target is always shown, including zeros. An item that hides itself when
+# there is nothing to report is indistinguishable from one that has broken, and
+# this exists precisely so it can be trusted at a glance without opening the app
+# to check.
 
 # bundle id : short label on the bar
 TARGETS=(
@@ -52,16 +57,17 @@ for entry in "${TARGETS[@]}"; do
   if [ -n "$count" ]; then
     parts+="${short} ${count} "
     alert=1
+  else
+    # Running, nothing waiting. Shown as 0 rather than omitted: an app that
+    # silently vanishes from the bar is indistinguishable from one that is
+    # broken, and the whole point of this item is to be able to trust it at a
+    # glance without opening anything.
+    parts+="${short} 0 "
   fi
 done
 
 parts="${parts% }"
 
-if [ -z "$parts" ]; then
-  # everything running, nothing unread: stay out of the way
-  sketchybar --set "$NAME" drawing=off
-else
-  COLOR="$FOREGROUND"
-  [ "$alert" -eq 1 ] && COLOR="$BLUE_BRIGHT"
-  sketchybar --set "$NAME" drawing=on label="$parts" label.color="$COLOR"
-fi
+COLOR="$FOREGROUND"
+[ "$alert" -eq 1 ] && COLOR="$BLUE_BRIGHT"
+sketchybar --set "$NAME" drawing=on label="$parts" label.color="$COLOR"
