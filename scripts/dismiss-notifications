@@ -10,11 +10,20 @@
 // that's AeroSpace.app, since it's what spawns the process via exec-and-forget.
 
 function run(argv) {
-  // Default is newest-only: close one banner and stop. --all restores the
-  // original sweep, which kept closing until nothing dismissable was left.
-  // Tree order puts the newest first (verified by posting three in sequence and
-  // walking the tree: index 0 was the last one posted), so "first found" and
-  // "most recent" are the same element.
+  // Default is one-at-a-time: close the banner currently on screen and stop.
+  // --all restores the original sweep, which kept closing until nothing
+  // dismissable was left.
+  //
+  // Measured, because the tree is not what you would guess. macOS only ever
+  // exposes ONE banner at a time here, whatever is being shown; the rest queue
+  // behind it. Posting from three different apps and walking the tree gives
+  // COUNT=1 showing the first-posted, and after a single close the walk gives
+  // COUNT=1 again showing the second. Same-app notifications are different
+  // again: they collapse into one grouped banner showing the newest, and
+  // closing that takes the whole group.
+  //
+  // This is exactly why the old sweep was destructive. One press drained the
+  // entire queue, because each close revealed the next and the loop kept going.
   const closeAll = (argv || []).indexOf('--all') > -1;
 
   const systemEvents = Application('System Events');
