@@ -168,6 +168,28 @@ sketchybar --add item wifi right \
                  update_freq=30 \
                  script="$PLUGIN_DIR/wifi.sh"
 
+# ----- Unread messages (right) -----
+# Everything macOS uses to say "someone is waiting" is switched off on this
+# machine: the Dock is autohidden, the menu bar is autohidden, and a banner gets
+# one shot before it is gone. This bar is the only always-visible surface, so
+# the count lives here, where it stays until the message is actually read.
+#
+# plugins/unread.sh reads Dock badges via lsappinfo, which needs no permissions,
+# and reports an app that is not running as loudly as an unread count. That is
+# deliberate: Telegram has no push entitlement, so while it is quit it receives
+# and shows nothing at all.
+#
+# updates=on is mandatory, same trap the wifi item hit above: the plugin hides
+# itself when there is nothing to report, and with the default updates=when_shown
+# a self-hidden item can never run its own script again to bring itself back.
+sketchybar --add item unread right \
+           --subscribe unread system_woke \
+           --set unread \
+                 updates=on \
+                 update_freq=15 \
+                 icon.drawing=off \
+                 script="$PLUGIN_DIR/unread.sh"
+
 # ----- Alacritty font size (no visual item) -----
 # The built-in display and the ultrawide want very different alacritty font
 # sizes. scripts/alacritty-font-size measures which screen is attached and
