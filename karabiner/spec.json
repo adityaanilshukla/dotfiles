@@ -110,6 +110,20 @@
     "which wants that same physical key to stay Super. Karabiner is per-machine,",
     "so the keyboard keeps sending Super and only macOS reinterprets it.",
     "",
+    "Third instance of the same Alt-key-back idea: ctrl+shift+x clears notification",
+    "banners on the Glove80. aerospace binds that action to alt-shift-x, so this",
+    "emits option+shift+x and lets aerospace catch it. The group has to sit ABOVE",
+    "the gui block, because the gui `x` rule takes control as mandatory and shift",
+    "as optional, so it would otherwise swallow the chord into cmd+shift+x first.",
+    "The emitted left_option is safe from the swap group at the top: `to` events go",
+    "to the virtual keyboard and never re-enter the manipulator list.",
+    "",
+    "Scoped not_vscode deliberately. ctrl+shift+x is the Extensions view there, and",
+    "that is the entire reason dismiss-notifications sits on alt-shift-x rather",
+    "than here. So in VS Code the chord still opens Extensions; everywhere else on",
+    "this keyboard it clears banners. aerospace's own alt-shift-x is untouched and",
+    "remains the only route on the built-in keyboard.",
+    "",
     "Home/End emit ctrl+a and ctrl+e, not cmd+left and cmd+right. macOS puts",
     "line-start on cmd+left, which is also Back in a browser, so Home would",
     "navigate off the page whenever focus was not in a text field. ctrl+a and",
@@ -206,6 +220,14 @@
         { "from": "close_bracket", "mods": ["command"], "to": "close_bracket", "to_mods": ["left_option"] },
         { "from": "e", "mods": ["command"], "to": "e", "to_mods": ["left_option"] },
         { "from": "d", "mods": ["command", "shift"], "to": "d", "to_mods": ["left_option", "left_shift"] }
+      ]
+    },
+
+    {
+      "description": "Glove80 outside VS Code: ctrl+shift+x dismisses notifications",
+      "scope": ["glove80", "not_vscode"],
+      "mappings": [
+        { "from": "x", "mods": ["control", "shift"], "to": "x", "to_mods": ["left_option", "left_shift"] }
       ]
     },
 

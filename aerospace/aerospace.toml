@@ -278,6 +278,11 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # On alt-shift-x, not ctrl-shift-x: that is the VS Code Extensions view on
 # Windows/Linux and Karabiner now translates it, which would leave a binding
 # here dead. See the ordering note on alt-i above.
+#
+# The Glove80 gets ctrl-shift-x for this anyway, everywhere except VS Code, via
+# a karabiner group that rewrites it to option+shift+x so this binding is what
+# actually fires. Nothing to change here: that rewrite happens before AeroSpace
+# ever sees the event.
 alt-shift-x = 'exec-and-forget $HOME/Scripts/dismiss-notifications'
 
 
