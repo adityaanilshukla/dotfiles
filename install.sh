@@ -188,6 +188,7 @@ files=(
 
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
+  "scripts/notification-center:$HOME/Scripts/notification-center"
 
   # the alt-x launcher itself. Deliberately NOT in ~/Scripts, or it would list
   # itself in its own menu.

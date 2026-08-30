@@ -1,0 +1,49 @@
+#!/usr/bin/osascript -l JavaScript
+// Toggle Notification Center.
+//
+// macOS ships no keyboard shortcut for this and there is nothing useful to
+// `open`: the panel belongs to NotificationCenter.app, which ignores ordinary
+// activation. The one reliable route is clicking the clock, which on current
+// macOS is a ControlCenter menu bar extra, so this presses it through the
+// accessibility tree. Clicking again closes the panel, so the binding toggles.
+//
+// Matched on description, NOT title. Every ControlCenter menu bar item reports
+// a null title (verified by walking the tree), so a title match finds nothing
+// and the script would silently do nothing.
+//
+// _HIHideMenuBar is 1 on this machine and sketchybar covers the top of the
+// screen, but neither matters here: the element exists in the tree whether or
+// not the menu bar is currently drawn.
+//
+// Requires Accessibility permission for whatever runs this, in practice
+// AeroSpace.app, since that is what spawns it via exec-and-forget. Without the
+// grant this silently no-ops, exactly like scripts/dismiss-notifications.
+
+function run() {
+  const systemEvents = Application('System Events');
+
+  let controlCenter;
+  try {
+    controlCenter = systemEvents.processes.byName('ControlCenter');
+    controlCenter.name();
+  } catch (e) {
+    return 'notification-center: no ControlCenter process';
+  }
+
+  let items;
+  try {
+    items = controlCenter.menuBars[0].menuBarItems();
+  } catch (e) {
+    return 'notification-center: no menu bar items';
+  }
+
+  for (const item of items) {
+    let description;
+    try { description = item.description(); } catch (e) { continue; }
+    if (description !== 'Clock') continue;
+    try { item.click(); } catch (e) { return 'notification-center: click failed: ' + e; }
+    return '';
+  }
+
+  return 'notification-center: no Clock item in the menu bar';
+}
