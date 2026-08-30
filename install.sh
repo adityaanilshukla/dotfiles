@@ -189,6 +189,7 @@ files=(
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
   "scripts/notification-center:$HOME/Scripts/notification-center"
+  "scripts/start-comms:$HOME/Scripts/start-comms"
 
   # the alt-x launcher itself. Deliberately NOT in ~/Scripts, or it would list
   # itself in its own menu.
@@ -320,6 +321,31 @@ for svc in sketchybar syncthing; do
       || echo "  couldn't start $svc — run 'brew services start $svc'"
   fi
 done
+
+# --- Login agent: start the comms apps -------------------------------------
+# sketchybar's unread item can only report what a running app publishes, and
+# Telegram in particular receives nothing at all while quit (no aps-environment
+# entitlement), so "not running" is a silent-failure state worth preventing
+# rather than just displaying.
+#
+# A LaunchAgent, not a macOS Login Item: Login Items can only be added by
+# scripting System Events, which needs an Automation grant that cannot itself be
+# scripted, so it could never be hands-off. This is just a file.
+#
+# Idempotent: bootout before bootstrap, because bootstrap on an already-loaded
+# label is an error rather than a no-op.
+AGENT_SRC="$DOTFILES_DIR/launchd/com.aditya.dotfiles.start-comms.plist"
+AGENT_DST="$HOME/Library/LaunchAgents/com.aditya.dotfiles.start-comms.plist"
+if [[ -f "$AGENT_SRC" ]]; then
+  mkdir -p "$HOME/Library/LaunchAgents"
+  ln -sfn "$AGENT_SRC" "$AGENT_DST"
+  launchctl bootout "gui/$UID/com.aditya.dotfiles.start-comms" 2>/dev/null || true
+  if launchctl bootstrap "gui/$UID" "$AGENT_DST" 2>/dev/null; then
+    echo "Login agent installed: comms apps start hidden at login."
+  else
+    echo "  couldn't load the start-comms agent — load it with: launchctl bootstrap gui/$UID '$AGENT_DST'"
+  fi
+fi
 
 # --- VS Code extensions ---------------------------------------------------
 # Resolve the `code` CLI even if it isn't on PATH yet (fresh install).
