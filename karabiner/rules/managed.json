@@ -286,7 +286,7 @@
       ]
     },
     {
-      "description": "dotfiles: Glove80 outside VS Code: ctrl+shift+x dismisses notifications",
+      "description": "dotfiles: Glove80 outside VS Code: the notification chords",
       "manipulators": [
         {
           "type": "basic",
@@ -302,6 +302,45 @@
           "to": [
             {
               "key_code": "x",
+              "modifiers": [
+                "left_option",
+                "left_shift"
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "type": "device_if",
+              "identifiers": [
+                {
+                  "vendor_id": 5824,
+                  "product_id": 10203,
+                  "is_keyboard": true
+                }
+              ]
+            },
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.microsoft\\.VSCode$"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "n",
+            "modifiers": {
+              "mandatory": [
+                "control",
+                "shift"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "n",
               "modifiers": [
                 "left_option",
                 "left_shift"

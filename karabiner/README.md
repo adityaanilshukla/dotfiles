@@ -159,10 +159,18 @@ One more, outside browsers, in the `Glove80 outside VS Code` group:
 | Pressed on the Glove80 | Karabiner emits | Who wants it |
 |---|---|---|
 | `Ctrl+Shift+X` | `Option+Shift+X` | AeroSpace `alt-shift-x`, dismiss notification banners |
+| `Ctrl+Shift+N` | `Option+Shift+N` | AeroSpace `alt-shift-n`, open Notification Center |
 
 That group sits above the `Ctrl+letter to Cmd+letter` block on purpose, since the
 `x` rule there takes shift as optional and would otherwise claim the chord first.
-`not_vscode` keeps the Extensions view intact where it belongs.
+`not_vscode` keeps the Extensions view and New Window intact where they belong.
+Cost outside VS Code on that keyboard: `Cmd+Shift+N`, a new incognito window in
+browsers. `alt-i` already opens one, and the Option-position key still sends
+Command, so `Option+Shift+N` gets it back anyway.
+
+The AeroSpace bindings stay regardless of keyboard, because they are what
+actually runs the scripts; this group only rewrites the chord into one AeroSpace
+already answers.
 
 The result is one gesture on both keyboards: the key labelled Alt, in a browser,
 does the Alt thing. The userscript itself is untouched and still keys off plain
