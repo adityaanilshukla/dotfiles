@@ -1,5 +1,6 @@
 #!/usr/bin/osascript -l JavaScript
-// Actually dismisses notification banners, unlike `killall NotificationCenter`
+// Dismisses the most recent notification banner, or with --all every banner
+// currently on screen. Unlike `killall NotificationCenter`
 // (which just crash-restarts the renderer; the banner reappears and finishes
 // its normal ~5s auto-hide countdown regardless, so that "fix" did nothing).
 // This walks System Events' accessibility tree for the NotificationCenter
@@ -8,7 +9,14 @@
 // Security > Accessibility) for whatever ends up running this; in practice
 // that's AeroSpace.app, since it's what spawns the process via exec-and-forget.
 
-function run() {
+function run(argv) {
+  // Default is newest-only: close one banner and stop. --all restores the
+  // original sweep, which kept closing until nothing dismissable was left.
+  // Tree order puts the newest first (verified by posting three in sequence and
+  // walking the tree: index 0 was the last one posted), so "first found" and
+  // "most recent" are the same element.
+  const closeAll = (argv || []).indexOf('--all') > -1;
+
   const systemEvents = Application('System Events');
   systemEvents.includeStandardAdditions = true;
 
@@ -93,6 +101,7 @@ function run() {
       }
     }
     if (!didClose) break;
+    if (!closeAll) break;
   }
 
   return 'closed ' + closed;

@@ -268,8 +268,10 @@ alt-n = 'exec-and-forget open -na Alacritty --args --working-directory "$HOME" -
 # approach here) doesn't actually dismiss anything; it crash-restarts the
 # renderer, which redraws whatever's still mid-flight and lets it finish its
 # normal ~5s auto-hide countdown anyway, so it looked like a fix but wasn't.
-# scripts/dismiss-notifications presses each banner's real Close/Clear action
-# via System Events, same as clicking it. Needs Accessibility permission
+# scripts/dismiss-notifications presses the newest banner's real Close/Clear
+# action via System Events, same as clicking it. Newest only, deliberately: a
+# sweep that cleared everything took away notifications that had not been read
+# yet. Pass --all for the old behaviour; nothing binds that. Needs Accessibility permission
 # granted to AeroSpace.app (System Settings > Privacy & Security >
 # Accessibility), since that's what spawns this via exec-and-forget; until
 # granted this silently no-ops. Not a default macOS shortcut (verified before
