@@ -31,7 +31,7 @@
 # you type the name.
 
 # @raycast.schemaVersion 1
-# @raycast.title Shut Down (clean)
+# @raycast.title Shut Down
 # @raycast.mode silent
 # @raycast.packageName System
 # @raycast.icon ⏻
