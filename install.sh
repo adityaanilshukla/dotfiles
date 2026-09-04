@@ -17,11 +17,42 @@ elif [[ -x /usr/local/bin/brew ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+BREW_BUNDLE_INCOMPLETE=0
 if [[ -f "$DOTFILES_DIR/Brewfile" ]]; then
   echo "Installing packages from Brewfile..."
   # Don't abort the whole setup if a single cask needs a password/retry.
   brew bundle --file="$DOTFILES_DIR/Brewfile" \
-    || echo "brew bundle finished with some failures — review the output above."
+    || echo "brew bundle finished with some failures — retrying once."
+
+  # One retry, because the common failure is transient: a cask that wanted a
+  # password, or a tap that had not finished syncing when its formula was
+  # first reached.
+  if ! brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+    brew bundle --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1 || true
+  fi
+
+  # Then say plainly what is still missing, because everything downstream is
+  # guarded on these existing and will otherwise skip in silence. Observed:
+  # sketchybar failed here, arrived half an hour later by hand, and the service
+  # step had already run and quietly skipped it — leaving a fully configured
+  # bar that never appeared on screen, with the install reporting success.
+  if ! brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+    BREW_BUNDLE_INCOMPLETE=1
+    echo
+    echo "!! brew bundle check reports unsatisfied dependencies:"
+    # 2>&1, not 2>/dev/null: `check --verbose` writes the list to stderr, so
+    # discarding stderr discards the entire point of running it.
+    brew bundle check --file="$DOTFILES_DIR/Brewfile" --verbose 2>&1 \
+      | sed 's/^/     /'
+    echo
+    echo "   On a fresh machine these really are missing, and anything below"
+    echo "   that depends on them will skip and say so."
+    echo
+    echo "   On an established machine, expect false alarms: an app installed"
+    echo "   by hand is not brew-managed, so it reads as missing while being"
+    echo "   perfectly present. Hand ownership over with:"
+    echo "     brew install --cask --adopt <name>"
+  fi
 fi
 
 # --- De-quarantine ad-hoc-signed casks ------------------------------------
@@ -343,8 +374,14 @@ done
 # and simply no bar on screen. Starting an already-started service is harmless,
 # so this stays idempotent.
 for svc in sketchybar syncthing; do
-  command -v "$svc" >/dev/null 2>&1 || continue
-  if ! brew services list 2>/dev/null | grep -qE "^$svc\s+started"; then
+  # Loud, not `|| continue`. This silently did nothing for sketchybar on a real
+  # install and the bar simply never appeared.
+  if ! command -v "$svc" >/dev/null 2>&1; then
+    echo "  !! $svc is not installed — service not started."
+    echo "     Install it, then: brew services start $svc"
+    continue
+  fi
+  if ! brew services list 2>/dev/null | grep -qE "^$svc[[:space:]]+started"; then
     echo "Starting $svc service..."
     brew services start "$svc" >/dev/null \
       || echo "  couldn't start $svc — run 'brew services start $svc'"
@@ -366,6 +403,9 @@ done
 if [[ -d /Applications/AeroSpace.app ]]; then
   echo "Launching AeroSpace (registers start-at-login, raises the Accessibility prompt)..."
   open -g -a AeroSpace || echo "  couldn't launch AeroSpace — open it by hand."
+else
+  echo "  !! AeroSpace is not installed — not launched, so start-at-login is not"
+  echo "     registered and the Accessibility prompt has not been raised."
 fi
 
 # --- VS Code extensions ---------------------------------------------------
@@ -395,6 +435,13 @@ fi
 if [[ -x "$DOTFILES_DIR/macos/defaults.sh" ]]; then
   echo "Applying macOS defaults..."
   "$DOTFILES_DIR/macos/defaults.sh"
+fi
+
+if [[ "$BREW_BUNDLE_INCOMPLETE" -eq 1 ]]; then
+  echo
+  echo "Finished, but brew bundle check was not clean — see the list above."
+  echo "If those are genuinely missing, install them and re-run this script;"
+  echo "it is idempotent. If they were installed by hand, they are fine."
 fi
 
 echo "Done. Remaining manual steps:"
