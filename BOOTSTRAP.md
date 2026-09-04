@@ -52,7 +52,7 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 
 | Step | Why |
 |---|---|
-| Grant **Accessibility** to AeroSpace, Karabiner, BetterDisplay, Raycast (install.sh launches AeroSpace, so the prompt is already waiting) | AeroSpace cannot tile without it, and `alt-shift-x` (dismiss notifications) needs it. |
+| Grant **Accessibility** to AeroSpace, Karabiner, BetterDisplay, Raycast, sketchybar (install.sh launches AeroSpace, so the prompt is already waiting) | AeroSpace cannot tile without it, and `alt-shift-x` (dismiss notifications) needs it. sketchybar needs it only for the unread counter, and only for Catalyst apps like WhatsApp, whose Dock badge has to be read off the Dock itself; without the grant that app shows `?` instead of a number. |
 | Approve the **Karabiner driver extension** and its Input Monitoring, then reboot | Nothing remaps until the DriverKit extension is `activated enabled`. `karabiner/install.sh` prints the exact panes; `karabiner/verify.sh` confirms. |
 | Approve the **macfuse** kernel extension, then reboot | Kernel extensions require explicit approval. |
 | `gh auth login` | per-device auth |
