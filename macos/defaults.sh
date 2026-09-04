@@ -61,7 +61,42 @@ defaults write org.alacritty AppleFontSmoothing -int 0
 # down, and is the trade.
 defaults write -g ApplePersistence -bool false
 
+# Ctrl+Left / Ctrl+Right: give them back to the terminal.
+#
+# macOS binds both system-wide to Mission Control's "Move left/right a space"
+# (symbolic hotkeys 79 and 81). A registered symbolic hotkey is consumed before
+# the frontmost application is offered the event, so Ctrl+Arrow never reached
+# Alacritty at all. That is why word navigation looked broken everywhere at once
+# rather than in one program, and why nothing downstream was at fault: Karabiner
+# already excludes terminals from its own Ctrl+Arrow rule, alacritty sends
+# \e[1;5D and \e[1;5C, and oh-my-zsh binds both to backward-word/forward-word.
+# Verified with `bindkey "^[[1;5C"` under every TERM this machine uses.
+#
+# Nothing is lost by turning them off. AeroSpace manages workspaces itself and
+# does not use native macOS spaces, so the shortcut had nothing to switch
+# between here.
+#
+# 80 and 82 (Ctrl+Shift+Arrow, "move window to a space") are deliberately left
+# alone. They collide with nothing a terminal wants.
+#
+# Replacing each entry wholesale is lossless: both hold only {enabled = 1} and
+# carry no custom key binding to preserve. Written with `defaults` rather than
+# by editing the plist, because cfprefsd owns that file and would overwrite it.
+for hotkey in 79 81; do
+  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+    -dict-add "$hotkey" '<dict><key>enabled</key><false/></dict>'
+done
+
+# The hotkey table is read once and cached, so without this the change does not
+# reach the WindowServer until the next login. Not fatal if it fails: the write
+# above is the part that persists, and a login applies it anyway. This script
+# runs under `set -e`, so the guard is what keeps a cosmetic refresh from
+# aborting everything after it.
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u \
+  || echo "  !! activateSettings failed — Ctrl+Left/Right take effect at the next login."
+
 echo "Applied macOS defaults. Restart affected apps to pick them up:"
 echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
 echo "  - nothing else; ApplePersistence takes effect at the next restart"
+echo "Ctrl+Left/Right are released from Mission Control and work immediately."
