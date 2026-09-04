@@ -33,7 +33,7 @@
 # @raycast.schemaVersion 1
 # @raycast.title Shut Down
 # @raycast.mode silent
-# @raycast.packageName System
+# @raycast.packageName Dotfiles
 # @raycast.icon ⏻
 # @raycast.description Shut down without macOS reopening every running app.
 

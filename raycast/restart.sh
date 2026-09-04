@@ -33,7 +33,7 @@
 # @raycast.schemaVersion 1
 # @raycast.title Restart
 # @raycast.mode silent
-# @raycast.packageName System
+# @raycast.packageName Dotfiles
 # @raycast.icon 🔄
 # @raycast.description Restart without macOS reopening every running app.
 
