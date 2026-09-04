@@ -158,6 +158,36 @@ if [[ -x "$DOTFILES_DIR/karabiner/install.sh" ]]; then
     || echo "  karabiner module failed — re-run '$DOTFILES_DIR/karabiner/install.sh' after granting permissions."
 fi
 
+# --- Oh My Zsh ------------------------------------------------------------
+# zsh/zshrc sources "$ZSH/oh-my-zsh.sh" unconditionally, so without this a
+# fresh machine opens a shell that errors before it draws a prompt. Not from
+# brew — the formula was dropped upstream and the install script is what
+# ohmyzsh actually supports.
+#
+# KEEP_ZSHRC=yes is the load-bearing part. The installer's default is to move
+# an existing ~/.zshrc aside to ~/.zshrc.pre-oh-my-zsh and write its own
+# template in place. Here ~/.zshrc is a symlink into this repo, so the default
+# would quietly replace the whole config with a stock one that looks close
+# enough to be confusing. Runs before the symlink section for the same reason:
+# nothing of ours is in place yet to be clobbered.
+#
+# RUNZSH=no stops it exec'ing a new interactive zsh and swallowing the rest of
+# this script. CHSH=no skips the chsh prompt, which needs a password and has
+# nothing to do: zsh is already the macOS default shell.
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  echo "Installing Oh My Zsh..."
+  KEEP_ZSHRC=yes RUNZSH=no CHSH=no sh -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
+    "" --unattended \
+    || true
+  # Checked rather than trusted: a failed `curl` inside the command
+  # substitution yields an empty string, so `sh -c ""` exits 0 and the install
+  # reads as successful while nothing was installed. The directory is the only
+  # honest signal.
+  [[ -d "$HOME/.oh-my-zsh" ]] \
+    || echo "  Oh My Zsh did not install — zsh will error on every prompt until it does."
+fi
+
 # --- Symlinks -------------------------------------------------------------
 # Single-file configs.
 files=(
@@ -321,6 +351,23 @@ for svc in sketchybar syncthing; do
   fi
 done
 
+# AeroSpace does not come up on its own. Installing a cask does not launch it,
+# and `start-at-login = true` in aerospace.toml only registers a login item
+# once the app has run once — so on a fresh machine the setting reads as
+# ignored: reboot, and there is no window manager and nothing tiles.
+#
+# Launching it here is also what raises the Accessibility prompt, which is the
+# part that genuinely cannot be scripted. Raising it during install means it is
+# sitting there waiting rather than being discovered weeks later when
+# alt-shift-x silently does nothing.
+#
+# -g so it does not steal focus mid-install, and `open -a` on an already
+# running app just activates it, so this stays idempotent like everything else.
+if [[ -d /Applications/AeroSpace.app ]]; then
+  echo "Launching AeroSpace (registers start-at-login, raises the Accessibility prompt)..."
+  open -g -a AeroSpace || echo "  couldn't launch AeroSpace — open it by hand."
+fi
+
 # --- VS Code extensions ---------------------------------------------------
 # Resolve the `code` CLI even if it isn't on PATH yet (fresh install).
 CODE_BIN="$(command -v code || true)"
@@ -351,9 +398,6 @@ if [[ -x "$DOTFILES_DIR/macos/defaults.sh" ]]; then
 fi
 
 echo "Done. Remaining manual steps:"
-echo "  - Open AeroSpace once. Installing the cask does not launch it, and the"
-echo "    start-at-login setting in aerospace.toml only registers after a first"
-echo "    launch. Opening it is also what raises the Accessibility prompt."
 echo "  - Grant permissions to AeroSpace, Karabiner-Elements, BetterDisplay and"
 echo "    Raycast in System Settings > Privacy & Security. AeroSpace needs it to"
 echo "    tile at all, and alt-shift-x (dismiss notifications) needs it too."

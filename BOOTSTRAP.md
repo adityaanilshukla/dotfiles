@@ -52,8 +52,7 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 
 | Step | Why |
 |---|---|
-| Open AeroSpace once | Installing a cask does not launch it, and `start-at-login` only registers after a first run. This also raises the Accessibility prompt. |
-| Grant **Accessibility** to AeroSpace, Karabiner, BetterDisplay, Raycast | AeroSpace cannot tile without it, and `alt-shift-x` (dismiss notifications) needs it. |
+| Grant **Accessibility** to AeroSpace, Karabiner, BetterDisplay, Raycast (install.sh launches AeroSpace, so the prompt is already waiting) | AeroSpace cannot tile without it, and `alt-shift-x` (dismiss notifications) needs it. |
 | Approve the **Karabiner driver extension** and its Input Monitoring, then reboot | Nothing remaps until the DriverKit extension is `activated enabled`. `karabiner/install.sh` prints the exact panes; `karabiner/verify.sh` confirms. |
 | Approve the **macfuse** kernel extension, then reboot | Kernel extensions require explicit approval. |
 | `gh auth login` | per-device auth |
