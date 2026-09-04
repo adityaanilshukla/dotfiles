@@ -22,6 +22,46 @@ defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 # with Cmd-Q and relaunch.
 defaults write org.alacritty AppleFontSmoothing -int 0
 
+# Nothing reopens at login. macOS TAL ("Terminate and Live" — the "Reopen
+# windows when logging back in" checkbox) relaunches whatever was running at
+# shutdown, which meant arriving at a desktop full of Brave and Alacritty
+# windows placed wherever AeroSpace happened to put them.
+#
+# The checkbox alone does not fix it, and neither does TALLogoutSavesState:
+# both were already off here while loginwindow still restored six apps. The
+# reason is that the checkbox is only consulted on the dialog path. Restart
+# from Raycast (or any scripted restart) arrives as an Apple Event, and
+# loginwindow logs what it does with it:
+#
+#   Received a kAERestart
+#   Calling to start a logout with NO UI
+#   showConfirmation:0, currentTALOption:1 - TALRestore
+#
+# showConfirmation:0 means the dialog carrying the checkbox is never drawn, and
+# TALRestore is the hardcoded fallback for that path. Nothing user-facing can
+# change it.
+#
+# ApplePersistence sits upstream of all of that. From loginwindow's own binary:
+#
+#   ApplePersistence = -1 or 0 setting returnAppsEnabled to NO prefValue:%ld
+#
+# returnAppsEnabled is what -[PersistentAppsSupport persistentAppsEnabled]
+# returns, and it gates the relaunch before the TAL option is ever consulted.
+# Set to 0 the whole subsystem is off, so it no longer matters who triggers the
+# restart or which Apple Event parameters they omit.
+#
+# Verify after a restart with:
+#   log show --last 10m --predicate 'process == "loginwindow"' \
+#     | grep -E "returnAppsEnabled|previouslyRunningApps count"
+# Wanted: returnAppsEnabled set to NO, and previouslyRunningApps count:0.
+#
+# Cost: this is the global Resume switch, so it also stops apps restoring their
+# own windows and documents when you reopen them — Preview will not come back
+# to the PDFs you had open. That is the same thing being asked for, one level
+# down, and is the trade.
+defaults write -g ApplePersistence -bool false
+
 echo "Applied macOS defaults. Restart affected apps to pick them up:"
 echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
+echo "  - nothing else; ApplePersistence takes effect at the next restart"
