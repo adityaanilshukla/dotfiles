@@ -56,12 +56,16 @@ default-root-container-orientation = 'auto'
 enable-normalization-flatten-containers = false
 enable-normalization-opposite-orientation-for-nested-containers = false
 
-# Open default apps on their starting workspaces once, at AeroSpace startup.
-# Soft placement — after launch, windows can be moved anywhere freely.
-after-startup-command = [
-  'exec-and-forget open -a BetterDisplay',
-  'exec-and-forget /Users/aditya/.config/aerospace/startup.sh',
-]
+# BetterDisplay is not a login item, so AeroSpace starts it.
+#
+# startup.sh used to run here too, placing restored apps on the workspaces named
+# in the on-window-detected block below. Dropped, not fixed: it never worked. It
+# called `list-windows --all --app-bundle-id ...`, and those two flags conflict
+# ("--all conflicts with 'filtering' flags"), so every call exited 2. Its stderr
+# went to /dev/null and the window-id loop read an empty stream, which is why the
+# failure was silent for as long as the script existed. `--monitor all` is the
+# form that works, if placement is ever wanted back.
+after-startup-command = ['exec-and-forget open -a BetterDisplay']
 
 # Notify sketchybar whenever the focused workspace changes so the bar's
 # workspace indicator stays in sync.
