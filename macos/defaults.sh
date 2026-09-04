@@ -95,8 +95,47 @@ done
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u \
   || echo "  !! activateSettings failed — Ctrl+Left/Right take effect at the next login."
 
+# Key repeat: faster, and in step with the display.
+#
+# Both values are in sixtieths of a second. The factory default, read off the
+# live HID event system rather than guessed at:
+#
+#   ioreg -c IOHIDSystem -r -d 1 | grep -E "HIDKeyRepeat|HIDInitialKeyRepeat"
+#   HIDInitialKeyRepeat = 500000000 ns   (30/60s)
+#   HIDKeyRepeat        =  83333333 ns   ( 5/60s = 12 repeats/second)
+#
+# 12 a second is slow enough that holding j or k in nvim crawls. It is also the
+# reason the scrolling looked JITTERY rather than merely slow, which is the part
+# worth writing down, because the fix is not simply "make it faster".
+#
+# A line can only appear on a frame boundary. On the 100Hz Dell a frame is 10ms,
+# and an 83.33ms step is 8 and 1/3 frames — so the gaps you actually see
+# alternate 80, 90, 80, 80, 90, and every third line hangs 12.5% longer than its
+# neighbours. Same shape as 3:2 pulldown judder, and 12Hz sits right where the
+# eye is worst at tolerating an uneven cadence. (Alacritty compounds this: it
+# does not vsync on macOS, pacing frames off its own free-running timer instead,
+# so a second unsynchronised quantiser stacks on the first.)
+#
+# Only repeat rates whose step is a whole number of frames come out even. At
+# 100Hz that means multiples of 3:
+#
+#   n=2   33.3ms   30/sec   gaps 30,40   <- faster, still beats
+#   n=3   50.0ms   20/sec   gaps 50      <- even
+#   n=5   83.3ms   12/sec   gaps 80,90   <- the default, the problem
+#   n=6  100.0ms   10/sec   gaps 100     <- even but slower than the default
+#
+# n=3 is the only value that is both quicker and evenly paced, so that is the
+# one set here: 67% faster AND smooth. Turning the System Settings slider to its
+# maximum would give 30/sec and put the beat straight back.
+#
+# This is tuned to a 100Hz panel. On a 60Hz display every value divides evenly
+# and the choice is purely about speed.
+defaults write -g KeyRepeat -int 3
+defaults write -g InitialKeyRepeat -int 15
+
 echo "Applied macOS defaults. Restart affected apps to pick them up:"
 echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
 echo "  - nothing else; ApplePersistence takes effect at the next restart"
 echo "Ctrl+Left/Right are released from Mission Control and work immediately."
+echo "Key repeat is 20/sec — that one needs a logout before it applies."
