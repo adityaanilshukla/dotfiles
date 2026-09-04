@@ -13,3 +13,25 @@
 
 [color]
     ui = auto
+
+# Push over HTTPS without a password prompt, by asking the gh CLI for a token.
+# Written here by `gh auth setup-git`, which lands in this file rather than a
+# private one because ~/.gitconfig is a symlink into this repo.
+#
+# `gh` rather than /opt/homebrew/bin/gh, which is what setup-git writes: that
+# path is Apple Silicon only and would miss on an Intel mac, where Homebrew
+# lives in /usr/local. Resolving through PATH works on both.
+#
+# The empty `helper =` above each entry is not a stray line. Helpers accumulate
+# across config files, so the blank resets the inherited list first and stops
+# osxkeychain answering ahead of gh with a stale credential.
+#
+# Needs `gh auth login`, which BOOTSTRAP.md already lists as a per-device step.
+# Without it this is inert rather than broken: gh declines, and git falls back
+# to asking, exactly as it did before.
+[credential "https://github.com"]
+    helper =
+    helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+    helper =
+    helper = !gh auth git-credential
