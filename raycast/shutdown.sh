@@ -39,4 +39,34 @@
 
 set -euo pipefail
 
+# Confirm first. Raycast fires a script command the instant you press enter on
+# it and offers no confirmation of its own, so without this the machine goes
+# down on one keystroke, from a list where the neighbouring entries are things
+# like Restore and Restart Audio.
+#
+# `activate` is load-bearing. Without it the dialog belongs to a background
+# osascript and can open *behind* whatever you are looking at, which is worse
+# than no confirmation: the machine appears to hang, then restarts when you
+# eventually find and answer the box.
+#
+# Default button is Cancel, so enter dismisses and shut downing takes a deliberate
+# click. Swap `default button` to "Shut Down" if you would rather enter confirmed;
+# that still costs two enters rather than one.
+#
+# `giving up after` bounds an unattended dialog. It returns an empty string,
+# which is not "Shut Down", so the timeout falls through to the safe path.
+CHOICE=$(osascript <<'APPLESCRIPT'
+tell application "System Events"
+  activate
+  try
+    button returned of (display dialog "Shut down now?" buttons {"Cancel", "Shut Down"} default button "Cancel" with icon caution with title "Shut Down" giving up after 30)
+  on error
+    ""
+  end try
+end tell
+APPLESCRIPT
+)
+
+[ "$CHOICE" = "Shut Down" ] || exit 0
+
 osascript -e 'tell application "System Events" to shut down state saving preference true'
