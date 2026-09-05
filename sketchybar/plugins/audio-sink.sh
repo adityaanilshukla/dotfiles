@@ -45,15 +45,22 @@ probe_slow() {
 # as polybar's port match does. Wired 3.5mm is covered because macOS names that
 # device "External Headphones" even though its transport is Built-in.
 #
+# `earpod` is listed separately from `airpod` on purpose: USB-C EarPods report
+# the name "EarPods" with transport USB, which matched neither the name arm nor
+# any transport arm and so drew the laptop glyph while they were plugged in.
+# The two words differ by a letter and it is an easy one to assume is covered.
+#
 # Known gap, inherited from the polybar version: USB or wired headphones whose
 # name is a bare model number ("WH-1000XM4") match nothing and fall through to
 # the laptop glyph. Add the model to the first case arm if that bothers you;
-# there is no reliable way to infer it from what CoreAudio reports.
+# there is no reliable way to infer it from what CoreAudio reports — nothing
+# CoreAudio exposes distinguishes a headset from a speaker, only how it is
+# attached, and USB carries both.
 classify() {
   local dev="$1" transport="$2" icon
   shopt -s nocasematch
   case "$dev" in
-    *headphone*|*headset*|*airpod*|*buds*)
+    *headphone*|*earphone*|*headset*|*earpod*|*airpod*|*buds*)
       icon="$SINK_HEADPHONES" ;;
     *)
       case "$transport" in
