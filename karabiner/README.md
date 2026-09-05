@@ -4,11 +4,14 @@ Every Karabiner-Elements remap this machine runs, generated from one compact
 spec file.
 
 PC-style text editing (`Ctrl+C/V/X`, `Ctrl+Arrow` word navigation,
-`Ctrl+Backspace` delete-word, `Ctrl+Tab` and `Ctrl+1..9` tab switching) plus the
-`fn+F7/F8` volume keys.
+`Ctrl+Backspace` delete-word, `Ctrl+Tab` and `Ctrl+1..9` tab switching), the
+`fn+F7/F8` volume keys, and the function key row.
 
-**Terminals are excluded from every remap here**, so `Ctrl+C` still sends
-SIGINT in Alacritty, and tmux and Neovim bindings are untouched. zathura is
+**Terminals are excluded from every text-editing remap here**, so `Ctrl+C`
+still sends SIGINT in Alacritty, and tmux and Neovim bindings are untouched.
+The exceptions are the two groups that are not text editing — the volume keys
+and the function key row — which fire everywhere, because a media key means
+the same thing in a terminal as anywhere else. zathura is
 excluded on the same grounds — it is vim-keyed, and `Ctrl+R`, `Ctrl+D` and
 `Ctrl+F` mean recolor and scrolling there, not reload and find. Wherever this
 file says "not in terminals" below, read it as "not in terminals or zathura".
@@ -20,13 +23,34 @@ leaves `option_as_alt` at `None` on macOS, so `Option+Arrow` arrives as a bare
 arrow and `Option+Backspace` as a bare delete. The rewrite was taking a working
 chord and returning a broken one.
 
-`fn+F7/F8` was the one rule that stayed global, and it cost the same way. On
-this keyboard the bare top row sends media keys, so `F7` alone is
-previous-track and never reaches the frontmost app; holding `fn` is the only
-way to produce a real `F7`. Neovim binds `<F7>` to the floating terminal, so
-the volume remap ate it and the binding looked dead rather than shadowed.
-Narrowing the rule costs nothing: `F9`-`F12` are not remapped here, so the
-row's native mute and volume keys still work in a terminal on their own.
+## The function key row
+
+Neovim binds `<F7>` to its floating terminal and it did nothing, on the
+built-in keyboard *and* on the Glove80. The cause sits below this file
+entirely.
+
+macOS draws the media functions over the top row of **Apple** keyboards.
+Karabiner grabs every physical keyboard and re-emits events through its own
+virtual device, and that device reports Apple's vendor id (`1452`) — so the
+overlay is applied to everything Karabiner passes on, the Glove80 included,
+whose `f7` was correct the whole time. The overlay is *downstream* of
+Karabiner, which is why nothing here could win it: a complex modification from
+`f7` to `f7` did nothing, and neither did the `fn_function_keys` table. Both
+measured, not assumed.
+
+The only switch upstream of it is the macOS setting, so `macos/defaults.sh`
+sets `com.apple.keyboard.fnState`. That is heavy-handed on its own — it takes
+the whole row away from a bare press for the sake of one key — so the
+`the media row on a bare press, except F7` group here puts every one of them
+back explicitly, `f7` excepted. With the overlay off Karabiner is no longer
+competing with macOS for the row; it is the only thing assigning it.
+
+The two halves are load-bearing together. `fnState` without these rules leaves
+the row dead; these rules without `fnState` do nothing at all.
+
+Cost: previous-track, and `fn+F1..F12` now producing literal function keys
+rather than media — the inverse of stock, and what keeps `fn+F7` free for the
+volume rule.
 
 Left alone, the terminal's own path works end to end:
 
@@ -74,7 +98,9 @@ readable version and `generate.py` produces the verbose one.
 
 | Chord | Becomes | Where |
 |---|---|---|
-| `fn+F7` / `fn+F8` | volume down / up | not in terminals |
+| `F1`–`F6`, `F8`–`F12` (bare) | brightness, mission control, spotlight, dictation, do-not-disturb, media, volume | everywhere |
+| `F7` (bare) | a real `F7` — Neovim's floating terminal | everywhere |
+| `fn+F7` / `fn+F8` | volume down / up | everywhere |
 | `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
 | `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | zoom in / out / reset | not in terminals |

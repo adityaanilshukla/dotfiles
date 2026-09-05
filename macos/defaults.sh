@@ -87,13 +87,37 @@ for hotkey in 79 81; do
     -dict-add "$hotkey" '<dict><key>enabled</key><false/></dict>'
 done
 
+# The top row sends real function keys.
+#
+# Neovim binds <F7> to its floating terminal and it did nothing, on the built-in
+# keyboard AND on the Glove80. The cause is one layer lower than it looks.
+#
+# macOS draws the media functions over the top row of APPLE keyboards. Karabiner
+# grabs every physical keyboard and re-emits the events through its own virtual
+# device, and that device reports Apple's vendor id (1452), so macOS applies the
+# overlay to everything Karabiner passes on - including the Glove80, whose f7
+# was correct all along. The overlay is downstream of Karabiner, which is why no
+# Karabiner rule could win: a complex modification from f7 to f7 changed
+# nothing, and neither did the fn_function_keys table. Both were measured, not
+# assumed. fnState is the only switch upstream of the overlay.
+#
+# On its own this is heavy-handed - it takes brightness, mission control and
+# volume off a bare press for the sake of one key - so karabiner/spec.json puts
+# them straight back with an explicit rule per key. Every one is restored except
+# f7. Net cost is previous-track, plus fn+F-key now giving a literal function
+# key rather than a media one.
+#
+# The two halves are load-bearing together: this line without the Karabiner
+# rules leaves the row dead, and the rules without this line do nothing at all.
+defaults write -g com.apple.keyboard.fnState -bool true
+
 # The hotkey table is read once and cached, so without this the change does not
 # reach the WindowServer until the next login. Not fatal if it fails: the write
 # above is the part that persists, and a login applies it anyway. This script
 # runs under `set -e`, so the guard is what keeps a cosmetic refresh from
 # aborting everything after it.
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u \
-  || echo "  !! activateSettings failed — Ctrl+Left/Right take effect at the next login."
+  || echo "  !! activateSettings failed — Ctrl+Left/Right and the function-key row take effect at the next login."
 
 # Key repeat: faster, and in step with the display.
 #
@@ -138,4 +162,6 @@ echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
 echo "  - nothing else; ApplePersistence takes effect at the next restart"
 echo "Ctrl+Left/Right are released from Mission Control and work immediately."
+echo "The top row sends F1-F12; karabiner/install.sh restores the media keys"
+echo "  on every one of them except F7, which Neovim wants."
 echo "Key repeat is 20/sec — that one needs a logout before it applies."

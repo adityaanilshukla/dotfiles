@@ -26,6 +26,25 @@ APP_MODES = {"if", "unless"}
 DEVICE_MODES = {"device_if", "device_unless"}
 VALID_MODES = APP_MODES | DEVICE_MODES
 
+# Karabiner sorts key codes into namespaces, and the media row is spread across
+# three of them: brightness and volume are consumer_key_code, mission control
+# and spotlight are apple_vendor_keyboard_key_code, and do_not_disturb is
+# generic_desktop. Sending one under the wrong name is not a silent no-op -
+# Karabiner rejects the whole ruleset, which install.sh surfaces before writing
+# anything live. A mapping names its namespace with `to_code`; the default
+# covers every ordinary letter, digit and arrow.
+#
+# The authoritative list of which name lives where is shipped inside the app:
+#   /Applications/Karabiner-Elements.app/Contents/Resources/simple_modifications.json
+TO_CODE_TYPES = {
+    "key_code",
+    "consumer_key_code",
+    "apple_vendor_keyboard_key_code",
+    "apple_vendor_top_case_key_code",
+    "generic_desktop",
+    "pointing_button",
+}
+
 
 def build_conditions(spec: dict) -> dict:
     """Resolve spec.scopes into {name: conditions-list-or-None}.
@@ -132,6 +151,13 @@ def build(spec: dict) -> dict:
 
         manipulators = []
         for m in group["mappings"]:
+            to_code = m.get("to_code", "key_code")
+            if to_code not in TO_CODE_TYPES:
+                sys.exit(
+                    f"error: group {group['description']!r} mapping to {m['to']!r} "
+                    f"uses unknown to_code {to_code!r}; valid: {sorted(TO_CODE_TYPES)}"
+                )
+
             from_block: dict = {"key_code": m["from"]}
 
             modifiers: dict = {}
@@ -142,7 +168,7 @@ def build(spec: dict) -> dict:
             if modifiers:
                 from_block["modifiers"] = modifiers
 
-            to_event: dict = {"key_code": m["to"]}
+            to_event: dict = {to_code: m["to"]}
             if m.get("to_mods"):
                 to_event["modifiers"] = m["to_mods"]
 
