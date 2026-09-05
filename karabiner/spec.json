@@ -342,6 +342,36 @@
     },
 
     {
+      "description": "F7 is previous-track, except in terminals",
+      "_note": [
+        "The other half of the group above. That one hands the whole media row",
+        "back and deliberately skips f7, leaving it a plain F7 everywhere so",
+        "Neovim's floating terminal binding can see it. But F7 is only wanted",
+        "raw where Neovim runs; in a music player it should still skip a",
+        "track.",
+        "",
+        "So f7 is scoped rather than device-scoped. Scoping to the built-in",
+        "keyboard was the obvious-looking alternative and is wrong: it would",
+        "kill previous-track on the Glove80, solving the problem for one",
+        "keyboard by re-breaking it on the other. The app is the axis that",
+        "matters here, and both keyboards then behave identically everywhere.",
+        "",
+        "This makes f7 work exactly like the Ctrl+letter rules - the app",
+        "meaning outside terminals, the raw key inside them - which is the",
+        "pattern the rest of this file already follows.",
+        "",
+        "Known gap, the same one the Ctrl+letter rules have: Karabiner cannot",
+        "see inside an app, so VS Code's integrated terminal reads as VS Code",
+        "and gets previous-track rather than F7. Fixable app-side in",
+        "vscode/keybindings.json if Neovim is ever run in that pane."
+      ],
+      "scope": "gui",
+      "mappings": [
+        { "from": "f7", "to": "rewind", "to_code": "consumer_key_code" }
+      ]
+    },
+
+    {
       "description": "Ctrl+letter to Cmd+letter (not in terminals)",
       "scope": "gui",
       "mappings": [

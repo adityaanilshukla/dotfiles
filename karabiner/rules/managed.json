@@ -576,6 +576,39 @@
       ]
     },
     {
+      "description": "dotfiles: F7 is previous-track, except in terminals",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "f7"
+          },
+          "to": [
+            {
+              "consumer_key_code": "rewind"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "description": "dotfiles: Ctrl+letter to Cmd+letter (not in terminals)",
       "manipulators": [
         {

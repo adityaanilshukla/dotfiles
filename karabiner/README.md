@@ -48,9 +48,15 @@ competing with macOS for the row; it is the only thing assigning it.
 The two halves are load-bearing together. `fnState` without these rules leaves
 the row dead; these rules without `fnState` do nothing at all.
 
-Cost: previous-track, and `fn+F1..F12` now producing literal function keys
-rather than media — the inverse of stock, and what keeps `fn+F7` free for the
-volume rule.
+`F7` is then split back apart along the same line every other rule here uses:
+previous-track outside terminals, a raw `F7` inside them. The app is the axis
+that matters, not the keyboard — scoping it to the built-in keyboard instead
+would kill previous-track on the Glove80, fixing one keyboard by breaking the
+other. Same known gap as the `Ctrl+letter` rules: VS Code's integrated terminal
+reads as VS Code, so it gets previous-track rather than `F7`.
+
+Cost: `fn+F1..F12` now produce literal function keys rather than media — the
+inverse of stock, and what keeps `fn+F7` free for the volume rule.
 
 Left alone, the terminal's own path works end to end:
 
@@ -99,7 +105,8 @@ readable version and `generate.py` produces the verbose one.
 | Chord | Becomes | Where |
 |---|---|---|
 | `F1`–`F6`, `F8`–`F12` (bare) | brightness, mission control, spotlight, dictation, do-not-disturb, media, volume | everywhere |
-| `F7` (bare) | a real `F7` — Neovim's floating terminal | everywhere |
+| `F7` (bare) | previous track | not in terminals |
+| `F7` (bare) | a real `F7` — Neovim's floating terminal | terminals only |
 | `fn+F7` / `fn+F8` | volume down / up | everywhere |
 | `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
 | `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
