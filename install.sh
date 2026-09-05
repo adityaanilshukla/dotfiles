@@ -241,6 +241,11 @@ files=(
   # tailscaled daemon: the names in it are MagicDNS names and resolve to
   # nothing until this machine has joined the tailnet.
   "ssh/config:$HOME/.ssh/config"
+
+  # Claude Code notification hook — desktop banner and a sound when a session
+  # finishes or needs input. claude/install.sh registers it in settings.json
+  # afterwards; the symlink alone does nothing.
+  "claude/hooks/notify.sh:$HOME/.claude/hooks/notify.sh"
   "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
   "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
 
@@ -383,6 +388,18 @@ for pair in "${dirs[@]}"; do
   ln -sfn "$src_path" "$dest"
   echo "Linked $src_path -> $dest"
 done
+
+# --- Claude Code ----------------------------------------------------------
+# Registers the notification hooks in ~/.claude/settings.json. Must run after
+# the symlink loops above: the module checks that notify.sh is actually in
+# place and bails rather than registering a hook that would fail on every
+# event. Non-fatal like karabiner — a missing desktop notification must not
+# abort a machine setup, and this script runs under `set -e`.
+if [[ -x "$DOTFILES_DIR/claude/install.sh" ]]; then
+  echo "Configuring Claude Code hooks..."
+  "$DOTFILES_DIR/claude/install.sh" \
+    || echo "  claude module failed — re-run '$DOTFILES_DIR/claude/install.sh'."
+fi
 
 # --- Services -------------------------------------------------------------
 # Installing sketchybar and symlinking its config is not enough: it runs as a

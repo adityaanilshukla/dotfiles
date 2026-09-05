@@ -43,6 +43,13 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
   default of 11.25 and every terminal is unreadably small. Regenerated
   afterwards by sketchybar whenever a monitor is plugged in or unplugged.
 - **Symlinks** every tracked config into place, and the git hooks.
+- **Claude Code hooks** — registers `claude/hooks/notify.sh` in
+  `~/.claude/settings.json`, which posts a desktop banner and plays a sound
+  when a session finishes or needs input. Merged rather than symlinked, for the
+  same reason as `karabiner.json`: Claude Code writes to that file itself. The
+  merge replaces its own entries instead of appending, because appending is how
+  the machine this came from ended up firing two banners and two sounds per
+  event.
 - **Starts** the sketchybar and syncthing services. Tailscale is reported on, not
   started: its daemon runs as root and joining the tailnet is a browser login.
 - **VS Code extensions** and the macOS `defaults`.
