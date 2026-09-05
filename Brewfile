@@ -127,7 +127,9 @@ cask "macfuse"                        # needs manual kernel-extension approval +
 
 # ----- Networking + sync -----
 brew "syncthing"
-brew "tailscale"                      # links this machine to brovo
+brew "tailscale"                      # joins the tailnet: brovo, kalu, buffyx, ello.
+                                      # CLI only — the daemon needs
+                                      # `sudo brew services start tailscale`, see BOOTSTRAP.md
 cask "localsend"
 
 # ----- Comms + everyday apps -----

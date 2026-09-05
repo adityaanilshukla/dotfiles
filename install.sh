@@ -219,12 +219,28 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     || echo "  Oh My Zsh did not install — zsh will error on every prompt until it does."
 fi
 
+# --- SSH ------------------------------------------------------------------
+# ssh/config is symlinked below like any other config, but two things about it
+# cannot be expressed in a symlink.
+#
+# ssh enforces permissions itself and refuses to run rather than degrade: it
+# ignores a config file others can write, and it will not use a ControlPath in
+# a directory others can enter. A fresh ~/.ssh created by `mkdir -p` in the
+# symlink loop is 755, which fails both tests, so set the modes explicitly.
+mkdir -p "$HOME/.ssh/sockets"
+chmod 700 "$HOME/.ssh" "$HOME/.ssh/sockets"
+
 # --- Symlinks -------------------------------------------------------------
 # Single-file configs.
 files=(
   "zsh/zshrc:$HOME/.zshrc"
   "tmux/tmux.conf:$HOME/.tmux.conf"
   "git/gitconfig:$HOME/.gitconfig"
+
+  # Tailscale host aliases, so `scp file brovo:` works. Inert without the
+  # tailscaled daemon: the names in it are MagicDNS names and resolve to
+  # nothing until this machine has joined the tailnet.
+  "ssh/config:$HOME/.ssh/config"
   "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
   "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
 
@@ -388,6 +404,34 @@ for svc in sketchybar syncthing; do
   fi
 done
 
+# Tailscale is deliberately NOT in the loop above. Its daemon has to run as
+# root — it opens a utun interface and rewrites the system DNS resolvers for
+# MagicDNS, neither of which a per-user LaunchAgent can do — so it is
+# `sudo brew services start tailscale`, landing in /Library/LaunchDaemons
+# rather than ~/Library/LaunchAgents where the loop looks. Joining the tailnet
+# is a browser login on top of that.
+#
+# So this only reports. An install script that stops to ask for a password
+# halfway through is worse than one that tells you the two commands, and the
+# failure it is guarding against is quiet: ssh/config resolves its hosts by
+# MagicDNS, so with no daemon `ssh brovo` fails with "could not resolve
+# hostname" and looks like a broken config rather than a service that is off.
+if command -v tailscale >/dev/null 2>&1 && ! tailscale status >/dev/null 2>&1; then
+  echo "  !! tailscale is installed but not connected — 'ssh brovo' cannot resolve."
+  echo "     sudo brew services start tailscale"
+  echo "     sudo tailscale up --operator=$USER"
+fi
+
+# Remote Login (sshd), so the other machines can copy FROM this one. Checked by
+# opening a socket rather than by asking systemsetup, which needs admin rights
+# just to read the setting, and rather than by lsof, which would not show a
+# root-owned listener to an unprivileged user and would report every machine as
+# off.
+if ! nc -z 127.0.0.1 22 >/dev/null 2>&1; then
+  echo "  !! Remote Login is off — nothing can ssh or scp INTO this Mac."
+  echo "     sudo systemsetup -setremotelogin on"
+fi
+
 # AeroSpace does not come up on its own. Installing a cask does not launch it,
 # and `start-at-login = true` in aerospace.toml only registers a login item
 # once the app has run once — so on a fresh machine the setting reads as
@@ -452,6 +496,13 @@ echo "  - macfuse needs a kernel extension approved in System Settings, then a"
 echo "    reboot."
 echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"
 echo "    once on this machine to mint its Turso token."
+echo "  - Tailscale is a two-step, both needing a password: start the root daemon"
+echo "    with 'sudo brew services start tailscale', then join the tailnet with"
+echo "    'sudo tailscale up --operator=$USER'. The --operator flag is what lets"
+echo "    plain 'tailscale status' work afterwards without sudo."
+echo "  - 'sudo systemsetup -setremotelogin on' to let other machines ssh in."
+echo "    If it answers that Full Disk Access is required, grant it to this"
+echo "    terminal in System Settings > Privacy & Security > Full Disk Access."
 echo "  - Install the Raycast extension 'Set Audio Device' (benvp/audio-device)."
 echo "    aerospace's alt-ctrl-z and the sketchybar audio glyph both deeplink"
 echo "    straight into it, and both do nothing until it is installed:"

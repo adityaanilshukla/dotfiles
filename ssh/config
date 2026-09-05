@@ -1,0 +1,45 @@
+# ~/.ssh/config — symlinked here by install.sh. Host aliases so moving files
+# between machines is `scp file brovo:` and not a 100.x address looked up by
+# hand every time.
+#
+# There are no HostName lines below on purpose. ssh falls back to using the
+# alias itself as the hostname, and Tailscale's MagicDNS resolves these names
+# tailnet-wide, so the alias IS the address. That also means the names follow
+# the machine: they resolve the same whether it is on this desk or behind
+# someone else's NAT, and the connection is encrypted end to end with no port
+# forwarded on any router.
+#
+# The catch is that they resolve only while tailscaled is running. If a name
+# fails while `tailscale status` still lists the machine, MagicDNS is off — add
+# a HostName line by hand using the address from that output.
+#
+# `tailscale status` is the source of truth for both the machine list and the
+# addresses. They are deliberately not copied here: this repo is public, and a
+# pasted table goes stale the moment a machine is added or removed.
+
+Host molly ello brovo kalu buffyx
+    User aditya
+
+    # Tailscale is a WireGuard tunnel, so an idle session can sit behind a NAT
+    # mapping that expires without either end noticing. These turn a silent
+    # hang into a clean "Broken pipe" after ~90s.
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+
+    # Reuse one TCP connection for subsequent ssh/scp/rsync to the same host.
+    # Matters most for rsync over many small files, where the handshake
+    # otherwise dominates. install.sh creates the socket dir with mode 700;
+    # ssh refuses a ControlPath in a directory others can write.
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h:%p
+    ControlPersist 10m
+
+Host *
+    IdentityFile ~/.ssh/id_ed25519
+    # Offer only the key named above. Otherwise ssh offers every key the agent
+    # holds and can trip a server's MaxAuthTries before reaching the right one.
+    IdentitiesOnly yes
+    AddKeysToAgent yes
+    # macOS-only keyword: load the passphrase from the login keychain. This
+    # file is on the MacOS branch; ssh on Linux would reject it as unknown.
+    UseKeychain yes

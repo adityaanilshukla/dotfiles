@@ -43,7 +43,8 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
   default of 11.25 and every terminal is unreadably small. Regenerated
   afterwards by sketchybar whenever a monitor is plugged in or unplugged.
 - **Symlinks** every tracked config into place, and the git hooks.
-- **Starts** the sketchybar and syncthing services.
+- **Starts** the sketchybar and syncthing services. Tailscale is reported on, not
+  started: its daemon runs as root and joining the tailnet is a browser login.
 - **VS Code extensions** and the macOS `defaults`.
 
 ## Manual steps afterwards
@@ -56,7 +57,8 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
 | Approve the **Karabiner driver extension** and its Input Monitoring, then reboot | Nothing remaps until the DriverKit extension is `activated enabled`. `karabiner/install.sh` prints the exact panes; `karabiner/verify.sh` confirms. |
 | Approve the **macfuse** kernel extension, then reboot | Kernel extensions require explicit approval. |
 | `gh auth login` | per-device auth |
-| `tailscale up` | per-device auth; links this machine to `brovo` |
+| `sudo brew services start tailscale` then `sudo tailscale up --operator=$USER` | per-device auth; links this machine to `brovo`. Two commands, not one: the daemon needs root for a utun interface and for MagicDNS, so it is a LaunchDaemon and `brew services` alone will not start it. `--operator` is what makes plain `tailscale status` work without sudo afterwards. Until this is done the host aliases in `ssh/config` resolve to nothing. |
+| `sudo systemsetup -setremotelogin on` | turns on sshd, so `brovo` can copy files *from* this Mac. Needs Full Disk Access for the terminal on recent macOS; if it refuses, grant that in System Settings > Privacy & Security first. |
 | `make -C ~/Projects/online-zathura join` | mints this device's Turso token for reading-state sync |
 | Import your **GPG key**, then `scripts/secrets.sh decrypt` | The private key is deliberately not in this repo. Without it `secrets.gpg` cannot be opened. |
 | Install the Raycast extension **Set Audio Device** (`benvp/audio-device`): `open 'raycast://extensions/benvp/audio-device'` | AeroSpace's `alt-ctrl-z` and the sketchybar audio glyph both deeplink into it. Until it is installed, both silently do nothing. |
