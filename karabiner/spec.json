@@ -267,8 +267,22 @@
     },
 
     {
-      "description": "fn+F7/F8 volume down/up",
-      "scope": "everywhere",
+      "description": "fn+F7/F8 volume down/up (not in terminals)",
+      "_note": [
+        "Scoped away from terminals because fn+F7 is the only chord that can",
+        "produce a real F7 on this keyboard, and Neovim binds <F7> to the",
+        "floating terminal (toggleterm). With the default keyboard setting the",
+        "bare top row sends media keys, so a bare F7 is 'previous track' and",
+        "never reaches the app at all; holding fn is what turns it back into",
+        "F7. This rule was consuming exactly that, everywhere, so the Neovim",
+        "binding looked dead rather than shadowed.",
+        "",
+        "Nothing is lost by narrowing it. F9-F12 are untouched here, so the",
+        "built-in row's native mute / volume-down / volume-up keep working in",
+        "a terminal without any remap at all - which is where the volume was",
+        "coming from anyway."
+      ],
+      "scope": "gui",
       "mappings": [
         { "from": "f7", "mods": ["fn"], "to": "volume_decrement" },
         { "from": "f8", "mods": ["fn"], "to": "volume_increment" }

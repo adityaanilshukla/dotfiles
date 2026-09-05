@@ -413,7 +413,7 @@
       ]
     },
     {
-      "description": "dotfiles: fn+F7/F8 volume down/up",
+      "description": "dotfiles: fn+F7/F8 volume down/up (not in terminals)",
       "manipulators": [
         {
           "type": "basic",
@@ -428,6 +428,23 @@
           "to": [
             {
               "key_code": "volume_decrement"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
+              ]
             }
           ]
         },
@@ -444,6 +461,23 @@
           "to": [
             {
               "key_code": "volume_increment"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.apple\\.Terminal$",
+                "^com\\.googlecode\\.iterm2$",
+                "^io\\.alacritty$",
+                "^org\\.alacritty$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$",
+                "^com\\.github\\.wez\\.wezterm$"
+              ],
+              "file_paths": [
+                "/zathura$"
+              ]
             }
           ]
         }

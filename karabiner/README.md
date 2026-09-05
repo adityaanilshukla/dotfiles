@@ -20,6 +20,14 @@ leaves `option_as_alt` at `None` on macOS, so `Option+Arrow` arrives as a bare
 arrow and `Option+Backspace` as a bare delete. The rewrite was taking a working
 chord and returning a broken one.
 
+`fn+F7/F8` was the one rule that stayed global, and it cost the same way. On
+this keyboard the bare top row sends media keys, so `F7` alone is
+previous-track and never reaches the frontmost app; holding `fn` is the only
+way to produce a real `F7`. Neovim binds `<F7>` to the floating terminal, so
+the volume remap ate it and the binding looked dead rather than shadowed.
+Narrowing the rule costs nothing: `F9`-`F12` are not remapped here, so the
+row's native mute and volume keys still work in a terminal on their own.
+
 Left alone, the terminal's own path works end to end:
 
 | Chord | What carries it |
@@ -66,7 +74,7 @@ readable version and `generate.py` produces the verbose one.
 
 | Chord | Becomes | Where |
 |---|---|---|
-| `fn+F7` / `fn+F8` | volume down / up | everywhere |
+| `fn+F7` / `fn+F8` | volume down / up | not in terminals |
 | `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
 | `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | zoom in / out / reset | not in terminals |
