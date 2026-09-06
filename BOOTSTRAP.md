@@ -98,6 +98,29 @@ itself. Support files can sit alongside as dotfiles, which `ls` skips.
 if installed by hand, since its cask is ad-hoc signed), Discord, and
 Progress-tracker.
 
+## Leaving it running with the lid shut
+
+`awake on 3h` (from `scripts/awake`) keeps this Mac up with the lid closed, so
+it can sit locked in a bag on a phone hotspot and still answer `claude
+--remote-control`. `awake off` ends it early, `awake status` reports what is
+holding on, `awake lock` locks the screen without sleeping.
+
+Two things are easy to get wrong here:
+
+- **`caffeinate` does not survive a closed lid.** None of its assertions apply
+  to the clamshell path. Claude Code runs `caffeinate -i -t 300` for the life of
+  a session, which is idle-sleep only — a running caffeinate is not evidence the
+  machine will stay up once the lid is down. `pmset disablesleep 1` is the only
+  switch that works, and it needs root.
+- **`disablesleep` persists, including across a reboot.** That is why `awake on`
+  takes a duration and arms a root-owned timer to clear the flag. Never set the
+  flag by hand; a laptop that never sleeps in a closed bag overheats and runs
+  the battery flat. If `awake status` reports `NO WATCHDOG`, run `awake off`.
+
+Remote Control is an outbound connection to Anthropic, so it needs the machine
+awake and *some* working route — it does not need Tailscale, and it does not
+need `sshd`. Tailscale only matters for `ssh`/`scp` between hosts.
+
 ## Layout
 
 | Path | What |
@@ -108,5 +131,6 @@ Progress-tracker.
 | `githooks/` | tracked hooks, symlinked into `.git/hooks` by install.sh |
 | `karabiner/` | keyboard remaps; edit `spec.json`, see its `README.md` |
 | `macos/defaults.sh` | `defaults write` settings, which cannot be symlinked |
+| `scripts/awake` | keep the Mac up with the lid shut; see above |
 | `scripts/` | helpers the configs invoke |
 | `secrets.gpg` | encrypted; see `scripts/secrets.sh` |

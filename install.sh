@@ -261,6 +261,11 @@ files=(
   # a brew binary lands in.
   "scripts/nightlight:$HOME/Scripts/nightlight"
 
+  # Keeps the Mac running with the lid shut (a `pmset disablesleep` wrapper with
+  # a self-disarming timer), so it can be left locked in a bag and still be
+  # reachable. Needs sudo at runtime, not at install time. See scripts/awake.
+  "scripts/awake:$HOME/.local/bin/awake"
+
   # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
   "scripts/t:$HOME/.local/bin/t"
 

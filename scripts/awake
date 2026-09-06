@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#
+# Keep this Mac running with the lid shut, then put it back the way it was.
+#
+# Why this exists at all: closing the lid sleeps the machine no matter what
+# `caffeinate` is holding. caffeinate's assertions (-i idle, -s system, -d
+# display) are all ignored by the clamshell path. The only switch that stops a
+# lid-close sleep is `pmset disablesleep 1`, and that needs root. Apple's
+# supported alternative is "clamshell mode", which requires an external display
+# AND external keyboard AND power — i.e. a desk, which is the one situation
+# where you did not need this script.
+#
+# Note that Claude Code already runs `caffeinate -i -t 300` for the life of a
+# session. That is idle-sleep only, so it keeps an *open* laptop from dozing off
+# mid-task and does nothing whatsoever once the lid is down. Do not read a
+# running caffeinate as "the machine will survive the lid".
+#
+# Display sleep is deliberately left alone. The lid being shut turns the panel
+# off anyway, and the screen lock is wanted, not worked around: this script
+# keeps the *computer* awake, not the *screen* on.
+#
+# THE SAFETY PROPERTY. disablesleep is a system-wide flag that persists until
+# something clears it — including across a reboot. Left set, a laptop in a bag
+# never sleeps, cooks itself, and flattens the battery. So `on` never sets it
+# without also arming a root-owned timer to unset it. Every failure mode here
+# lands on "sleep re-enabled": the timer only ever writes 0, so a stray watchdog
+# surviving an `off` is harmless, and killing the watchdog mid-flight leaves a
+# flag that `off` clears. The one hole is a reboot, which drops the watchdog but
+# keeps the flag — `status` shouts about that case specifically.
+#
+# usage:
+#   awake on [duration]   # duration accepts 90m, 3h, or bare seconds. default 3h
+#   awake off
+#   awake lock            # lock the screen now, without sleeping
+#   awake status          # also the default with no arguments
+
+set -euo pipefail
+
+STATE="/var/run/awake.state"
+
+die() { printf 'awake: %s\n' "$1" >&2; exit 1; }
+
+# 90m / 3h / 7200 -> seconds. Rejects anything else rather than guessing, since
+# a misparse here is the difference between three hours and three seconds.
+parse_duration() {
+  local d="$1"
+  case "$d" in
+    *h) printf '%s' $(( ${d%h} * 3600 )) ;;
+    *m) printf '%s' $(( ${d%m} * 60 )) ;;
+    *[!0-9]*) die "unparseable duration '$d' (want 90m, 3h, or seconds)" ;;
+    *) printf '%s' "$d" ;;
+  esac
+}
+
+is_on() { pmset -g | grep -qE '^ *disablesleep +1'; }
+
+fmt_remaining() {
+  local s="$1"
+  (( s < 0 )) && s=0
+  printf '%dh%02dm' $(( s / 3600 )) $(( (s % 3600) / 60 ))
+}
+
+cmd_status() {
+  if is_on; then
+    echo "awake: ON — this Mac will not sleep, lid open or shut"
+  else
+    echo "awake: off — closing the lid sleeps the machine"
+  fi
+
+  if [[ -r "$STATE" ]]; then
+    local pid deadline now
+    { read -r pid; read -r deadline; } < "$STATE"
+    now=$(date +%s)
+    if kill -0 "$pid" 2>/dev/null; then
+      echo "  auto-off in $(fmt_remaining $(( deadline - now ))) (watchdog pid $pid)"
+    else
+      echo "  WATCHDOG GONE — nothing will turn this off. Run: awake off"
+    fi
+  elif is_on; then
+    # disablesleep survives reboots; the watchdog does not. This is that case.
+    echo "  NO WATCHDOG — this will stay on forever. Run: awake off"
+  fi
+
+  # The reason you are doing this, so a typo in the plan shows up here and not
+  # two hours later on a train.
+  if pmset -g batt | grep -q "'AC Power'"; then
+    echo "  power: AC"
+  else
+    local pct
+    pct=$(pmset -g batt | grep -Eo '[0-9]+%' | head -1)
+    echo "  power: BATTERY ${pct:-?} — no sleep means it drains to zero"
+  fi
+
+  printf '  network: '
+  if route -n get default >/dev/null 2>&1; then
+    printf '%s via %s\n' "up" "$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')"
+  else
+    echo "DOWN — remote control cannot reach this machine"
+  fi
+
+  printf '  tailscale: '
+  if command -v tailscale >/dev/null 2>&1 && tailscale status >/dev/null 2>&1; then
+    echo "up"
+  else
+    echo "down (only matters for ssh/scp, not for Claude remote control)"
+  fi
+}
+
+cmd_on() {
+  local secs deadline
+  secs=$(parse_duration "${1:-3h}")
+  (( secs > 0 )) || die "duration must be positive"
+  deadline=$(( $(date +%s) + secs ))
+
+  if ! pmset -g batt | grep -q "'AC Power'"; then
+    echo "awake: WARNING — on battery. Sleep is the only thing that saves the" >&2
+    echo "       charge here, and you are about to switch it off. A shut lid in" >&2
+    echo "       a bag also has nowhere to dump heat." >&2
+  fi
+
+  # One sudo for both halves on purpose. The watchdog has to run as root to be
+  # able to call pmset later, and a second sudo would prompt again long after
+  # you have walked away.
+  sudo /bin/sh -s <<SUDO
+set -e
+pmset -a disablesleep 1
+nohup /bin/sh -c 'sleep $secs; /usr/bin/pmset -a disablesleep 0; rm -f "$STATE"' \
+  >/dev/null 2>&1 &
+printf '%s\n%s\n' "\$!" "$deadline" > "$STATE"
+SUDO
+
+  echo "awake: ON for $(fmt_remaining "$secs"). Shut the lid whenever."
+  echo "       Sleep comes back on its own; \`awake off\` ends it early."
+}
+
+cmd_off() {
+  if [[ -r "$STATE" ]]; then
+    local pid
+    { read -r pid; } < "$STATE"
+    sudo kill "$pid" 2>/dev/null || true
+  fi
+  sudo /bin/sh -c "pmset -a disablesleep 0; rm -f '$STATE'"
+  echo "awake: off — normal sleep restored"
+}
+
+# Lock now rather than waiting out the screenLock delay. With disablesleep on,
+# a shut lid only blanks the display — the lock timer still has to run down
+# first (`sysadminctl -screenLock status` shows how long that is), leaving the
+# machine shut but unlocked for that window. CGSession drops to the login
+# window immediately and needs no Accessibility grant, unlike the osascript
+# keystroke trick. Background processes are untouched: this locks the GUI
+# session, it does not log anyone out.
+cmd_lock() {
+  local cg="/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession"
+  [[ -x "$cg" ]] || die "CGSession not found — lock the screen by hand"
+  "$cg" -suspend
+}
+
+case "${1:-status}" in
+  on)     shift; cmd_on "$@" ;;
+  off)    cmd_off ;;
+  lock)   cmd_lock ;;
+  status) cmd_status ;;
+  *)      die "unknown command '$1' (want: on | off | lock | status)" ;;
+esac
