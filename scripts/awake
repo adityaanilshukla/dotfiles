@@ -52,7 +52,11 @@ parse_duration() {
   esac
 }
 
-is_on() { pmset -g | grep -qE '^ *disablesleep +1'; }
+# `pmset -a disablesleep 1` is written with one name and read back under
+# another: `pmset -g` prints it as `SleepDisabled`, tab-separated. Match both,
+# since the setting name is the one documented and the display name is the one
+# that actually appears.
+is_on() { pmset -g | grep -qE '^[[:space:]]*(disablesleep|SleepDisabled)[[:space:]]+1'; }
 
 fmt_remaining() {
   local s="$1"
@@ -71,7 +75,10 @@ cmd_status() {
     local pid deadline now
     { read -r pid; read -r deadline; } < "$STATE"
     now=$(date +%s)
-    if kill -0 "$pid" 2>/dev/null; then
+    # ps, not `kill -0`: the watchdog is root-owned, and `kill -0` against
+    # another user's process fails with EPERM even when it is alive and well.
+    # Confirm the command too, so a recycled pid cannot pass for the watchdog.
+    if ps -p "$pid" -o command= 2>/dev/null | grep -q 'pmset'; then
       echo "  auto-off in $(fmt_remaining $(( deadline - now ))) (watchdog pid $pid)"
     else
       echo "  WATCHDOG GONE — nothing will turn this off. Run: awake off"
