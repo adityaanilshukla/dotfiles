@@ -218,6 +218,14 @@ alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/s
 # reason: a GUI launch inherits PATH=/usr/bin:/bin and nothing else. The
 # launcher needs fzf from /opt/homebrew/bin before it can draw anything, and
 # library needs the rest of it once picked.
+# `open -na Alacritty`, not a bare `alacritty`, and `/bin/zsh`, not `zsh`.
+# exec-and-forget runs with PATH=/usr/bin:/bin. Alacritty is installed as an
+# .app and has no binary on that path at all (it is not a brew cask here, so
+# there is no /opt/homebrew/bin/alacritty either), so the bare form resolved to
+# nothing and this binding silently did nothing at all. alt-n above always used
+# `open` and always worked, which is the tell. The on-window-detected rule at
+# the bottom of this file is what keeps the new instance from floating.
+#
 # The whole command has to sit inside ONE pair of double quotes. It read
 # `"...launcher; "sleep 0.3` for a while, and the stray quote split the word:
 # bash joined the quoted part to the adjacent `sleep` and handed zsh -c a script
@@ -226,7 +234,7 @@ alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/s
 # which errors on a missing operand. Only visible when you cancel the menu,
 # because picking an entry makes launcher exec over the shell and the trailing
 # command never runs at all.
-alt-x = 'exec-and-forget alacritty -e zsh -lic "~/.local/bin/launcher; sleep 0.3"'
+alt-x = 'exec-and-forget open -na Alacritty --args -e /bin/zsh -lic "~/.local/bin/launcher; sleep 0.3"'
 
 # Launch Alacritty with tmux
 # alt-enter = 'exec-and-forget open -na Alacritty --args -e tmux'

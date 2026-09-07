@@ -146,7 +146,14 @@ if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.
   source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
 
-export ZATHURA_PLUGINS_PATH="$(brew --prefix)/Cellar/zathura-pdf-poppler/2026.02.03:$(brew --prefix)/Cellar/zathura-pdf-mupdf/2026.02.03"
+# zathura finds no plugins on its own here: the Homebrew tap installs each one
+# into its own keg rather than a shared plugin directory, so the path has to be
+# spelled out. Point at brew's `opt` symlinks, NOT at Cellar. These two lines
+# used to name the version (2026.02.03) directly, which works right up until
+# `brew upgrade` moves the keg and zathura silently opens nothing -- there is no
+# error, the plugin just is not there. `opt/<formula>` always points at whatever
+# version is current.
+export ZATHURA_PLUGINS_PATH="$(brew --prefix)/opt/zathura-pdf-poppler:$(brew --prefix)/opt/zathura-pdf-mupdf"
 
 # --------------------
 # Lazy-load conda. The stock eager `conda init` block that used to sit here ran
