@@ -80,6 +80,18 @@ brew "lazygit"
 # plugins below: depending on someone else's dependency graph is how a thing
 # quietly stops being installed.
 brew "zathura"
+# Both plugins are source-only in this tap: no bottle, so brew compiles them
+# against whatever mupdf/poppler is installed at the time. It does NOT rebuild
+# them when those upgrade, and there is no revision bump to force it either, so
+# the plugin quietly keeps a stale header version. mupdf notices and refuses
+# ("cannot create context: incompatible header (1.28.2) and library (1.28.3)
+# versions" -> "could not open document"); poppler usually keeps linking, so it
+# breaks later and less obviously.
+#
+# The tell is one format dying while the other still works: poppler does PDF,
+# mupdf does epub/mobi/fb2/oxps, so a dead mupdf looks like "epubs stopped
+# opening". `scripts/check-zathura-plugins` names the drift; the fix is
+#   brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler
 brew "homebrew-zathura/zathura/zathura-pdf-poppler"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading state

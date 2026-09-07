@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# Reports zathura pdf plugins that were compiled against a different version of
+# mupdf/poppler than the one currently installed.
+#
+# Why this needs checking at all: the homebrew-zathura tap ships no bottles, so
+# both plugins are compiled locally against whatever mupdf/poppler happened to
+# be installed that day. Upgrading mupdf or poppler later does not rebuild them,
+# and the tap does not bump plugin revisions to force it, so the built artifact
+# keeps a header version that no longer matches the library beside it.
+#
+# The failure is one-sided and therefore easy to misread. poppler handles pdf,
+# mupdf handles epub/mobi/fb2/oxps. mupdf checks its header against its library
+# at context creation and refuses outright:
+#
+#   cannot create context: incompatible header (1.28.2) and library (1.28.3) versions
+#   error: could not open document
+#
+# so epubs stop opening while pdfs carry on, which reads like "epub support
+# broke" rather than "a rebuild is due". poppler tends to keep linking across
+# upgrades, so its drift stays silent until some release changes the ABI.
+#
+# Exits 0 when everything is in step, 1 when at least one plugin has drifted.
+
+set -euo pipefail
+
+BREW="${BREW:-/opt/homebrew/bin/brew}"
+command -v "$BREW" >/dev/null 2>&1 || BREW=brew
+command -v "$BREW" >/dev/null 2>&1 || { printf 'check-zathura-plugins: no brew on PATH\n' >&2; exit 1; }
+
+CELLAR="$("$BREW" --cellar)"
+
+drift=0
+
+# The dependency each plugin is version-sensitive about. Everything else in the
+# receipt (glib, cairo, girara) moves without breaking the plugin, so listing
+# only the renderer keeps this from crying wolf on every routine upgrade.
+check() {
+  local plugin="$1" dep="$2" receipt built installed
+
+  receipt="$(find "$CELLAR/$plugin" -maxdepth 2 -name INSTALL_RECEIPT.json 2>/dev/null | head -n1)"
+  if [[ -z "$receipt" ]]; then
+    printf '  %-22s not installed\n' "$plugin"
+    return 0
+  fi
+
+  # The receipt records the exact version of each dependency present when the
+  # plugin was built, which is the only place that number survives.
+  built="$(python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(next((x["pkg_version"] for x in d.get("runtime_dependencies", [])
+            if x["full_name"] == sys.argv[2]), ""))
+' "$receipt" "$dep")"
+
+  installed="$(basename "$(find "$CELLAR/$dep" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -n1)" 2>/dev/null || true)"
+
+  if [[ -z "$built" || -z "$installed" ]]; then
+    printf '  %-22s cannot determine (%s: built=%s installed=%s)\n' \
+      "$plugin" "$dep" "${built:-?}" "${installed:-?}"
+    return 0
+  fi
+
+  if [[ "$built" == "$installed" ]]; then
+    printf '  %-22s ok      (%s %s)\n' "$plugin" "$dep" "$installed"
+  else
+    printf '  %-22s DRIFT   (built against %s %s, installed %s)\n' \
+      "$plugin" "$dep" "$built" "$installed"
+    drift=1
+  fi
+}
+
+printf 'zathura plugins:\n'
+check zathura-pdf-mupdf   mupdf
+check zathura-pdf-poppler poppler
+
+if (( drift )); then
+  cat <<'MSG'
+
+Rebuild the drifted plugins against what is installed now:
+
+  brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler
+
+Takes a few seconds each; no configuration changes.
+MSG
+  exit 1
+fi

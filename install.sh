@@ -273,6 +273,12 @@ files=(
   # nothing synced to Turso. Also what library's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
+  # Diagnostic for the one way zathura breaks on its own: its pdf plugins are
+  # built from source against whatever mupdf/poppler was installed that day and
+  # are never rebuilt on upgrade, so epubs stop opening while pdfs still work.
+  # Not in ~/Scripts — it answers a question, it is not a command to run.
+  "scripts/check-zathura-plugins:$HOME/.local/bin/check-zathura-plugins"
+
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
   "scripts/notification-center:$HOME/Scripts/notification-center"
