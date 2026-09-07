@@ -73,7 +73,6 @@ brew "homebrew-zathura/zathura/zathura-pdf-poppler"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading state
 brew "go"                             # builds online-zathura (see install.sh)
-cask "xournal++"                      # annotating PDFs
 
 # ----- Documents + media -----
 brew "pandoc"
