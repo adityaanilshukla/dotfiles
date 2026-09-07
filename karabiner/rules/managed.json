@@ -286,7 +286,7 @@
       ]
     },
     {
-      "description": "dotfiles: Glove80 outside VS Code: the notification chords",
+      "description": "dotfiles: Outside VS Code: the notification chords",
       "manipulators": [
         {
           "type": "basic",
@@ -309,16 +309,6 @@
             }
           ],
           "conditions": [
-            {
-              "type": "device_if",
-              "identifiers": [
-                {
-                  "vendor_id": 5824,
-                  "product_id": 10203,
-                  "is_keyboard": true
-                }
-              ]
-            },
             {
               "type": "frontmost_application_unless",
               "bundle_identifiers": [
@@ -348,16 +338,6 @@
             }
           ],
           "conditions": [
-            {
-              "type": "device_if",
-              "identifiers": [
-                {
-                  "vendor_id": 5824,
-                  "product_id": 10203,
-                  "is_keyboard": true
-                }
-              ]
-            },
             {
               "type": "frontmost_application_unless",
               "bundle_identifiers": [
