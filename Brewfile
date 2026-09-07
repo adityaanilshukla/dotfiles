@@ -19,7 +19,18 @@ brew "felixkratz/formulae/sketchybar"
 cask "font-sketchybar-app-font"      # sketchybar's glyph icons
 
 # ----- Terminal + shell -----
-cask "alacritty"
+# alacritty is NOT installed from here. Homebrew disabled the cask on
+# 2026-09-01 because the upstream build stopped passing the macOS Gatekeeper
+# check, so `brew install --cask alacritty` now errors out and `brew bundle`
+# fails on this line if it is uncommented. Download the .dmg from
+# github.com/alacritty/alacritty/releases and drag it to /Applications.
+#
+# Consequence worth knowing, because it silently breaks keybindings: a
+# hand-installed .app puts no `alacritty` binary on PATH, unlike the cask which
+# linked one into the brew prefix. Anything spawning a terminal has to go
+# through `open -na Alacritty` instead. See the alt-x and alt-n bindings in
+# aerospace/aerospace.toml, which do exactly that.
+# cask "alacritty"
 brew "tmux"                          # tmux.conf is symlinked; inert without this
 brew "zsh-autosuggestions"           # sourced by zshrc
 brew "zsh-syntax-highlighting"       # sourced by zshrc, must load last
