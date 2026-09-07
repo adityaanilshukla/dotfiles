@@ -19,6 +19,11 @@
 
 CLI=/opt/homebrew/bin/nightlight
 
+# How warm Night Shift goes, on the CLI's 0-100 scale. The CLI's own default is
+# 50, which is the weaker end and is what a machine gets if nothing sets it;
+# 100 is the warmest it offers. Overridable for a one-off without editing this.
+TEMP="${NIGHTLIGHT_TEMP:-100}"
+
 # Bootstrap on a fresh machine can reach the symlinks before the tap is
 # installed. Say so rather than closing the launcher window on a blank error.
 if [ ! -x "$CLI" ]; then
@@ -26,5 +31,13 @@ if [ ! -x "$CLI" ]; then
   sleep 3
   exit 1
 fi
+
+# Apply the warmth before switching on, so turning it on always lands at TEMP
+# rather than at whatever the CLI last stored. Only the two forms that switch
+# it on are treated this way: an explicit `temp` call is the user setting the
+# value themselves, and `status`/`off` have no business changing anything.
+case "${1:-}" in
+  ''|on) "$CLI" temp "$TEMP" >/dev/null 2>&1 || true ;;
+esac
 
 exec "$CLI" "$@"
