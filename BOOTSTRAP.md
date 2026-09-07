@@ -99,8 +99,12 @@ rebuild.** They come from a tap with no bottles, so brew compiles them against
 whatever mupdf/poppler is installed that day and never rebuilds them when those
 upgrade. mupdf refuses to open anything once its header and library versions
 disagree, and it is the plugin that handles epub/mobi/fb2, so the breakage looks
-format-specific rather than version-specific. `check-zathura-plugins` names the
-drift; the fix is one command:
+format-specific rather than version-specific. `library` and `zp` now detect this
+themselves and print the reason plus a plugin check, rather than leaving an
+empty zathura window with no explanation — zathura does not exit when it cannot
+read a document, so their stderr goes to `~/.cache/library/last-launch.log`
+instead of `/dev/null`. `check-zathura-plugins` names the drift on demand; the
+fix is one command:
 
 ```sh
 brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler

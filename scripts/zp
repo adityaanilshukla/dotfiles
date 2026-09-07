@@ -85,16 +85,76 @@ TMPDATA=$(mktemp -d "${TMPDIR:-/tmp}"/zp.XXXXXX) || exit 1
 # dir is removed by the same wrapper once zathura exits. Arguments are passed
 # positionally so paths with spaces survive and the inner shell expands nothing
 # of its own.
-nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
-  zp "$ZATHURA" "$TMPDATA" "$@" >/dev/null 2>&1 &
+#
+# stderr is kept rather than discarded: zathura does not exit when it cannot
+# read a document, it leaves an empty window up and keeps running, so what it
+# writes here is the only sign anything failed. See the watch loop below.
+LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/library"
+mkdir -p "$LOG_DIR"
+LOG="$LOG_DIR/last-launch.log"
+: > "$LOG"
 
-# --- focus ---
-(( HAVE_AEROSPACE )) || exit 0
-for _ in $(seq 1 50); do
+nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
+  zp "$ZATHURA" "$TMPDATA" "$@" >"$LOG" 2>&1 &
+
+# One error appears on every healthy launch and means nothing: both plugins
+# register application/pdf and the second registration loses. Anything else on
+# an `error:` line is a real failure.
+launch_error() {
+  grep '^error:' "$LOG" 2>/dev/null \
+    | grep -v 'filetype already registered' \
+    | head -n1
+}
+
+# What to show once something has gone wrong. The line naming the cause is
+# often NOT the `error:` line: a mupdf version mismatch reports "cannot create
+# context: incompatible header (1.28.2) and library (1.28.3) versions" with no
+# prefix at all, and the `error:` line under it says only "could not open
+# document". So print everything zathura wrote apart from the routine noise.
+launch_detail() {
+  grep -v -e 'filetype already registered' \
+          -e 'Gtk-CRITICAL' \
+          -e 'ApplePersistence' \
+          "$LOG" 2>/dev/null | sed '/^[[:space:]]*$/d'
+}
+
+# --- watch, and focus ---
+# Runs even without AeroSpace, because reporting a failed open matters on any
+# machine; only the focus call is conditional. zathura creates its window
+# before it parses the document, so an error arrives after the window exists —
+# focus first, then keep watching for a further second.
+# Without AeroSpace there is nothing to focus and the loop's only job is to
+# catch an error, so start already "focused": that hands it to the grace-period
+# branch below and it gives up after a second instead of holding the shell
+# prompt for the full five.
+if (( HAVE_AEROSPACE )); then
+  focused=0
+else
+  focused=1
+fi
+settled=0
+for i in $(seq 1 50); do
   sleep 0.1
-  wid=$(zathura_ids | sort -n | tail -n1)
-  if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
-    aerospace focus --window-id "$wid"
+
+  if err=$(launch_error) && [[ -n "$err" ]]; then
+    printf '\nzp: zathura opened a window but could not read the document.\n' >&2
+    launch_detail | sed 's/^/  /' >&2
+    printf '\n' >&2
+    if command -v check-zathura-plugins >/dev/null 2>&1; then
+      check-zathura-plugins >&2 || true
+    fi
+    printf '\nfull output: %s\n' "$LOG" >&2
+    exit 1
+  fi
+
+  if (( HAVE_AEROSPACE )) && (( ! focused )); then
+    wid=$(zathura_ids | sort -n | tail -n1)
+    if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
+      aerospace focus --window-id "$wid"
+      focused=1
+      settled=$i
+    fi
+  elif (( focused )) && (( i - settled >= 10 )); then
     break
   fi
 done
