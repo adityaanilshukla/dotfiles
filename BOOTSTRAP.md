@@ -98,6 +98,19 @@ itself. Support files can sit alongside as dotfiles, which `ls` skips.
 if installed by hand, since its cask is ad-hoc signed), Discord, and
 Progress-tracker.
 
+## Per-machine ssh hosts
+
+`ssh/config` is shared by every machine, so anything true of only one of them —
+a literal address, a non-standard port, a per-device key, a work jump box —
+goes in `~/.ssh/config.local` instead. That file is not in this repo and
+nothing here creates or touches it.
+
+The `Include` sits at the very top of `ssh/config` on purpose: ssh takes the
+first value it sees for a keyword, so an Include lower down could never
+override the blocks above it. Missing file is a no-op, so a fresh machine needs
+nothing. `git pull && ./install.sh` cannot clobber it, because `config.local`
+is not in the symlink list — which is the reason for splitting it out at all.
+
 ## Leaving it running with the lid shut
 
 `awake on 3h` (from `scripts/awake`) keeps this Mac up with the lid closed, so

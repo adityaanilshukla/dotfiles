@@ -17,6 +17,32 @@
 # addresses. They are deliberately not copied here: this repo is public, and a
 # pasted table goes stale the moment a machine is added or removed.
 
+# ---------------------------------------------------------------------------
+# Machine-specific hosts go in ~/.ssh/config.local, which is NOT in this repo.
+#
+# This Include has to stay at the very top. ssh takes the FIRST value it sees
+# for any keyword and ignores every later one, so an Include placed below the
+# blocks here could never override them — it would silently lose to whatever
+# this file already said. At the top, the local file wins.
+#
+# What belongs there: anything private or true of only one machine. Hosts with
+# a literal address or a non-standard port, per-device keys, work jump boxes.
+# ello's `phone` entry is the example — an address, port 8022 and its own
+# keyfile, none of which should be in a public repo or apply to any other
+# machine.
+#
+# What belongs here instead: hosts every machine shares, addressed by MagicDNS
+# name rather than by address.
+#
+# Missing is fine. ssh treats an Include whose file does not exist as a no-op,
+# so a fresh machine works with no local file at all, and install.sh does not
+# create one. It also never overwrites one: config.local is not in its symlink
+# list, so `git pull && ./install.sh` cannot clobber your local hosts. That is
+# the whole point of splitting them out.
+Include ~/.ssh/config.local
+
+# ---------------------------------------------------------------------------
+
 Host molly ello brovo kalu buffyx
     User aditya
 
