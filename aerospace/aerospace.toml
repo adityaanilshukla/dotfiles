@@ -234,7 +234,7 @@ alt-ctrl-z = 'exec-and-forget open -g "raycast://extensions/benvp/audio-device/s
 # which errors on a missing operand. Only visible when you cancel the menu,
 # because picking an entry makes launcher exec over the shell and the trailing
 # command never runs at all.
-alt-x = 'exec-and-forget open -na Alacritty --args -e /bin/zsh -lic "~/.local/bin/launcher; sleep 0.3"'
+alt-x = 'exec-and-forget open -na Alacritty --args -T aerospace-launcher -e /bin/zsh -lic "~/.local/bin/launcher; sleep 0.3"'
 
 # Launch Alacritty with tmux
 # alt-enter = 'exec-and-forget open -na Alacritty --args -e tmux'
@@ -414,6 +414,22 @@ run = ['move-node-to-workspace 9']
 # if.app-id = "com.microsoft.Outlook"
 # run = "move-node-to-workspace 4"
 #
+# The alt-x launcher is the one Alacritty window that should NOT tile. It is a
+# menu standing in for i3's rofi, so it wants to sit on top of the layout and
+# disappear, not shove the current split sideways for as long as it is open.
+#
+# This has to stay ABOVE the catch-all below: AeroSpace runs the first matching
+# on-window-detected callback and stops, so with the order reversed the generic
+# org.alacritty rule would tile this window before the title is ever considered.
+#
+# The title comes from `-T aerospace-launcher` on the alt-x binding. Matching on
+# the title is the only way to separate this window from every other Alacritty
+# window, since they all share one app id.
+[[on-window-detected]]
+if.app-id = 'org.alacritty'
+if.window-title-regex-substring = 'aerospace-launcher'
+run = 'layout floating'
+
 # Alacritty opened via `open -na Alacritty` (e.g. the alt-n ranger launcher) is a
 # NEW instance, and AeroSpace tends to drop new-instance windows to floating.
 # Force every Alacritty window back to the tiling layout.
