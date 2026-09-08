@@ -62,6 +62,21 @@ TARGETS=(
 # perl's alarm is the timeout: macOS ships no timeout(1), and a wedged Dock must
 # not stall the bar. Prints the count, or nothing for no badge, or DENIED when
 # the accessibility grant is missing.
+#
+# stderr is folded in on purpose: a denied accessibility grant is reported there
+# and nowhere else, and losing it would turn a permissions failure into a silent
+# "no badge" -- the one outcome this item exists to make impossible to miss.
+#
+# The cost of that merge is that osascript unconditionally logs a line like
+#
+#   2026-09-08 10:10:42.176 osascript[62436:26473806] ApplePersistence=NO
+#
+# to stderr on every single run. Both error cases match on a substring so they
+# survive it, but a real badge does not: echoing the merged stream whole put
+# that log line on the bar in front of the count. So classify on everything,
+# and extract the value only from the lines osascript did not write itself.
+# Matching the timestamped prefix rather than ApplePersistence by name keeps
+# any future chatter of the same shape out too.
 dock_badge() {
   local name="$1" out
   out=$(perl -e 'alarm 3; exec @ARGV' osascript -e "
@@ -72,7 +87,7 @@ dock_badge() {
   case "$out" in
     *"not allowed assistive access"*|*"-1719"*) echo "DENIED" ;;
     *"missing value"*|*error*)                  ;;
-    *)                                          echo "$out" ;;
+    *) printf '%s\n' "$out" | grep -v '^[0-9-]\{10\} [0-9:.]* osascript\[' ;;
   esac
 }
 
