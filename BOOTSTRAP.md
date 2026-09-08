@@ -158,19 +158,29 @@ Three things are easy to get wrong here:
   flag by hand; a laptop that never sleeps in a closed bag overheats and runs
   the battery flat. If `awake status` reports `NO WATCHDOG`, run `awake off`.
 - **Idle sleep is a separate door, and `awake` does not cover it.** A lid left
-  open still sleeps: once the display is off and nothing holds a wake
-  assertion, `pmset -g custom` shows `sleep 1` and the machine goes down about
-  a minute later. On a docked machine running for days that is the common way
-  a session dies — over four days one Mac here logged 28 idle sleeps against 12
-  from the lid, and in six of them the last `caffeinate` assertion had dropped
-  five to eight seconds earlier. Stock macOS settings; nothing is misconfigured.
-  Run `pmset -c sleep 0` as root to switch off idle sleep on the adapter only,
-  leaving battery alone. It persists across reboots, so it is a one-time change.
+  open still sleeps. Once the display stops counting as on, `powerd` drops the
+  assertion named `Prevent sleep while display is on`, and `sleep 1` — one
+  minute, the stock value — takes the machine down. On a laptop running long
+  sessions that is the usual way one dies: over four days here, one Mac logged
+  28 idle sleeps against 12 from the lid, and in six of them the last
+  `caffeinate` had dropped five to eight seconds earlier.
 
-  Deliberately not applied by `install.sh`. It needs a password, which would
-  turn `git pull && ./install.sh` into a prompt, and it is a per-machine call
-  rather than a shared preference: a laptop that gets shut down most nights
-  never reaches idle sleep at all and does not want the setting.
+  **The switch is the screen saver, not power management.** System Settings >
+  Lock Screen > "Start Screen Saver when inactive" > Never. `macos/defaults.sh`
+  now sets it (`defaults -currentHost write com.apple.screensaver idleTime 0`);
+  it needs a logout to take effect. Measured: the Mac with this set to Never
+  logged **zero** idle sleeps in seven days of `pmset -g log`; the one on the
+  default logged 28 in four and a half.
+
+  Do not go looking for this in `pmset`. It is not there — the setting lives in
+  a per-host preferences plist, so two machines can have byte-identical
+  `pmset -g custom` output and behave completely differently. That mistake cost
+  an evening here.
+
+  `pmset -c sleep 0` as root also works, and switches off idle sleep on the
+  adapter only. It is a second line of defence rather than the fix — worth
+  having if you want the guarantee to survive an OS update resetting the screen
+  saver, not worth a password prompt in `install.sh` otherwise.
 
 Remote Control is an outbound connection to Anthropic, so it needs the machine
 awake and *some* working route — it does not need Tailscale, and it does not

@@ -157,6 +157,29 @@ defaults write -g com.apple.keyboard.fnState -bool true
 defaults write -g KeyRepeat -int 3
 defaults write -g InitialKeyRepeat -int 15
 
+# Screen saver: never. System Settings > Lock Screen > "Start Screen Saver when
+# inactive".
+#
+# This is not about screen savers. It is the switch that decides whether a
+# machine left alone stays reachable, and it is invisible in the place you
+# would look for it: `pmset -g custom` does not mention it at all, because it
+# lives in a per-host preferences plist rather than in power management.
+#
+# The chain it controls: while the display counts as on, powerd holds an
+# assertion named "Prevent sleep while display is on", and the idle-sleep timer
+# never gets to run. Let the screen saver start and that assertion eventually
+# drops, at which point `sleep 1` -- one minute, the stock value -- takes the
+# machine down. On a laptop running long sessions that is the usual way one
+# dies: measured here, the Mac with this set to Never logged zero idle sleeps
+# in seven days, while the one on the default logged 28 in four and a half.
+#
+# `-currentHost` is required and not decoration. The screen saver preference is
+# per-machine (~/Library/Preferences/ByHost/), so a plain `defaults write` puts
+# it somewhere nothing reads.
+#
+# Needs a logout to take effect: loginwindow reads the timer when it starts.
+defaults -currentHost write com.apple.screensaver idleTime -int 0
+
 echo "Applied macOS defaults. Restart affected apps to pick them up:"
 echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
@@ -165,3 +188,5 @@ echo "Ctrl+Left/Right are released from Mission Control and work immediately."
 echo "The top row sends F1-F12; karabiner/install.sh restores the media keys"
 echo "  on every one of them except F7, which Neovim wants."
 echo "Key repeat is 20/sec — that one needs a logout before it applies."
+echo "So does the screen saver being set to Never, which is what stops this"
+echo "  machine idle-sleeping out from under a long session."
