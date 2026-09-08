@@ -2,7 +2,10 @@
 
 # ============================================================================
 # SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
-# Layout: [workspaces 1-10]  <center>  [wifi] [timer] [audio_sink] [volume] [battery] [clock]
+# Layout: [workspaces 1-10]  <center>  [timer] [unread] [wifi] [audio_sink] [volume] [battery] [clock]
+#
+# Right-side items are laid out right-to-left in the order they are added, so
+# the reading order above runs backwards through the --add item calls below.
 # ============================================================================
 
 export CONFIG_DIR="$HOME/.config/sketchybar"
@@ -140,27 +143,13 @@ sketchybar --add item audio_sink right \
                  script="$PLUGIN_DIR/audio-sink.sh" \
                  click_script='open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
-# ----- Timer (right) -----
-# Countdown started via `t <minutes> [b <break_minutes>]` (scripts/t, on PATH
-# as ~/.local/bin/t). Hidden until a timer is active; timer.sh renders the
-# countdown and also drives the work -> break transition and notifications.
-sketchybar --add event timer_update
-
-sketchybar --add item timer right \
-           --subscribe timer timer_update \
-           --set timer \
-                 drawing=off \
-                 updates=on \
-                 update_freq=1 \
-                 script="$PLUGIN_DIR/timer.sh"
-
 # ----- Wifi (right) -----
 # updates=on, not the when_shown default. wifi.sh hides the item when the
 # interface is down, and when_shown gates update_freq AND subscribed events on
 # the item being drawn, so the first time it hid itself the script could never
 # run again to bring it back: the glyph stayed gone until a full reload. Any
-# plugin that can set its own drawing=off needs updates=on, which is why timer
-# and aerospace_controller already have it.
+# plugin that can set its own drawing=off needs updates=on, which is why the
+# timer and aerospace_controller items carry it too.
 sketchybar --add item wifi right \
            --subscribe wifi wifi_change system_woke \
            --set wifi \
@@ -189,6 +178,20 @@ sketchybar --add item unread right \
                  update_freq=15 \
                  icon.drawing=off \
                  script="$PLUGIN_DIR/unread.sh"
+
+# ----- Timer (right) -----
+# Countdown started via `t <minutes> [b <break_minutes>]` (scripts/t, on PATH
+# as ~/.local/bin/t). Hidden until a timer is active; timer.sh renders the
+# countdown and also drives the work -> break transition and notifications.
+sketchybar --add event timer_update
+
+sketchybar --add item timer right \
+           --subscribe timer timer_update \
+           --set timer \
+                 drawing=off \
+                 updates=on \
+                 update_freq=1 \
+                 script="$PLUGIN_DIR/timer.sh"
 
 # ----- Alacritty font size (no visual item) -----
 # The built-in display and the ultrawide want very different alacritty font
