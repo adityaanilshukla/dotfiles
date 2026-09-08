@@ -84,7 +84,14 @@ dock_badge() {
       value of attribute \"AXStatusLabel\" of (first UI element whose name contains \"$name\")
     end tell" 2>&1)
 
+  # AppleScript overloads -1719: it is the assistive-access denial, and it is
+  # also "Invalid index", returned when no Dock item matches the name. Those
+  # need opposite answers, so the not-found reading is taken off the table
+  # first. -1719 is still trusted for denial afterwards rather than relying on
+  # the message text alone, because mistaking a denial for a zero is the one
+  # error this item must never make.
   case "$out" in
+    *"Invalid index"*)                          ;;
     *"not allowed assistive access"*|*"-1719"*) echo "DENIED" ;;
     *"missing value"*|*error*)                  ;;
     *) printf '%s\n' "$out" | grep -v '^[0-9-]\{10\} [0-9:.]* osascript\[' ;;
