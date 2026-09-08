@@ -2,7 +2,7 @@
 
 # ============================================================================
 # SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
-# Layout: [workspaces 1-10]  <center>  [timer] [unread] [wifi] [audio_sink] [volume] [battery] [clock]
+# Layout: [workspaces 1-10]  <center>  [timer] [W T M] [wifi] [audio_sink] [volume] [battery] [clock]
 #
 # Right-side items are laid out right-to-left in the order they are added, so
 # the reading order above runs backwards through the --add item calls below.
@@ -168,15 +168,43 @@ sketchybar --add item wifi right \
 # deliberate: Telegram has no push entitlement, so while it is quit it receives
 # and shows nothing at all.
 #
-# updates=on is mandatory, same trap the wifi item hit above: the plugin hides
-# itself when there is nothing to report, and with the default updates=when_shown
-# a self-hidden item can never run its own script again to bring itself back.
-sketchybar --add item unread right \
-           --subscribe unread system_woke \
-           --set unread \
+# One item per app, so the colour can name WHICH app is waiting -- a single
+# label is one colour for its whole length and could only ever say "something,
+# somewhere". The letter is the icon and the count is the label, so a quiet app
+# is just a dimmed letter with nothing after it.
+#
+# Added mail -> telegram -> whatsapp because right-side items lay out
+# right-to-left, which puts them on screen as W T M.
+#
+# Smaller and bolder than the rest of the bar on purpose: three letters sitting
+# together read as one group rather than as three more modules, and the tight
+# paddings keep the count attached to its own letter.
+for u in "unread.mail" "unread.telegram" "unread.whatsapp"; do
+  sketchybar --add item "$u" right \
+             --set "$u" \
+                   icon.font="Hack Nerd Font:Bold:11.0" \
+                   label.font="Hack Nerd Font:Bold:11.0" \
+                   icon.padding_left=5 \
+                   icon.padding_right=0 \
+                   label.padding_left=2 \
+                   label.padding_right=0 \
+                   padding_left=0 \
+                   padding_right=0
+done
+
+# Invisible driver for the three items above, same shape as
+# aerospace_controller: one script call repaints the whole group.
+#
+# updates=on is mandatory, same trap the wifi item hit above -- this item is
+# never drawn, and the default updates=when_shown gates update_freq and
+# subscribed events on being visible, so with the default it would run once and
+# never again.
+sketchybar --add item unread_controller right \
+           --subscribe unread_controller system_woke \
+           --set unread_controller \
+                 drawing=off \
                  updates=on \
                  update_freq=15 \
-                 icon.drawing=off \
                  script="$PLUGIN_DIR/unread.sh"
 
 # ----- Timer (right) -----

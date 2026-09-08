@@ -22,7 +22,28 @@ source "$CONFIG_DIR/colors.sh"
 # Every target is always shown, including zeros. An item that hides itself when
 # there is nothing to report is indistinguishable from one that has broken, and
 # this exists precisely so it can be trusted at a glance without opening the app
-# to check.
+# to check. A quiet app is a dimmed letter rather than a missing one: still
+# present, still countable, visibly saying nothing is waiting.
+#
+# ----- Why three items and not one label -----
+#
+# A sketchybar label is one colour for its whole length, so a single item can
+# only ever say "something, somewhere, is waiting". Splitting into one item per
+# app is what lets the colour name WHICH app, which is the entire glance-value
+# of this thing. The script itself is an invisible fourth item that drives the
+# other three, the same shape aerospace_controller uses for the ten workspace
+# items, and for the same reason: one script call, several drawn items.
+#
+# State is carried by colour and by whether a number is present at all:
+#
+#   count > 0     bright blue letter + the number
+#   running, 0    dimmed letter, no number
+#   not running   magenta letter, no number
+#   grant missing yellow letter + "?"
+#
+# Not-running keeps a loud colour rather than the dim one. It is not a quiet
+# state: Telegram quit means messages arrive nowhere and announce nothing, and
+# that has to look like an alarm, not like an empty inbox.
 #
 # ----- Two badge mechanisms, not one -----
 #
@@ -50,11 +71,11 @@ source "$CONFIG_DIR/colors.sh"
 # Without the grant the app is shown as "?" rather than "0": not knowing and
 # knowing there is nothing are different answers and must not look the same.
 
-# bundle id : short label : name to match on the Dock item
+# bundle id : item name : letter : name to match on the Dock item
 TARGETS=(
-  "net.whatsapp.WhatsApp:WA:WhatsApp"
-  "ru.keepcoder.Telegram:TG:Telegram"
-  "com.zoho.mail.desktop:Mail:Zoho Mail"
+  "net.whatsapp.WhatsApp:unread.whatsapp:W:WhatsApp"
+  "ru.keepcoder.Telegram:unread.telegram:T:Telegram"
+  "com.zoho.mail.desktop:unread.mail:M:Zoho Mail"
 )
 
 # Read the badge the Dock is drawing for an app, by name.
@@ -98,20 +119,30 @@ dock_badge() {
   esac
 }
 
-parts=""
-alert=0
+# One --set per app, all handed to sketchybar in a single call at the end.
+# Three separate calls would repaint the group in three steps and flicker.
+args=()
+
+# paint <item> <letter> <colour> [number]
+paint() {
+  args+=(--set "$1"
+         icon="$2" icon.color="$3"
+         label="${4-}" label.color="$3")
+}
 
 for entry in "${TARGETS[@]}"; do
   bundle="${entry%%:*}"
   rest="${entry#*:}"
-  short="${rest%%:*}"
+  item="${rest%%:*}"
+  rest="${rest#*:}"
+  letter="${rest%%:*}"
   dock_name="${rest#*:}"
 
   asn=$(lsappinfo find "bundleid=$bundle" 2>/dev/null | head -1)
   if [ -z "$asn" ]; then
-    # Not running. For Telegram this means messages arrive with no trace at all.
-    parts+="${short}:off "
-    alert=1
+    # Not running. For Telegram this means messages arrive with no trace at all,
+    # so it is coloured as an alarm rather than dimmed like a quiet app.
+    paint "$item" "$letter" "$ALERT"
     continue
   fi
 
@@ -123,8 +154,7 @@ for entry in "${TARGETS[@]}"; do
     count=$(dock_badge "$dock_name")
     if [ "$count" = "DENIED" ]; then
       # Grant sketchybar Accessibility in System Settings > Privacy & Security.
-      parts+="${short} ? "
-      alert=1
+      paint "$item" "$letter" "$WARNING" "?"
       continue
     fi
   else
@@ -132,19 +162,14 @@ for entry in "${TARGETS[@]}"; do
   fi
 
   if [ -n "$count" ]; then
-    parts+="${short} ${count} "
-    alert=1
+    paint "$item" "$letter" "$BLUE_BRIGHT" "$count"
   else
-    # Running, nothing waiting. Shown as 0 rather than omitted: an app that
-    # silently vanishes from the bar is indistinguishable from one that is
-    # broken, and the whole point of this item is to be able to trust it at a
-    # glance without opening anything.
-    parts+="${short} 0 "
+    # Running, nothing waiting. Dimmed rather than dropped: an app that silently
+    # vanishes from the bar is indistinguishable from one that is broken, and
+    # the whole point of this is to be trusted at a glance without opening
+    # anything.
+    paint "$item" "$letter" "$DISABLED"
   fi
 done
 
-parts="${parts% }"
-
-COLOR="$FOREGROUND"
-[ "$alert" -eq 1 ] && COLOR="$BLUE_BRIGHT"
-sketchybar --set "$NAME" drawing=on label="$parts" label.color="$COLOR"
+sketchybar "${args[@]}"
