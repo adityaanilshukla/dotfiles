@@ -246,6 +246,12 @@ files=(
   # finishes or needs input. claude/install.sh registers it in settings.json
   # afterwards; the symlink alone does nothing.
   "claude/hooks/notify.sh:$HOME/.claude/hooks/notify.sh"
+
+  # PreToolUse guard: refuses sudo, doas, and osascript's "with administrator
+  # privileges" from inside a Claude session, so an escalation has to be typed
+  # by a human in a terminal. A guardrail against habit, not a sandbox -- see
+  # the header of the script. Registered in settings.json by claude/install.sh.
+  "claude/hooks/no-sudo.sh:$HOME/.claude/hooks/no-sudo.sh"
   "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
   "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
 

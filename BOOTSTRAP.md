@@ -49,7 +49,19 @@ Installs Homebrew and everything in the `Brewfile` (~80 packages), then:
   same reason as `karabiner.json`: Claude Code writes to that file itself. The
   merge replaces its own entries instead of appending, because appending is how
   the machine this came from ended up firing two banners and two sounds per
-  event.
+  event. The same step registers `claude/hooks/no-sudo.sh`, a PreToolUse guard
+  that refuses `sudo`, `doas`, and osascript's `with administrator privileges`
+  from inside a session, so an escalation has to be typed by a human in a
+  terminal. Matching deny rules go in alongside it: a permission rule only
+  matches the start of a command, so it catches a leading `sudo` and not
+  `x; sudo y` or the osascript route.
+
+  It is a guardrail against habit, not a sandbox — anything that hides the word
+  (base64, a variable, a script that escalates internally) goes straight
+  through. It also false-positives on writing *about* sudo: a chained example
+  inside an `echo` or a heredoc trips it, because the guard reads the command
+  text and cannot tell quoting from execution. Rephrase, or assemble the string
+  from fragments.
 - **Starts** the sketchybar and syncthing services. Tailscale is reported on, not
   started: its daemon runs as root and joining the tailnet is a browser login.
 - **VS Code extensions** and the macOS `defaults`.
