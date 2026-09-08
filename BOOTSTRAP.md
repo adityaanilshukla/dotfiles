@@ -146,7 +146,7 @@ it can sit locked in a bag on a phone hotspot and still answer `claude
 --remote-control`. `awake off` ends it early, `awake status` reports what is
 holding on, `awake lock` locks the screen without sleeping.
 
-Two things are easy to get wrong here:
+Three things are easy to get wrong here:
 
 - **`caffeinate` does not survive a closed lid.** None of its assertions apply
   to the clamshell path. Claude Code runs `caffeinate -i -t 300` for the life of
@@ -157,6 +157,20 @@ Two things are easy to get wrong here:
   takes a duration and arms a root-owned timer to clear the flag. Never set the
   flag by hand; a laptop that never sleeps in a closed bag overheats and runs
   the battery flat. If `awake status` reports `NO WATCHDOG`, run `awake off`.
+- **Idle sleep is a separate door, and `awake` does not cover it.** A lid left
+  open still sleeps: once the display is off and nothing holds a wake
+  assertion, `pmset -g custom` shows `sleep 1` and the machine goes down about
+  a minute later. On a docked machine running for days that is the common way
+  a session dies — over four days one Mac here logged 28 idle sleeps against 12
+  from the lid, and in six of them the last `caffeinate` assertion had dropped
+  five to eight seconds earlier. Stock macOS settings; nothing is misconfigured.
+  Run `pmset -c sleep 0` as root to switch off idle sleep on the adapter only,
+  leaving battery alone. It persists across reboots, so it is a one-time change.
+
+  Deliberately not applied by `install.sh`. It needs a password, which would
+  turn `git pull && ./install.sh` into a prompt, and it is a per-machine call
+  rather than a shared preference: a laptop that gets shut down most nights
+  never reaches idle sleep at all and does not want the setting.
 
 Remote Control is an outbound connection to Anthropic, so it needs the machine
 awake and *some* working route — it does not need Tailscale, and it does not
