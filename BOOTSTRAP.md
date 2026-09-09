@@ -93,6 +93,23 @@ switching branches silently reconfigures the file manager, the window manager
 and the status bar. A `post-checkout` hook warns when HEAD leaves `MacOS`. Stay
 on `MacOS` for day-to-day work.
 
+**Deleting something from this repo does not delete it from your machines.**
+Symlinks go stale, `defaults` keys stay written, login items stay registered and
+LaunchAgents stay loaded. A commit that removes a feature removes it from a
+*fresh* install and from nowhere else, so the repo reads as correct while the
+machines quietly disagree.
+
+That is not hypothetical: `78e69bc` retired the start-comms LaunchAgent and
+deleted its plist, its script and the install.sh block that placed it — and the
+Mac that had been set up before that commit went on launching the comms apps at
+login for another five days. Nothing was wrong with the commit except what it
+did not do.
+
+So retiring something that install.sh *placed* means naming it for removal, not
+just deleting the source. `install.sh` has a `retired_agents` list for exactly
+this; the entries stay indefinitely, since the loop skips anything already gone.
+The same care is owed to symlinks and login items, which have no such list yet.
+
 **Re-running install.sh on an established machine is not the same as a fresh
 install.** Homebrew casks try to *adopt* apps you installed by hand, which needs
 a `sudo` password and fails non-interactively. Observed with WhatsApp and
