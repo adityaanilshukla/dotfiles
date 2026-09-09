@@ -2,7 +2,7 @@
 
 # ============================================================================
 # SketchyBar config — waybar-style top bar for macOS, wired to AeroSpace.
-# Layout: [workspaces 1-10]  <center>  [timer] [W T M] [wifi] [audio_sink] [volume] [battery] [clock]
+# Layout: [workspaces 1-10]  <center>  [timer] [wifi] [W T M] [audio_sink] [volume] [battery] [clock]
 #
 # Right-side items are laid out right-to-left in the order they are added, so
 # the reading order above runs backwards through the --add item calls below.
@@ -143,20 +143,6 @@ sketchybar --add item audio_sink right \
                  script="$PLUGIN_DIR/audio-sink.sh" \
                  click_script='open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
-# ----- Wifi (right) -----
-# updates=on, not the when_shown default. wifi.sh hides the item when the
-# interface is down, and when_shown gates update_freq AND subscribed events on
-# the item being drawn, so the first time it hid itself the script could never
-# run again to bring it back: the glyph stayed gone until a full reload. Any
-# plugin that can set its own drawing=off needs updates=on, which is why the
-# timer and aerospace_controller items carry it too.
-sketchybar --add item wifi right \
-           --subscribe wifi wifi_change system_woke \
-           --set wifi \
-                 updates=on \
-                 update_freq=30 \
-                 script="$PLUGIN_DIR/wifi.sh"
-
 # ----- Unread messages (right) -----
 # Everything macOS uses to say "someone is waiting" is switched off on this
 # machine: the Dock is autohidden, the menu bar is autohidden, and a banner gets
@@ -206,6 +192,20 @@ sketchybar --add item unread_controller right \
                  updates=on \
                  update_freq=15 \
                  script="$PLUGIN_DIR/unread.sh"
+
+# ----- Wifi (right) -----
+# updates=on, not the when_shown default. wifi.sh hides the item when the
+# interface is down, and when_shown gates update_freq AND subscribed events on
+# the item being drawn, so the first time it hid itself the script could never
+# run again to bring it back: the glyph stayed gone until a full reload. Any
+# plugin that can set its own drawing=off needs updates=on, which is why the
+# timer and aerospace_controller items carry it too.
+sketchybar --add item wifi right \
+           --subscribe wifi wifi_change system_woke \
+           --set wifi \
+                 updates=on \
+                 update_freq=30 \
+                 script="$PLUGIN_DIR/wifi.sh"
 
 # ----- Timer (right) -----
 # Countdown started via `t <minutes> [b <break_minutes>]` (scripts/t, on PATH
