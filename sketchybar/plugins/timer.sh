@@ -13,7 +13,11 @@ source "$CONFIG_DIR/state.sh"
 STATE_FILE="$SKETCHYBAR_TIMER_STATE"
 
 if [[ ! -f "$STATE_FILE" ]]; then
-  sketchybar --set "$NAME" drawing=off icon="" label=""
+  # update_freq=0 stops the once-a-second poll while no timer exists. Nothing is
+  # lost: `t` fires timer_update when it writes the state file, so the way back
+  # in is an event rather than a tick. Worth doing because idle is almost all of
+  # the time -- 86,400 forks a day to discover a file is still absent.
+  sketchybar --set "$NAME" drawing=off icon="" label="" update_freq=0
   exit 0
 fi
 
@@ -23,7 +27,9 @@ paused_remaining="${paused_remaining:-0}"
 if (( paused_remaining > 0 )); then
   mins=$(( paused_remaining / 60 ))
   secs=$(( paused_remaining % 60 ))
-  sketchybar --set "$NAME" drawing=on icon="$PLAY" icon.color="$GREY" label="$(printf '%02d:%02d' "$mins" "$secs")"
+  # Frozen, so nothing changes until `t play` fires the event: no poll needed.
+  sketchybar --set "$NAME" drawing=on icon="$PLAY" icon.color="$GREY" \
+    label="$(printf '%02d:%02d' "$mins" "$secs")" update_freq=0
   exit 0
 fi
 
@@ -50,7 +56,7 @@ if (( remaining <= 0 )); then
     else
       notify "Timer done"
     fi
-    sketchybar --set "$NAME" drawing=off icon="" label=""
+    sketchybar --set "$NAME" drawing=off icon="" label="" update_freq=0
     exit 0
   fi
 fi
@@ -75,4 +81,7 @@ else
   color="$RED"
 fi
 
-sketchybar --set "$NAME" drawing=on icon="$icon" icon.color="$color" label="$(printf '%02d:%02d' "$mins" "$secs")"
+# The one state that needs a second-by-second tick, so it is switched on here
+# and nowhere else. Idempotent -- re-setting the same value each tick is free.
+sketchybar --set "$NAME" drawing=on icon="$icon" icon.color="$color" \
+  label="$(printf '%02d:%02d' "$mins" "$secs")" update_freq=1

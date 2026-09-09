@@ -111,10 +111,21 @@ sketchybar --add item battery right \
                  script="$PLUGIN_DIR/battery.sh"
 
 # ----- Volume (right) -----
+# update_freq=5, not 1. Measured on battery, this was the single most expensive
+# thing on the machine after WindowServer: 245 ms per run once a second, a
+# quarter of a core continuously, because a periodic tick makes two osascript
+# calls (mute state, then level) and osascript costs ~100 ms just to start.
+# Throttling this one item cut total system draw by 0.65 W.
+#
+# Nothing is lost for macOS volume -- the volume_change subscription still
+# redraws instantly. The poll exists only for a DDC display whose level is
+# changed with the monitor's own buttons, which macOS never reports. Five
+# seconds is the compromise; lower it if that lag bothers you more than the
+# battery does.
 sketchybar --add item volume right \
            --subscribe volume volume_change \
            --set volume \
-                 update_freq=1 \
+                 update_freq=5 \
                  script="$PLUGIN_DIR/volume.sh"
 
 # ----- Audio output device (right) -----
@@ -146,11 +157,20 @@ sketchybar --add item volume right \
 # time the output device changed.
 rm -f "$SKETCHYBAR_AUDIO_SINK_CACHE"
 
+# update_freq=2 rather than 1. The fast path here is already cheap by design
+# (~33 ms of its own time), but it asks CoreAudio for the current device every
+# tick, and that work bills to coreaudiod rather than to this script -- so the
+# measured per-run cost understates it. Halving the rate halves whatever that
+# hidden share is; a headset switch now shows within two seconds instead of one.
+#
+# Do not read a busy coreaudiod as proof of this: it sits at 15-25% whenever
+# audio is actually playing, throttled or not. That was checked after the fact,
+# having first assumed the opposite.
 sketchybar --add item audio_sink right \
            --subscribe audio_sink volume_change system_woke \
            --set audio_sink \
                  updates=on \
-                 update_freq=1 \
+                 update_freq=2 \
                  script="$PLUGIN_DIR/audio-sink.sh" \
                  click_script='open -g "raycast://extensions/benvp/audio-device/set-output-device"'
 
@@ -217,12 +237,17 @@ sketchybar --add item wifi right \
 # countdown and also drives the work -> break transition and notifications.
 sketchybar --add event timer_update
 
+# update_freq=0: the plugin turns its own polling on and off. A countdown needs
+# a tick every second; an absent countdown needs none, and idle is almost all of
+# the time. timer.sh sets update_freq=1 while one is running and 0 when it is
+# not, and `t` fires timer_update to get things moving, so no tick is needed to
+# notice that a timer has started.
 sketchybar --add item timer right \
            --subscribe timer timer_update \
            --set timer \
                  drawing=off \
                  updates=on \
-                 update_freq=1 \
+                 update_freq=0 \
                  script="$PLUGIN_DIR/timer.sh"
 
 # ----- Alacritty font size (no visual item) -----
