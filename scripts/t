@@ -12,7 +12,15 @@ set -euo pipefail
 # every second and does the actual countdown, phase transitions and
 # notifications.
 
-STATE_FILE="/tmp/sketchybar_timer.state"
+# The path is sketchybar's to define -- plugins/timer.sh reads what this
+# writes, so the two must never disagree. Sourced rather than restated for that
+# reason. The literal below is only reached if the bar's config is not installed
+# yet, in which case nothing is going to render the timer anyway.
+if [[ -r "$HOME/.config/sketchybar/state.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$HOME/.config/sketchybar/state.sh"
+fi
+STATE_FILE="${SKETCHYBAR_TIMER_STATE:-${TMPDIR:-/tmp}/sketchybar_timer.state}"
 
 usage() {
   echo "Usage: t <minutes> [b <break_minutes>]   |   t pause   |   t play   |   t stop" >&2

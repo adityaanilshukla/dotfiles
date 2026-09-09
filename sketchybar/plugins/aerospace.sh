@@ -24,7 +24,7 @@ SHOW_LINES=$'\n'"$SHOW"$'\n'
 ARGS=()
 for sid in 1 2 3 4 5 6 7 8 9 10; do
   if [[ "$SHOW_LINES" == *$'\n'"$sid"$'\n'* ]]; then
-    if [ "$sid" = "$FOCUSED" ]; then
+    if [[ "$sid" == "$FOCUSED" ]]; then
       # polybar's label-active: white on blue-deep, square corners.
       ARGS+=(--set "space.$sid" drawing=on background.drawing=on background.color="$BLUE_DEEP" label.color="$PLAIN_WHITE")
     else

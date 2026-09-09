@@ -15,17 +15,17 @@ source "$CONFIG_DIR/colors.sh"
 PERCENTAGE=$(pmset -g batt | grep -Eo '[0-9]+%' | cut -d% -f1)
 CHARGING=$(pmset -g batt | grep 'AC Power')
 
-if [ "$PERCENTAGE" = "" ]; then
+if [[ -z "$PERCENTAGE" ]]; then
   exit 0
 fi
 
-if [ -n "$CHARGING" ]; then
+if [[ -n "$CHARGING" ]]; then
   ICON=$BATTERY_CHARGING
   COLOR=$SUCCESS
-elif [ "$PERCENTAGE" -ge 99 ]; then
+elif (( PERCENTAGE >= 99 )); then
   ICON=$BATTERY
   COLOR=$SUCCESS
-elif [ "$PERCENTAGE" -le 10 ]; then
+elif (( PERCENTAGE <= 10 )); then
   ICON=$BATTERY
   COLOR=$ALERT
 else

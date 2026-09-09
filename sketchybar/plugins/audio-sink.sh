@@ -2,6 +2,7 @@
 
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/state.sh"
 
 # Port of polybar's [module/audio-sink] (main branch, polybar/audio-sink.sh):
 # a single purple glyph naming the category of the current audio output, with
@@ -24,7 +25,7 @@ source "$CONFIG_DIR/colors.sh"
 # Net effect at update_freq=1: ~20ms per second steady state, one ~130ms call
 # when headphones go in. The old shape was a 130ms call every 5 seconds and a
 # glyph that lagged the switch by up to 5.
-CACHE="/tmp/sketchybar_audio_sink"
+CACHE="$SKETCHYBAR_AUDIO_SINK_CACHE"
 
 # Two devices in system_profiler can look default. "Default System Output
 # Device" takes alert sounds, "Default Output Device" takes application audio,
@@ -84,7 +85,7 @@ else
   CURRENT=$(probe_slow | sed -n 1p)
 fi
 
-if [ -z "$CURRENT" ]; then
+if [[ -z "$CURRENT" ]]; then
   sketchybar --set "$NAME" drawing=off
   exit 0
 fi
@@ -96,9 +97,9 @@ fi
 # rebuilds every item from scratch with no icon. A stale hit there would leave
 # the module permanently blank until the next device change, so sketchybarrc
 # deletes this file before it adds the item.
-if [ -f "$CACHE" ]; then
+if [[ -f "$CACHE" ]]; then
   IFS=$'\t' read -r CACHED_DEV CACHED_ICON < "$CACHE"
-  if [ "$CURRENT" = "$CACHED_DEV" ] && [ -n "$CACHED_ICON" ]; then
+  if [[ "$CURRENT" == "$CACHED_DEV" && -n "$CACHED_ICON" ]]; then
     exit 0
   fi
 fi
@@ -110,7 +111,7 @@ TRANSPORT=$(printf '%s\n' "$INFO" | sed -n 2p)
 
 # Nothing reported a default output: no audio hardware the bar can describe, so
 # say nothing rather than guess. Requires updates=on to recover.
-if [ -z "$SINK_DEV" ] && [ -z "$TRANSPORT" ]; then
+if [[ -z "$SINK_DEV" && -z "$TRANSPORT" ]]; then
   rm -f "$CACHE"
   sketchybar --set "$NAME" drawing=off
   exit 0

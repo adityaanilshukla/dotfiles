@@ -2,10 +2,10 @@
 
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/state.sh"
 
-# Where we cache which display currently carries audio, so the steady-state
-# poll is a single fast BetterDisplay query instead of re-enumerating displays.
-CACHE="/tmp/sketchybar_ddc_speaker"
+# Which display currently carries audio; see state.sh for the path.
+CACHE="$SKETCHYBAR_DDC_SPEAKER_CACHE"
 
 # read_ddc <display-name> -> prints 0–100 percent and returns 0 on success.
 # BetterDisplay reports the DDC speaker level as a 0.0–1.0 float; anything
@@ -23,7 +23,7 @@ read_ddc() {
 # just the word "muted" in the disabled colour. "missing value" comes back on
 # a DDC-controlled display, which has no macOS software mute, so only a
 # literal "true" counts.
-if [ "$(osascript -e 'output muted of (get volume settings)' 2>/dev/null)" = "true" ]; then
+if [[ "$(osascript -e 'output muted of (get volume settings)' 2>/dev/null)" == "true" ]]; then
   sketchybar --set "$NAME" icon.drawing=off label="muted" label.color="$DISABLED"
   exit 0
 fi
@@ -31,7 +31,7 @@ fi
 # INFO is set by the volume_change event (macOS software volume, an integer).
 # On a periodic refresh INFO is empty, so read the current output volume.
 VOLUME="$INFO"
-[ -z "$VOLUME" ] && VOLUME=$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)
+[[ -z "$VOLUME" ]] && VOLUME=$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)
 
 case "$VOLUME" in
   ''|*[!0-9]*)
@@ -43,11 +43,11 @@ case "$VOLUME" in
     # pick the one that does, caching it for next time.
     VOLUME=0
     DISP=$(cat "$CACHE" 2>/dev/null)
-    if [ -n "$DISP" ] && PCT=$(read_ddc "$DISP"); then
+    if [[ -n "$DISP" ]] && PCT=$(read_ddc "$DISP"); then
       VOLUME="$PCT"
     else
       while IFS= read -r d; do
-        [ -z "$d" ] && continue
+        [[ -z "$d" ]] && continue
         if PCT=$(read_ddc "$d"); then
           VOLUME="$PCT"
           printf '%s' "$d" >"$CACHE"

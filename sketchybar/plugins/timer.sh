@@ -2,6 +2,7 @@
 
 source "$CONFIG_DIR/icons.sh"
 source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/state.sh"
 
 # State written by `t` (scripts/t, on PATH as ~/.local/bin/t):
 #   <phase> <end_epoch> <phase_total_seconds> <next_break_seconds> <paused_remaining>
@@ -9,7 +10,7 @@ source "$CONFIG_DIR/colors.sh"
 # it's the break to chain into once work hits zero (0 = no break requested).
 # paused_remaining is 0 while running; when >0 the timer is frozen at that
 # many seconds and end_epoch is stale (ignored until `t pause` resumes it).
-STATE_FILE="/tmp/sketchybar_timer.state"
+STATE_FILE="$SKETCHYBAR_TIMER_STATE"
 
 if [[ ! -f "$STATE_FILE" ]]; then
   sketchybar --set "$NAME" drawing=off icon="" label=""

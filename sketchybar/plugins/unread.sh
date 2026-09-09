@@ -138,7 +138,7 @@ for entry in "${TARGETS[@]}"; do
   IFS=: read -r bundle item letter dock_name <<< "$entry"
 
   asn=$(lsappinfo find "bundleid=$bundle" 2>/dev/null | head -1)
-  if [ -z "$asn" ]; then
+  if [[ -z "$asn" ]]; then
     # Not running. For Telegram this means messages arrive with no trace at all,
     # so it is coloured as an alarm rather than dimmed like a quiet app.
     paint "$item" "$letter" "$ALERT"
@@ -148,10 +148,10 @@ for entry in "${TARGETS[@]}"; do
   # "StatusLabel"={ "label"="3" } when badged, "label"="" when not, and
   # "StatusLabel"=[ NULL ] when this app does not use LaunchServices at all.
   label=$(lsappinfo info -only StatusLabel "$asn" 2>/dev/null)
-  if [ "${label#*NULL}" != "$label" ]; then
+  if [[ "${label#*NULL}" != "$label" ]]; then
     # Catalyst app. LaunchServices knows nothing; ask the Dock what it draws.
     count=$(dock_badge "$dock_name")
-    if [ "$count" = "DENIED" ]; then
+    if [[ "$count" == "DENIED" ]]; then
       # Grant sketchybar Accessibility in System Settings > Privacy & Security.
       paint "$item" "$letter" "$WARNING" "?"
       continue
@@ -160,7 +160,7 @@ for entry in "${TARGETS[@]}"; do
     count=$(printf '%s' "$label" | sed -n 's/.*"label"="\([^"]*\)".*/\1/p')
   fi
 
-  if [ -n "$count" ]; then
+  if [[ -n "$count" ]]; then
     paint "$item" "$letter" "$BLUE_BRIGHT" "$count"
   else
     # Running, nothing waiting. Dimmed rather than dropped: an app that silently

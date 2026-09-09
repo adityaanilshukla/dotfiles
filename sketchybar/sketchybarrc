@@ -13,6 +13,7 @@ export PLUGIN_DIR="$CONFIG_DIR/plugins"
 
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/state.sh"
 
 # ----- Bar appearance -----
 # Height 37 matches the macOS menubar/notch on M-series MacBooks, and pure
@@ -35,6 +36,18 @@ sketchybar --bar \
 # square block, not a pill. Font sizes stay at macOS values rather than
 # polybar's 8/10, which would be tiny at this bar height; change these two
 # numbers if you want the exact polybar proportions.
+#
+# ----- THE updates=when_shown TRAP -----
+#
+# This is the sketchybar default and it is a one-way door for any item that can
+# hide itself. when_shown gates update_freq AND subscribed events on the item
+# currently being drawn, so the moment a plugin sets its own drawing=off it stops
+# receiving the ticks and events that would bring it back. The glyph stays gone
+# until a full reload.
+#
+# So every item below that either hides itself (wifi) or is never drawn at all
+# (the controllers) overrides this with updates=on. Where you see that override,
+# this is why; the individual items do not repeat the reasoning.
 sketchybar --default \
   updates=when_shown \
   icon.font="Hack Nerd Font:Regular:14.0" \
@@ -88,8 +101,6 @@ sketchybar --trigger aerospace_workspace_change \
 sketchybar --add item clock right \
            --set clock \
                  update_freq=10 \
-                 icon="$CALENDAR" \
-                 icon.color="$BLUE_BRIGHT" \
                  script="$PLUGIN_DIR/clock.sh"
 
 # ----- Battery (right) -----
@@ -133,7 +144,7 @@ sketchybar --add item volume right \
 # a reload, but a reload rebuilds this item with no icon, so a cache hit on the
 # first tick would skip the redraw and leave the module blank until the next
 # time the output device changed.
-rm -f /tmp/sketchybar_audio_sink
+rm -f "$SKETCHYBAR_AUDIO_SINK_CACHE"
 
 sketchybar --add item audio_sink right \
            --subscribe audio_sink volume_change system_woke \
@@ -181,10 +192,7 @@ done
 # Invisible driver for the three items above, same shape as
 # aerospace_controller: one script call repaints the whole group.
 #
-# updates=on is mandatory, same trap the wifi item hit above -- this item is
-# never drawn, and the default updates=when_shown gates update_freq and
-# subscribed events on being visible, so with the default it would run once and
-# never again.
+# Never drawn, so updates=on -- see the when_shown trap above.
 sketchybar --add item unread_controller right \
            --subscribe unread_controller system_woke \
            --set unread_controller \
@@ -194,12 +202,8 @@ sketchybar --add item unread_controller right \
                  script="$PLUGIN_DIR/unread.sh"
 
 # ----- Wifi (right) -----
-# updates=on, not the when_shown default. wifi.sh hides the item when the
-# interface is down, and when_shown gates update_freq AND subscribed events on
-# the item being drawn, so the first time it hid itself the script could never
-# run again to bring it back: the glyph stayed gone until a full reload. Any
-# plugin that can set its own drawing=off needs updates=on, which is why the
-# timer and aerospace_controller items carry it too.
+# wifi.sh hides the item when the interface is down, so updates=on -- see the
+# when_shown trap above.
 sketchybar --add item wifi right \
            --subscribe wifi wifi_change system_woke \
            --set wifi \
@@ -232,10 +236,7 @@ sketchybar --add item timer right \
 # unplugged, and the bar is already running, so this costs no new daemon and no
 # polling. system_woke too, since a dock can change while the lid is shut.
 #
-# updates=on is mandatory, not decoration: this item is never drawn, and the
-# default updates=when_shown gates subscribed events on the item being visible,
-# so with the default it would receive nothing, ever. Same trap the wifi item
-# hit, where a self-hidden item could never run its own script again.
+# Never drawn, so updates=on -- see the when_shown trap above.
 sketchybar --add item alacritty_font right \
            --subscribe alacritty_font display_change system_woke \
            --set alacritty_font \

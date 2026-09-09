@@ -18,7 +18,7 @@ source "$CONFIG_DIR/colors.sh"
 POWER=$(networksetup -getairportpower en0 2>/dev/null | awk '{print $NF}')
 STATUS=$(ifconfig en0 2>/dev/null | awk '/status:/ {print $2}')
 
-if [ "$POWER" = "Off" ] || [ "$STATUS" != "active" ]; then
+if [[ "$POWER" == "Off" || "$STATUS" != "active" ]]; then
   sketchybar --set "$NAME" drawing=off
   exit 0
 fi
@@ -26,7 +26,7 @@ fi
 # If something else carries the default route (dock ethernet, say), let the
 # wired module speak instead, exactly as polybar's network.sh does.
 PRIMARY=$(route -n get default 2>/dev/null | awk '/interface:/ {print $2}')
-if [ -n "$PRIMARY" ] && [ "$PRIMARY" != "en0" ]; then
+if [[ -n "$PRIMARY" && "$PRIMARY" != "en0" ]]; then
   sketchybar --set "$NAME" drawing=off
   exit 0
 fi
