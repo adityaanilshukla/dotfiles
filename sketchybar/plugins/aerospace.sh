@@ -14,9 +14,16 @@ NONEMPTY=$(aerospace list-workspaces --monitor all --empty no 2>/dev/null)
 # empty one doesn't leave the bar with no highlighted indicator.
 SHOW=$(printf '%s\n%s\n' "$NONEMPTY" "$FOCUSED" | sort -u | grep -v '^$')
 
+# Membership is tested against this rather than by piping to grep. The loop
+# below runs ten times every two seconds forever, and `echo | grep -qx` is two
+# processes each pass -- 36,000 of them an hour to answer a question bash can
+# answer with a glob. Wrapping in newlines is what makes the match exact, so
+# workspace 1 cannot match inside workspace 10.
+SHOW_LINES=$'\n'"$SHOW"$'\n'
+
 ARGS=()
 for sid in 1 2 3 4 5 6 7 8 9 10; do
-  if echo "$SHOW" | grep -qx "$sid"; then
+  if [[ "$SHOW_LINES" == *$'\n'"$sid"$'\n'* ]]; then
     if [ "$sid" = "$FOCUSED" ]; then
       # polybar's label-active: white on blue-deep, square corners.
       ARGS+=(--set "space.$sid" drawing=on background.drawing=on background.color="$BLUE_DEEP" label.color="$PLAIN_WHITE")

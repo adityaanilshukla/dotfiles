@@ -131,12 +131,11 @@ paint() {
 }
 
 for entry in "${TARGETS[@]}"; do
-  bundle="${entry%%:*}"
-  rest="${entry#*:}"
-  item="${rest%%:*}"
-  rest="${rest#*:}"
-  letter="${rest%%:*}"
-  dock_name="${rest#*:}"
+  # Safe as a plain split: no field contains a colon, and only the last one
+  # contains a space, which `read` leaves alone once the earlier fields are
+  # consumed. Peeling these off with ${x%%:*} / ${x#*:} took six lines and grew
+  # a line every time a field was added.
+  IFS=: read -r bundle item letter dock_name <<< "$entry"
 
   asn=$(lsappinfo find "bundleid=$bundle" 2>/dev/null | head -1)
   if [ -z "$asn" ]; then
