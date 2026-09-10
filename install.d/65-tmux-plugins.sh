@@ -38,5 +38,12 @@ if [[ -d "$TPM_DIR" ]] && command -v tmux >/dev/null 2>&1; then
   else
     echo "  tpm install_plugins failed - run prefix + I inside tmux."
   fi
-  [[ -n "$TPM_TEMP_SESSION" ]] && tmux kill-session -t "$TPM_TEMP_SESSION" 2>/dev/null
+  # An `if` rather than `[[ ... ]] && cmd`, because this is the last command in
+  # the script and its status becomes the script's. When a tmux server is
+  # already running we never made a throwaway session, so the test is false,
+  # the && list returns 1, and the step reports a failure having done its work
+  # perfectly. `if` returns 0 when its condition is false; the && list does not.
+  if [[ -n "$TPM_TEMP_SESSION" ]]; then
+    tmux kill-session -t "$TPM_TEMP_SESSION" 2>/dev/null || true
+  fi
 fi

@@ -57,9 +57,16 @@ require_dotfiles_dir() {
 # `command -v x >/dev/null 2>&1`.
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# brew_shellenv: put brew on PATH for a step that needs it. A step run on its
-# own does not inherit the PATH the Homebrew step set up, so any step depending
-# on a brew-installed binary calls this first.
+# brew_shellenv: put brew on PATH. A step run on its own -- or the whole
+# installer run from a non-interactive shell, e.g. over ssh -- does not inherit
+# the PATH a login shell would have set up, so a step guarded on a
+# brew-installed binary silently does nothing and reports success.
+#
+# Called from the bottom of this file rather than left for each step to
+# remember, because "each step calls it first" is a rule that gets forgotten
+# exactly once and then fails silently. Cheap to do unconditionally: it returns
+# immediately when brew is already on PATH, which it is for every step after
+# the runner has sourced this once, since children inherit the exported PATH.
 brew_shellenv() {
   have brew && return 0
   if [[ -x /opt/homebrew/bin/brew ]]; then
@@ -70,3 +77,4 @@ brew_shellenv() {
 }
 
 require_dotfiles_dir
+brew_shellenv
