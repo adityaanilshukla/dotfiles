@@ -1,624 +1,102 @@
 #!/usr/bin/env bash
+#
+# One job: run the install steps in order.
+#
+# Every step lives in install.d/ and does exactly one thing. This file decides
+# what runs and in what order, and nothing else -- if you are adding setup
+# logic, it belongs in a step, not here.
+#
+#   ./install.sh              run every step, in numeric order
+#   ./install.sh 55           run only the step whose name matches "55"
+#   ./install.sh symlinks     same, matching on name instead of number
+#   ./install.sh --list       show the steps and stop
+#
+# Being able to run one step is the reason for the split. Re-linking configs
+# after adding one is `./install.sh symlinks`, three seconds, instead of
+# re-running a Homebrew check and a VS Code extension sync to get to it.
+#
+# ORDER IS LOAD-BEARING and the numbers encode it. The dependencies that
+# actually bite, each documented in the step that owns it:
+#   45-oh-my-zsh   before 55-symlinks   or its installer replaces our ~/.zshrc
+#   55-symlinks    before 65-tmux       or tpm sources a ~/.tmux.conf that is
+#                                       not there yet and installs no plugins
+#   55-symlinks    before 75-claude     or the hook it registers points at
+#                                       a file that does not exist
+#   10-homebrew    before nearly all    almost everything is guarded on a
+#                                       binary the Brewfile provides
+#
+# A failing step does NOT abort the run. A keyboard remapper or a VS Code
+# extension failing must not stop a machine setup half-built; the failures are
+# collected and reported together at the end instead.
 set -euo pipefail
 
-DOTFILES_DIR="$HOME/dotfiles"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_DIR
+# shellcheck source=install.d/_lib.sh
+source "$DOTFILES_DIR/install.d/_lib.sh"
 
-# --- Homebrew + packages --------------------------------------------------
-# Install Homebrew if missing, then install every app/tool from the Brewfile.
-if ! command -v brew >/dev/null 2>&1; then
-  echo "Installing Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
+STEP_DIR="$DOTFILES_DIR/install.d"
 
-# Put brew on PATH for the rest of this script (Apple Silicon vs Intel).
-if [[ -x /opt/homebrew/bin/brew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -x /usr/local/bin/brew ]]; then
-  eval "$(/usr/local/bin/brew shellenv)"
-fi
+usage() {
+  printf 'usage: %s [--list] [filter]\n\n' "$0"
+  printf '  no argument   run every step in order\n'
+  printf '  filter        run only steps whose filename contains this\n'
+  printf '  --list        list the steps without running anything\n'
+}
 
-BREW_BUNDLE_INCOMPLETE=0
-if [[ -f "$DOTFILES_DIR/Brewfile" ]]; then
-  echo "Installing packages from Brewfile..."
-  # Don't abort the whole setup if a single cask needs a password/retry.
-  brew bundle --file="$DOTFILES_DIR/Brewfile" \
-    || echo "brew bundle finished with some failures — retrying once."
-
-  # One retry, because the common failure is transient: a cask that wanted a
-  # password, or a tap that had not finished syncing when its formula was
-  # first reached.
-  if ! brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
-    brew bundle --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1 || true
-  fi
-
-  # Then say plainly what is still missing, because everything downstream is
-  # guarded on these existing and will otherwise skip in silence. Observed:
-  # sketchybar failed here, arrived half an hour later by hand, and the service
-  # step had already run and quietly skipped it — leaving a fully configured
-  # bar that never appeared on screen, with the install reporting success.
-  if ! brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
-    BREW_BUNDLE_INCOMPLETE=1
-    echo
-    echo "!! brew bundle check reports unsatisfied dependencies:"
-    # 2>&1, not 2>/dev/null: `check --verbose` writes the list to stderr, so
-    # discarding stderr discards the entire point of running it.
-    brew bundle check --file="$DOTFILES_DIR/Brewfile" --verbose 2>&1 \
-      | sed 's/^/     /'
-    echo
-    echo "   On a fresh machine these really are missing, and anything below"
-    echo "   that depends on them will skip and say so."
-    echo
-    echo "   On an established machine, expect false alarms: an app installed"
-    echo "   by hand is not brew-managed, so it reads as missing while being"
-    echo "   perfectly present. Hand ownership over with:"
-    echo "     brew install --cask --adopt <name>"
-  fi
-fi
-
-# --- De-quarantine ad-hoc-signed casks ------------------------------------
-# qBittorrent's cask build is ad-hoc signed (not notarized), so Gatekeeper
-# quarantines it and blocks first launch. Strip the quarantine flag so it opens
-# without the "could not verify" prompt. Re-runs harmlessly if already clear.
-for app in "/Applications/qBittorrent.app"; do
-  [[ -d "$app" ]] && xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
-done
-
-# --- Tooling that does not come from brew ---------------------------------
-# Each of these is installed by its own ecosystem's package manager, so a
-# Brewfile entry cannot cover them and they would silently not exist.
-
-# Rust via rustup, not brew: rustup owns toolchain updates and component
-# installs (rust-analyzer, clippy, rustfmt), which a brew formula cannot do.
-if ! command -v cargo >/dev/null 2>&1; then
-  echo "Installing Rust via rustup..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path \
-    || echo "  rustup install failed — see https://rustup.rs"
-fi
-
-# pipx: isolated CLI apps. nbstripout strips notebook output before commits;
-# otpfetch is the 2FA helper.
-if command -v pipx >/dev/null 2>&1; then
-  for app in nbstripout otpfetch; do
-    if ! pipx list --short 2>/dev/null | grep -q "^$app "; then
-      echo "Installing $app via pipx..."
-      pipx install "$app" >/dev/null || echo "  pipx install $app failed"
-    fi
+list_steps() {
+  local path
+  printf '%sSteps in %s:%s\n\n' "$C_BOLD" "${STEP_DIR/#$HOME/\~}" "$C_OFF"
+  for path in "$STEP_DIR"/[0-9][0-9]-*.sh; do
+    [[ -e "$path" ]] || continue
+    printf '  %s\n' "$(basename "$path" .sh)"
   done
-fi
+  printf '\n'
+}
 
-# eslint_d is what the nvim JS/TS linting talks to; without it that setup is
-# configured and inert.
-if command -v npm >/dev/null 2>&1; then
-  if ! npm ls -g --depth=0 2>/dev/null | grep -q "eslint_d@"; then
-    echo "Installing eslint_d..."
-    npm install -g eslint_d >/dev/null 2>&1 || echo "  npm install -g eslint_d failed"
-  fi
-fi
+main() {
+  local filter="" path name failed=() ran=0
 
-# --- Neovim (via bob) -----------------------------------------------------
-# nvim is not a brew formula here. bob manages the version and drops the binary
-# in ~/.local/share/bob/nvim-bin, which zshrc puts on PATH. Installing bob alone
-# leaves that empty, so without this a fresh machine has every nvim config file
-# and no nvim.
-if command -v bob >/dev/null 2>&1; then
-  if [[ ! -x "$HOME/.local/share/bob/nvim-bin/nvim" ]]; then
-    echo "Installing Neovim via bob..."
-    bob use "${BOB_NVIM_VERSION:-nightly}" \
-      || echo "  bob failed — install manually: bob use nightly"
-  fi
-fi
+  case "${1:-}" in
+    --list)       list_steps; return 0 ;;
+    -h|--help)    usage;      return 0 ;;
+    -*)           usage >&2;  return 2 ;;
+    *)            filter="${1:-}" ;;
+  esac
 
-# The config is its own repo, not part of this one, so bob alone gives you a
-# working nvim binary and a completely empty config. Nothing errors; nvim just
-# opens bare, which is the least obvious way for 114 files to go missing.
-# Needs the SSH key to be on GitHub already.
-NVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [[ ! -d "$NVIM_CONFIG_DIR" ]]; then
-  echo "Cloning Neovim config..."
-  git clone git@github.com:adityaanilshukla/nvim.git "$NVIM_CONFIG_DIR" \
-    || echo "  couldn't clone nvim config (check SSH access) — nvim will start with no config."
-fi
+  [[ -d "$STEP_DIR" ]] || die "no install.d directory beside this script"
 
-# --- online-zathura -------------------------------------------------------
-# Reading-state sync used by scripts/library. It's its own repo, built with
-# its Makefile into ~/.local/bin. Needs `go` (Brewfile). Actual Turso sync also
-# needs a one-time `make join` per machine to mint this device's token — that
-# step is manual because it writes credentials.
-OZ_DIR="$HOME/Projects/online-zathura"
-if [[ ! -x "$HOME/.local/bin/online-zathura" ]]; then
-  if [[ ! -d "$OZ_DIR" ]]; then
-    echo "Cloning online-zathura..."
-    git clone git@github.com:adityaanilshukla/online-zathura.git "$OZ_DIR" \
-      || echo "Couldn't clone online-zathura (check SSH access) — skipping."
-  fi
-  if [[ -d "$OZ_DIR" ]] && command -v go >/dev/null 2>&1; then
-    echo "Building online-zathura..."
-    make -C "$OZ_DIR" install \
-      || echo "online-zathura build failed — build it manually: make -C '$OZ_DIR' install"
-  fi
-fi
+  for path in "$STEP_DIR"/[0-9][0-9]-*.sh; do
+    # The glob is literal when nothing matches, so check before running it.
+    [[ -e "$path" ]] || die "install.d contains no steps"
+    name="$(basename "$path" .sh)"
+    [[ -n "$filter" && "$name" != *"$filter"* ]] && continue
+    [[ -x "$path" ]] || die "step is not executable: $name"
 
-# --- drag-mac -------------------------------------------------------------
-# PyObjC drag source behind ranger's dn binding. Homebrew's python3 is PEP 668
-# externally managed, so pip refuses to install into it and PyObjC has to live
-# in a venv. Idempotent: re-running only upgrades what's already there.
-DRAG_MAC_VENV="$HOME/.local/share/drag-mac/venv"
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  # Test what the venv can actually do, not whether its directory exists. A venv
-  # keeps working only as long as the python it was built against stays put, so
-  # a Homebrew python upgrade silently breaks it. Importing the frameworks the
-  # tool really uses is the only check that catches that, and it makes this
-  # block self-healing on every run.
-  if ! "$DRAG_MAC_VENV/bin/python3" -c "import objc, AppKit, Quartz" >/dev/null 2>&1; then
-    echo "Building drag-mac venv..."
-    # :? so an unset or empty variable aborts instead of expanding to something
-    # catastrophic.
-    rm -rf "${DRAG_MAC_VENV:?refusing to remove an empty path}"
-    # Delegated to the Makefile on purpose: it already owns the dependency list,
-    # and duplicating it here is how the two drift. They did, briefly, and
-    # `make test` then failed on a fresh machine for want of pytest.
-    if make -C "$DOTFILES_DIR/drag-mac" venv >/dev/null; then
-      echo "  drag-mac venv built"
-    else
-      echo "  drag-mac venv FAILED — dn will report it. Retry: make -C '$DOTFILES_DIR/drag-mac' venv"
-    fi
-  fi
-
-  # Prove it end to end rather than assuming, so a broken install is loud here
-  # instead of showing up later as dn appearing to do nothing.
-  if "$DRAG_MAC_VENV/bin/python3" "$DOTFILES_DIR/drag-mac/drag_mac.py" >/dev/null 2>&1; then
-    echo "  drag-mac self-test unexpectedly passed with no arguments"
-  elif [[ $? -eq 2 ]]; then
-    echo "  drag-mac ready"
-  else
-    echo "  drag-mac self-test FAILED — check 'make -C $DOTFILES_DIR/drag-mac test'"
-  fi
-fi
-
-# --- Karabiner ------------------------------------------------------------
-# Keyboard remaps. Its own module because karabiner.json cannot be symlinked:
-# the settings GUI rewrites it, and the installer merges generated rules into
-# it. Needs brew (karabiner-elements, jq), so it has to run after the Brewfile.
-#
-# Non-fatal on purpose. A keyboard remapper failing — usually ungranted
-# permissions on a fresh machine — must not abort a whole machine setup, and
-# this script runs under `set -e`.
-if [[ -x "$DOTFILES_DIR/karabiner/install.sh" ]]; then
-  echo "Configuring Karabiner..."
-  "$DOTFILES_DIR/karabiner/install.sh" \
-    || echo "  karabiner module failed — re-run '$DOTFILES_DIR/karabiner/install.sh' after granting permissions."
-fi
-
-# --- Oh My Zsh ------------------------------------------------------------
-# zsh/zshrc sources "$ZSH/oh-my-zsh.sh" unconditionally, so without this a
-# fresh machine opens a shell that errors before it draws a prompt. Not from
-# brew — the formula was dropped upstream and the install script is what
-# ohmyzsh actually supports.
-#
-# KEEP_ZSHRC=yes is the load-bearing part. The installer's default is to move
-# an existing ~/.zshrc aside to ~/.zshrc.pre-oh-my-zsh and write its own
-# template in place. Here ~/.zshrc is a symlink into this repo, so the default
-# would quietly replace the whole config with a stock one that looks close
-# enough to be confusing. Runs before the symlink section for the same reason:
-# nothing of ours is in place yet to be clobbered.
-#
-# RUNZSH=no stops it exec'ing a new interactive zsh and swallowing the rest of
-# this script. CHSH=no skips the chsh prompt, which needs a password and has
-# nothing to do: zsh is already the macOS default shell.
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  echo "Installing Oh My Zsh..."
-  KEEP_ZSHRC=yes RUNZSH=no CHSH=no sh -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
-    "" --unattended \
-    || true
-  # Checked rather than trusted: a failed `curl` inside the command
-  # substitution yields an empty string, so `sh -c ""` exits 0 and the install
-  # reads as successful while nothing was installed. The directory is the only
-  # honest signal.
-  [[ -d "$HOME/.oh-my-zsh" ]] \
-    || echo "  Oh My Zsh did not install — zsh will error on every prompt until it does."
-fi
-
-# --- SSH ------------------------------------------------------------------
-# ssh/config is symlinked below like any other config, but two things about it
-# cannot be expressed in a symlink.
-#
-# ssh enforces permissions itself and refuses to run rather than degrade: it
-# ignores a config file others can write, and it will not use a ControlPath in
-# a directory others can enter. A fresh ~/.ssh created by `mkdir -p` in the
-# symlink loop is 755, which fails both tests, so set the modes explicitly.
-mkdir -p "$HOME/.ssh/sockets"
-chmod 700 "$HOME/.ssh" "$HOME/.ssh/sockets"
-
-# --- Symlinks -------------------------------------------------------------
-# Single-file configs.
-files=(
-  "zsh/zshrc:$HOME/.zshrc"
-  "tmux/tmux.conf:$HOME/.tmux.conf"
-  "git/gitconfig:$HOME/.gitconfig"
-
-  # Tailscale host aliases, so `scp file brovo:` works. Inert without the
-  # tailscaled daemon: the names in it are MagicDNS names and resolve to
-  # nothing until this machine has joined the tailnet.
-  "ssh/config:$HOME/.ssh/config"
-
-  # Claude Code notification hook — desktop banner and a sound when a session
-  # finishes or needs input. claude/install.sh registers it in settings.json
-  # afterwards; the symlink alone does nothing.
-  "claude/hooks/notify.sh:$HOME/.claude/hooks/notify.sh"
-
-  # PreToolUse guard: refuses sudo, doas, and osascript's "with administrator
-  # privileges" from inside a Claude session, so an escalation has to be typed
-  # by a human in a terminal. A guardrail against habit, not a sandbox -- see
-  # the header of the script. Registered in settings.json by claude/install.sh.
-  "claude/hooks/no-sudo.sh:$HOME/.claude/hooks/no-sudo.sh"
-  "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
-  "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
-
-  # Karabiner is deliberately absent here: karabiner.json is generated and
-  # merged by karabiner/install.sh, not symlinked. See karabiner/README.md.
-
-  # ~/Scripts is the alt-x launcher's menu: whatever is linked in here is what
-  # it offers. Keep that in mind before adding to it.
-  "scripts/library:$HOME/Scripts/library"
-
-  # Night Shift toggle. A pass-through to the nightlight CLI from the Brewfile,
-  # which exists so the launcher has a file to list; ~/Scripts is not something
-  # a brew binary lands in.
-  "scripts/nightlight:$HOME/Scripts/nightlight"
-
-  # Keeps the Mac running with the lid shut (a `pmset disablesleep` wrapper with
-  # a self-disarming timer), so it can be left locked in a bag and still be
-  # reachable. Needs sudo at runtime, not at install time. See scripts/awake.
-  "scripts/awake:$HOME/.local/bin/awake"
-
-  # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
-  "scripts/t:$HOME/.local/bin/t"
-
-  # zathura, privately: open any document with no reading state stored and
-  # nothing synced to Turso. Also what library's ctrl-o hands off to.
-  "scripts/zp:$HOME/.local/bin/zp"
-
-  # Diagnostic for the one way zathura breaks on its own: its pdf plugins are
-  # built from source against whatever mupdf/poppler was installed that day and
-  # are never rebuilt on upgrade, so epubs stop opening while pdfs still work.
-  # Not in ~/Scripts — it answers a question, it is not a command to run.
-  "scripts/check-zathura-plugins:$HOME/.local/bin/check-zathura-plugins"
-
-  # notification dismisser, run by aerospace's alt-shift-x binding
-  "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
-  "scripts/notification-center:$HOME/Scripts/notification-center"
-
-  # the alt-x launcher itself. Deliberately NOT in ~/Scripts, or it would list
-  # itself in its own menu.
-  "scripts/launcher:$HOME/.local/bin/launcher"
-
-  # macOS drag source — ranger's dn binding runs this, since dragon-drop is
-  # X11-only. Needs the venv built below.
-  "scripts/drag-mac:$HOME/.local/bin/drag-mac"
-
-  # alacritty font size per screen. Run by sketchybar's display_change event
-  # (sketchybar/plugins/alacritty-font.sh) and by hand after changing the two
-  # sizes inside it. Reads scripts/display-info.swift from beside itself, which
-  # is why the link target keeps the same basename.
-  "scripts/alacritty-font-size:$HOME/.local/bin/alacritty-font-size"
-
-  # VS Code (macOS config path)
-  "vscode/settings.json:$HOME/Library/Application Support/Code/User/settings.json"
-  "vscode/keybindings.json:$HOME/Library/Application Support/Code/User/keybindings.json"
-)
-
-# Whole-directory symlinks — for multi-file configs. Linked as a single dir so
-# new files inside are tracked automatically without touching this list. Only
-# use for configs that DON'T write runtime state into their config dir.
-dirs=(
-  "sketchybar:$HOME/.config/sketchybar"
-  "aerospace:$HOME/.config/aerospace"
-  "ranger:$HOME/.config/ranger"
-)
-
-# --- tmux plugins (tpm) ---------------------------------------------------
-# tmux.conf declares tmux-resurrect and tmux-continuum, but tpm is what
-# actually fetches them and tpm is not a brew formula. Without this block the
-# @plugin lines are inert: the config loads clean and silently does nothing,
-# which is exactly how resurrect sat dead on this machine.
-#
-# Must run after the symlink section, because install_plugins needs a tmux
-# server that has already sourced ~/.tmux.conf. On a fresh machine there is no
-# server yet, so start a throwaway session and tear it down afterwards.
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ ! -d "$TPM_DIR" ]]; then
-  echo "Cloning tpm..."
-  git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR" \
-    || echo "  tpm clone failed - install manually: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm"
-fi
-if [[ -d "$TPM_DIR" ]] && command -v tmux >/dev/null 2>&1; then
-  TPM_TEMP_SESSION=""
-  if ! tmux has-session 2>/dev/null; then
-    tmux new-session -d -s tpm-install 2>/dev/null && TPM_TEMP_SESSION="tpm-install"
-  fi
-  tmux source-file "$HOME/.tmux.conf" >/dev/null 2>&1 || true
-  if "$TPM_DIR/bin/install_plugins" >/dev/null 2>&1; then
-    echo "tmux plugins installed."
-  else
-    echo "  tpm install_plugins failed - run prefix + I inside tmux."
-  fi
-  [[ -n "$TPM_TEMP_SESSION" ]] && tmux kill-session -t "$TPM_TEMP_SESSION" 2>/dev/null
-fi
-
-# --- alacritty font size --------------------------------------------------
-# alacritty.toml deliberately sets no font size; it imports one from
-# ~/.config/alacritty/font-size.toml, which this script generates to suit
-# whichever screen is attached. Generate it now, because until it exists
-# alacritty falls back to its own default of 11.25, which is unreadably small
-# on both screens here. sketchybar regenerates it on every display change.
-if [[ -x "$DOTFILES_DIR/scripts/alacritty-font-size" ]]; then
-  echo "Setting alacritty font size for the current display..."
-  "$DOTFILES_DIR/scripts/alacritty-font-size" \
-    || echo "  couldn't set the alacritty font size — run alacritty-font-size by hand."
-fi
-
-# --- git hooks ------------------------------------------------------------
-# Hooks live in .git/hooks, which git does not track, so they never arrive with
-# a clone. The real script is a tracked file and gets symlinked into place here
-# instead; editing githooks/ then updates the live hook immediately.
-#
-# post-checkout warns when the checked-out branch is not the one whose config
-# this machine runs. The two dirs above are symlinks into the repo, so the
-# checked-out branch IS the live ranger and aerospace config.
-if [[ -d "$DOTFILES_DIR/.git" ]]; then
-  mkdir -p "$DOTFILES_DIR/.git/hooks"
-  for hook in "$DOTFILES_DIR"/githooks/*; do
-    [[ -f "$hook" ]] || continue
-    ln -sf "$hook" "$DOTFILES_DIR/.git/hooks/$(basename "$hook")"
-    echo "Linked $hook -> .git/hooks/$(basename "$hook")"
+    ran=$((ran + 1))
+    # Deliberately not `set -e`-fatal: collect and carry on. A step is
+    # responsible for its own internal error handling; this only records that
+    # it came back non-zero so the summary can name it.
+    "$path" || failed+=("$name")
   done
-fi
 
-for pair in "${files[@]}"; do
-  src="${pair%%:*}"
-  dest="${pair#*:}"
-  src_path="$DOTFILES_DIR/$src"
-
-  if [[ -e "$dest" && ! -L "$dest" ]]; then
-    mv "$dest" "$dest.backup"
-    echo "Backed up $dest to $dest.backup"
+  if [[ $ran -eq 0 ]]; then
+    die "no step matched '$filter' — try --list"
   fi
 
-  mkdir -p "$(dirname "$dest")"
-  ln -sf "$src_path" "$dest"
-  echo "Linked $src_path -> $dest"
-done
-
-for pair in "${dirs[@]}"; do
-  src="${pair%%:*}"
-  dest="${pair#*:}"
-  src_path="$DOTFILES_DIR/$src"
-
-  # Back up a real directory; a stale symlink is just replaced.
-  if [[ -d "$dest" && ! -L "$dest" ]]; then
-    mv "$dest" "$dest.backup"
-    echo "Backed up $dest to $dest.backup"
+  printf '\n'
+  if [[ ${#failed[@]} -gt 0 ]]; then
+    printf '%s%d of %d steps failed:%s\n' "$C_YELLOW$C_BOLD" "${#failed[@]}" "$ran" "$C_OFF"
+    # One printf per entry: passing "${failed[@]}" to a three-slot format
+    # string silently mangles the output as soon as more than one step fails.
+    for name in "${failed[@]}"; do
+      printf '  %s%s%s\n' "$C_YELLOW" "$name" "$C_OFF"
+    done
+    printf '\nRe-run just one with: %s%s <name>%s\n\n' "$C_BOLD" "$0" "$C_OFF"
+    return 1
   fi
 
-  mkdir -p "$(dirname "$dest")"
-  ln -sfn "$src_path" "$dest"
-  echo "Linked $src_path -> $dest"
-done
+  printf '%s%d steps completed.%s\n\n' "$C_GREEN$C_BOLD" "$ran" "$C_OFF"
+}
 
-# --- Claude Code ----------------------------------------------------------
-# Registers the notification hooks in ~/.claude/settings.json. Must run after
-# the symlink loops above: the module checks that notify.sh is actually in
-# place and bails rather than registering a hook that would fail on every
-# event. Non-fatal like karabiner — a missing desktop notification must not
-# abort a machine setup, and this script runs under `set -e`.
-if [[ -x "$DOTFILES_DIR/claude/install.sh" ]]; then
-  echo "Configuring Claude Code hooks..."
-  "$DOTFILES_DIR/claude/install.sh" \
-    || echo "  claude module failed — re-run '$DOTFILES_DIR/claude/install.sh'."
-fi
-
-# --- Services -------------------------------------------------------------
-# Installing sketchybar and symlinking its config is not enough: it runs as a
-# launch agent, so without this a fresh machine has the bar fully configured
-# and simply no bar on screen. Starting an already-started service is harmless,
-# so this stays idempotent.
-for svc in sketchybar syncthing; do
-  # Loud, not `|| continue`. This silently did nothing for sketchybar on a real
-  # install and the bar simply never appeared.
-  if ! command -v "$svc" >/dev/null 2>&1; then
-    echo "  !! $svc is not installed — service not started."
-    echo "     Install it, then: brew services start $svc"
-    continue
-  fi
-  if ! brew services list 2>/dev/null | grep -qE "^${svc}[[:space:]]+started"; then
-    echo "Starting $svc service..."
-    brew services start "$svc" >/dev/null \
-      || echo "  couldn't start $svc — run 'brew services start $svc'"
-  fi
-done
-
-# Tailscale is deliberately NOT in the loop above. Its daemon has to run as
-# root — it opens a utun interface and rewrites the system DNS resolvers for
-# MagicDNS, neither of which a per-user LaunchAgent can do — so it is
-# `sudo brew services start tailscale`, landing in /Library/LaunchDaemons
-# rather than ~/Library/LaunchAgents where the loop looks. Joining the tailnet
-# is a browser login on top of that.
-#
-# So this only reports. An install script that stops to ask for a password
-# halfway through is worse than one that tells you the two commands, and the
-# failure it is guarding against is quiet: ssh/config resolves its hosts by
-# MagicDNS, so with no daemon `ssh brovo` fails with "could not resolve
-# hostname" and looks like a broken config rather than a service that is off.
-if command -v tailscale >/dev/null 2>&1 && ! tailscale status >/dev/null 2>&1; then
-  echo "  !! tailscale is installed but not connected — 'ssh brovo' cannot resolve."
-  echo "     sudo brew services start tailscale"
-  echo "     sudo tailscale up --operator=$USER"
-fi
-
-# Remote Login (sshd), so the other machines can copy FROM this one. Checked by
-# opening a socket rather than by asking systemsetup, which needs admin rights
-# just to read the setting, and rather than by lsof, which would not show a
-# root-owned listener to an unprivileged user and would report every machine as
-# off.
-if ! nc -z 127.0.0.1 22 >/dev/null 2>&1; then
-  echo "  !! Remote Login is off — nothing can ssh or scp INTO this Mac."
-  echo "     sudo systemsetup -setremotelogin on"
-fi
-
-# AeroSpace does not come up on its own. Installing a cask does not launch it,
-# and `start-at-login = true` in aerospace.toml only registers a login item
-# once the app has run once — so on a fresh machine the setting reads as
-# ignored: reboot, and there is no window manager and nothing tiles.
-#
-# Launching it here is also what raises the Accessibility prompt, which is the
-# part that genuinely cannot be scripted. Raising it during install means it is
-# sitting there waiting rather than being discovered weeks later when
-# alt-shift-x silently does nothing.
-#
-# -g so it does not steal focus mid-install, and `open -a` on an already
-# running app just activates it, so this stays idempotent like everything else.
-if [[ -d /Applications/AeroSpace.app ]]; then
-  echo "Launching AeroSpace (registers start-at-login, raises the Accessibility prompt)..."
-  open -g -a AeroSpace || echo "  couldn't launch AeroSpace — open it by hand."
-else
-  echo "  !! AeroSpace is not installed — not launched, so start-at-login is not"
-  echo "     registered and the Accessibility prompt has not been raised."
-fi
-
-# --- Login items ----------------------------------------------------------
-# Apps that have to be running for this machine to behave as configured, but
-# which cannot be made to start themselves.
-#
-# AeroSpace, Raycast and BetterDisplay are not here because they do not need to
-# be: each has its own start-at-login setting and registers itself the first
-# time it runs, which is what the `open -g -a` above is for.
-#
-# Scroll Reverser and KeyClu have no such setting. Checked rather than assumed:
-# Scroll Reverser 1.9 has no StartAtLogin key in com.pilotmoon.scroll-reverser
-# and no Contents/Library/LoginItems helper in the bundle, so launching it
-# registers nothing. Left alone, both are installed by the Brewfile, appear to
-# be set up, and simply are not running after a reboot -- which is exactly how
-# this was found: reverse scrolling silently stopped working and had to be
-# started by hand from Raycast, weeks after the install.
-#
-# `make login item` keys on the path, so adding one twice replaces rather than
-# duplicates -- verified, not assumed. The presence check below is only so the
-# script says something true about what it did.
-#
-# hidden:true so nothing flashes at login. Both are menu-bar-only apps
-# (LSUIElement), so there is no window to show in the first place.
-#
-# First run may raise an Automation prompt for System Events. That is the same
-# bargain as the Accessibility prompt above: better surfaced now than
-# discovered later when the machine quietly does not do what it should.
-login_items="$(osascript -e 'tell application "System Events" to get the name of every login item' 2>/dev/null)"
-for app in "Scroll Reverser" "KeyClu"; do
-  if [[ ! -d "/Applications/${app}.app" ]]; then
-    echo "  !! $app is not installed — not registered to start at login."
-    continue
-  fi
-  if [[ "$login_items" == *"$app"* ]]; then
-    continue
-  fi
-  echo "Registering $app to start at login..."
-  osascript -e "tell application \"System Events\" to make login item at end \
-                with properties {path:\"/Applications/${app}.app\", hidden:true}" \
-    >/dev/null 2>&1 \
-    || echo "  couldn't register $app — add it by hand in System Settings > General > Login Items."
-done
-
-# --- Retired LaunchAgents -------------------------------------------------
-# Removing a LaunchAgent from this repo does not remove it from a machine that
-# already has one. 78e69bc deleted scripts/start-comms, its plist and the block
-# that installed it, but a copy already sitting in ~/Library/LaunchAgents stays
-# there and stays loaded -- so on the machine that had been installed before
-# that commit, the comms apps carried on launching at login for days after the
-# repo said they should not. The repo looked right and the machine disagreed,
-# which is the failure mode this file exists to prevent.
-#
-# So retiring an agent means naming it here, not just deleting it. Entries stay
-# for as long as any machine might still be carrying the old copy; there is no
-# cost to leaving one in place once every machine is clean, since the loop skips
-# anything already absent.
-#
-# The plists themselves are recoverable from git history if one turns out to
-# have been retired in error -- start-comms is at e4305f9.
-retired_agents=(
-  "com.aditya.dotfiles.start-comms"   # retired by 78e69bc: nothing starts at login
-)
-for label in "${retired_agents[@]}"; do
-  plist="$HOME/Library/LaunchAgents/${label}.plist"
-  [[ -e "$plist" ]] || continue
-  echo "Removing retired LaunchAgent ${label}..."
-  # bootout first: deleting a loaded agent's plist leaves it running until the
-  # next login, which is the same half-removed state this block is fixing.
-  launchctl bootout "gui/$(id -u)/${label}" 2>/dev/null || true
-  rm -f "$plist"
-done
-
-# --- VS Code extensions ---------------------------------------------------
-# Resolve the `code` CLI even if it isn't on PATH yet (fresh install).
-CODE_BIN="$(command -v code || true)"
-if [[ -z "$CODE_BIN" ]]; then
-  app_cli="/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
-  [[ -x "$app_cli" ]] && CODE_BIN="$app_cli"
-fi
-
-ext_list="$DOTFILES_DIR/vscode/extensions.txt"
-if [[ -z "$CODE_BIN" ]]; then
-  echo "VS Code 'code' CLI not found — install VS Code, then re-run this script to add extensions."
-elif [[ -f "$ext_list" ]]; then
-  echo "Installing VS Code extensions..."
-  while IFS= read -r ext; do
-    ext="${ext%%#*}"                       # strip inline comments
-    ext="$(echo "$ext" | tr -d '[:space:]')"  # trim whitespace
-    [[ -z "$ext" ]] && continue
-    "$CODE_BIN" --install-extension "$ext" --force
-  done < "$ext_list"
-fi
-
-# --- macOS defaults -------------------------------------------------------
-# `defaults` settings can't be symlinked (cfprefsd owns the plists), so re-apply
-# them from a script.
-if [[ -x "$DOTFILES_DIR/macos/defaults.sh" ]]; then
-  echo "Applying macOS defaults..."
-  "$DOTFILES_DIR/macos/defaults.sh"
-fi
-
-if [[ "$BREW_BUNDLE_INCOMPLETE" -eq 1 ]]; then
-  echo
-  echo "Finished, but brew bundle check was not clean — see the list above."
-  echo "If those are genuinely missing, install them and re-run this script;"
-  echo "it is idempotent. If they were installed by hand, they are fine."
-fi
-
-echo "Done. Remaining manual steps:"
-echo "  - Grant permissions to AeroSpace, Karabiner-Elements, BetterDisplay and"
-echo "    Raycast in System Settings > Privacy & Security. AeroSpace needs it to"
-echo "    tile at all, and alt-shift-x (dismiss notifications) needs it too."
-echo "  - macfuse needs a kernel extension approved in System Settings, then a"
-echo "    reboot."
-echo "  - Log out once. The screen-saver-never setting that stops this machine"
-echo "    idle-sleeping out from under a long session is applied above, but"
-echo "    loginwindow only reads it at login. See BOOTSTRAP.md."
-echo "  - For zathura reading-state sync, run 'make -C $HOME/Projects/online-zathura join'"
-echo "    once on this machine to mint its Turso token."
-echo "  - Tailscale is a two-step, both needing a password: start the root daemon"
-echo "    with 'sudo brew services start tailscale', then join the tailnet with"
-echo "    'sudo tailscale up --operator=$USER'. The --operator flag is what lets"
-echo "    plain 'tailscale status' work afterwards without sudo."
-echo "  - 'sudo systemsetup -setremotelogin on' to let other machines ssh in."
-echo "    If it answers that Full Disk Access is required, grant it to this"
-echo "    terminal in System Settings > Privacy & Security > Full Disk Access."
-echo "  - Install the Raycast extension 'Set Audio Device' (benvp/audio-device)."
-echo "    aerospace's alt-ctrl-z and the sketchybar audio glyph both deeplink"
-echo "    straight into it, and both do nothing until it is installed:"
-echo "      open 'raycast://extensions/benvp/audio-device'"
-echo "  - Import $DOTFILES_DIR/vimium_c-*.json into Vimium C (Options > Backup"
-echo "    and restore). The extension keeps its settings in browser storage, so"
-echo "    the file in this repo is a backup, not a live config."
-echo "  - Browser-side keyboard config lives in the browser profile, not on disk:"
-echo "    set Dark Reader to Alt+Shift+D in about:addons > Manage Extension"
-echo "    Shortcuts, and paste the userscripts from ~/Projects/tampermonkey into"
-echo "    Tampermonkey. The Glove80 Alt chords in karabiner/spec.json drive both."
+main "$@"
