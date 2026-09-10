@@ -43,14 +43,14 @@ heading() { printf '\n%s%s%s\n %s%s  %s%s\n%s%s%s\n\n' \
   "$DIM" "$RULE" "$OFF" "$BOLD$BLUE" "$1" "$2" "$OFF" "$DIM" "$RULE" "$OFF"; }
 
 # --- The table ------------------------------------------------------------
-# id|Human name|full System Settings URL. It has to be the whole URL rather than
-# an anchor appended to one prefix: driver extensions do not live under
-# Privacy & Security at all, they are their own settings extension.
+# id|Human name|full System Settings URL. Stored as the whole URL rather than
+# an anchor appended to a shared prefix, because not every pane worth checking
+# lives under Privacy & Security -- Login Items & Extensions is its own
+# settings extension with an unrelated URL.
 PANES=(
   "accessibility|Accessibility|x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
   "input|Input Monitoring|x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
   "fulldisk|Full Disk Access|x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
-  "kext|Driver Extensions|x-apple.systempreferences:com.apple.LoginItems-Settings.extension"
 )
 
 # Apps needing each pane, as "App name<TAB>what breaks without it". The reason
@@ -69,9 +69,6 @@ apps_for() {
       ;;
     fulldisk)
       printf 'Alacritty\tneeded for: sudo systemsetup -setremotelogin on\n'
-      ;;
-    kext)
-      printf 'macFUSE\tno sshfs mounts; needs a REBOOT after approving\n'
       ;;
   esac
 }
@@ -99,11 +96,6 @@ probe_fulldisk() {
   # makes it an exact test of the thing we are asking about.
   sqlite3 "$HOME/Library/Application Support/com.apple.TCC/TCC.db" \
     'select 1' >/dev/null 2>&1 && return 0 || return 1
-}
-
-probe_kext() {
-  command -v kmutil >/dev/null 2>&1 || return 2
-  kmutil showloaded 2>/dev/null | grep -qi 'macfuse' && return 0 || return 1
 }
 
 probe() { "probe_$1"; }

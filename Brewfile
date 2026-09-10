@@ -145,7 +145,6 @@ brew "jq"                             # karabiner/install.sh merges rules with i
 cask "keyclu"                         # shortcut cheatsheet
 cask "scroll-reverser"                # separate scroll direction for mouse vs trackpad
 brew "smudge/smudge/nightlight"       # night shift from the CLI
-cask "macfuse"                        # needs manual kernel-extension approval + reboot
 
 # ----- Networking + sync -----
 brew "syncthing"
