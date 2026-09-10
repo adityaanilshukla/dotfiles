@@ -157,6 +157,39 @@ defaults write -g com.apple.keyboard.fnState -bool true
 defaults write -g KeyRepeat -int 3
 defaults write -g InitialKeyRepeat -int 15
 
+# Dock: small, and out of the way without making you wait for it.
+#
+# Four keys, and only the first is the one people reach for. `autohide` alone
+# gives you a Dock that hides and then charges you half a second every time you
+# want it back, which is why autohide has a reputation for being annoying. The
+# two timing keys are what make it pleasant, and neither is exposed anywhere in
+# System Settings -- the Dock pane has the autohide checkbox and the size
+# slider, and nothing at all for the delay or the animation.
+#
+#   autohide-delay          how long the pointer must sit at the screen edge
+#                           before the Dock starts coming back. 0 = the moment
+#                           you get there. This is the one that matters.
+#   autohide-time-modifier  how long the slide itself takes, as a multiplier.
+#                           0 = no animation, the Dock is simply there. Set
+#                           this without the delay above and it still feels
+#                           laggy; set the delay without this and you watch it
+#                           glide. They are only good together.
+#   tilesize                icon size in points. 40 is small enough to stay out
+#                           of the way on a laptop display and still be a
+#                           readable target.
+#
+# expose-animation-duration is Mission Control rather than the Dock, but it
+# lives in the same domain and is the same intent: 0.08 against a stock 0.2, so
+# the transition reads as a cut instead of a sweep.
+#
+# The Dock reads all four at launch, so they need a `killall Dock` -- done at
+# the end of this script rather than here, so a run only restarts it once.
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock tilesize -int 40
+defaults write com.apple.dock expose-animation-duration -float 0.08
+
 # Screen saver: never. System Settings > Lock Screen > "Start Screen Saver when
 # inactive".
 #
@@ -180,9 +213,15 @@ defaults write -g InitialKeyRepeat -int 15
 # Needs a logout to take effect: loginwindow reads the timer when it starts.
 defaults -currentHost write com.apple.screensaver idleTime -int 0
 
+# The Dock caches all of the above at launch. Restarting it here rather than
+# beside each `defaults write` keeps a run to a single Dock restart, and it is
+# safe: launchd brings it straight back.
+killall Dock 2>/dev/null || true
+
 echo "Applied macOS defaults. Restart affected apps to pick them up:"
 echo "  - VS Code (press-and-hold)"
 echo "  - Alacritty, full Cmd-Q and relaunch (font smoothing)"
+echo "  - the Dock was restarted for you; its settings are live now"
 echo "  - nothing else; ApplePersistence takes effect at the next restart"
 echo "Ctrl+Left/Right are released from Mission Control and work immediately."
 echo "The top row sends F1-F12; karabiner/install.sh restores the media keys"
