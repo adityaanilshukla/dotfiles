@@ -406,6 +406,15 @@ up = 'resize height -50'
 if.app-id = 'org.mozilla.nightly'
 run = ['move-node-to-workspace 9']
 
+# Playwright ships its OWN Firefox build (ms-playwright/firefox-*/Nightly.app).
+# Its bundle id is 'org.mozilla.nightlyunofficial', NOT 'org.mozilla.nightly',
+# and if.app-id is an exact match — so the rule above never caught the browsers
+# that workday-bot's conformance suite and live apply runs launch. They landed
+# on whatever workspace was focused, on top of real work. Added 2026-09-10.
+[[on-window-detected]]
+if.app-id = 'org.mozilla.nightlyunofficial'
+run = ['move-node-to-workspace 9']
+
 # [[on-window-detected]]
 # if.app-id = "org.mozilla.firefox"
 # run = "move-node-to-workspace 2"
