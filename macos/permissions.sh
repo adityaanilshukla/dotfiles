@@ -133,6 +133,15 @@ summarise() {
 
 # --- Walk -----------------------------------------------------------------
 open_pane() {
+  # Opened twice on purpose. System Settings restores its last-viewed pane when
+  # it launches, and that restore can land AFTER the deep link has been
+  # handled, so a cold start silently shows Focus or Lock Screen instead of the
+  # pane being asked for -- measured here at roughly one in five, which is
+  # exactly the frequency that reads as "the URL is wrong" rather than "it is
+  # racy". The second open navigates a process that is already up, which is the
+  # case that never misses.
+  open "$1" 2>/dev/null || true
+  sleep 2
   open "$1" 2>/dev/null || true
 }
 
