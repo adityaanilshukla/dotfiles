@@ -88,10 +88,17 @@ brew "zathura"
 # versions" -> "could not open document"); poppler usually keeps linking, so it
 # breaks later and less obviously.
 #
-# The tell is one format dying while the other still works: poppler does PDF,
-# mupdf does epub/mobi/fb2/oxps, so a dead mupdf looks like "epubs stopped
-# opening". `scripts/check-zathura-plugins` names the drift; the fix is
+# mupdf now renders everything, PDFs included -- both plugins claim PDF and the
+# first entry in ZATHURA_PLUGINS_PATH wins, which zsh/zshrc sets to mupdf
+# because poppler is ~30x slower per page here, felt at page boundaries and on
+# zoom. That makes a drifted mupdf total rather than partial: it still
+# claims PDF, then refuses to open anything, and poppler cannot step in because
+# registration already happened. Nothing opening at all is the tell now.
+# `scripts/check-zathura-plugins` names the drift; the fix is
 #   brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler
+#
+# poppler stays installed only as a hedge: it is one line in zshrc to put it
+# back in front if some PDF turns out to render wrong under mupdf.
 brew "homebrew-zathura/zathura/zathura-pdf-poppler"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading state

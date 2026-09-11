@@ -9,16 +9,20 @@
 # and the tap does not bump plugin revisions to force it, so the built artifact
 # keeps a header version that no longer matches the library beside it.
 #
-# The failure is one-sided and therefore easy to misread. poppler handles pdf,
-# mupdf handles epub/mobi/fb2/oxps. mupdf checks its header against its library
-# at context creation and refuses outright:
+# mupdf is the one that matters: it renders every format here, PDFs included,
+# because zsh/zshrc puts it first in ZATHURA_PLUGINS_PATH and the first plugin
+# to claim a filetype wins. It checks its header against its library at context
+# creation and refuses outright:
 #
 #   cannot create context: incompatible header (1.28.2) and library (1.28.3) versions
 #   error: could not open document
 #
-# so epubs stop opening while pdfs carry on, which reads like "epub support
-# broke" rather than "a rebuild is due". poppler tends to keep linking across
-# upgrades, so its drift stays silent until some release changes the ABI.
+# and poppler cannot cover for it, because the claim is settled at registration,
+# before any file is opened. So a drifted mupdf means nothing opens at all --
+# loud, at least, rather than subtle. poppler tends to keep linking across
+# upgrades, so its own drift stays silent until some release changes the ABI;
+# it is checked here anyway since it is the fallback if mupdf is ever put back
+# behind it.
 #
 # Exits 0 when everything is in step, 1 when at least one plugin has drifted.
 
@@ -60,6 +64,16 @@ print(next((x["pkg_version"] for x in d.get("runtime_dependencies", [])
       "$plugin" "$dep" "${built:-?}" "${installed:-?}"
     return 0
   fi
+
+  # Compare upstream versions only, dropping Homebrew's `_N` revision suffix.
+  # A revision bump means the formula was rebuilt, not that upstream moved:
+  # mupdf 1.28.3 -> 1.28.3_1 leaves the header version at 1.28.3, which is the
+  # only number mupdf's own check looks at, so flagging it is crying wolf --
+  # exactly what this script exists to avoid. (It does mean a pure relink that
+  # broke the ABI would slip through, but that failure shows up as a missing
+  # symbol at load, not the version refusal this predicts.)
+  built="${built%%_*}"
+  installed="${installed%%_*}"
 
   if [[ "$built" == "$installed" ]]; then
     printf '  %-22s ok      (%s %s)\n' "$plugin" "$dep" "$installed"

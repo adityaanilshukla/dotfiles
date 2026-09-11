@@ -76,13 +76,32 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
 # Overridable so the launch paths can be exercised with stub binaries; a GUI
 # invocation has no environment, so the defaults are what actually run.
+# Prefer the locally built GTK4 zathura; fall back to the brew GTK3 one on a
+# machine that has not been through the source build. zsh/zshrc explains why
+# there are two and why the plugin directories cannot be mixed.
+ZATHURA_GTK4="$HOME/.local/zathura-gtk4/bin/zathura"
+if [[ -z "${ZATHURA:-}" && -x "$ZATHURA_GTK4" ]]; then
+  ZATHURA="$ZATHURA_GTK4"
+fi
 ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
 ONLINE_ZATHURA="${ONLINE_ZATHURA:-$HOME/.local/bin/online-zathura}"
 
-PDF_POPPLER="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler)" -name 'libpdf-poppler.dylib' | head -n1)")"
-PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-mupdf.dylib' | head -n1)")"
+# The plugin path must match the binary: the ABI went 7 to 9 between the two, so
+# the wrong directory means every plugin is rejected and the window comes up
+# empty. Resolved here rather than inherited, because a GUI launch arrives with
+# no environment at all.
+if [[ "$ZATHURA" == "$ZATHURA_GTK4" ]]; then
+  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+else
+  PDF_POPPLER="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler)" -name 'libpdf-poppler.dylib' | head -n1)")"
+  PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-mupdf.dylib' | head -n1)")"
 
-export ZATHURA_PLUGINS_PATH="$PDF_POPPLER:$PDF_MUPDF"
+  # mupdf first on purpose: both plugins claim PDF and the first one here wins.
+  # poppler renders this machine's books at roughly 310ms a page against mupdf's
+  # 10ms, which shows up at page boundaries, on zoom, and on the recolor toggle
+  # -- not in j/k scrolling, which never reaches the plugin.
+  export ZATHURA_PLUGINS_PATH="$PDF_MUPDF:$PDF_POPPLER"
+fi
 
 # --- book picker ---
 # Skipped entirely when a FILE was given on the command line.

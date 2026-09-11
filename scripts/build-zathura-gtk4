@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+#
+# Builds zathura 2026.07.18 (GTK4) and its matching mupdf plugin into
+# ~/.local/zathura-gtk4, leaving the Homebrew zathura alone.
+#
+# Why this exists rather than a Brewfile line: the homebrew-zathura tap is stuck
+# on 2026.02.09, the last GTK3 release, and has not moved in six months. GTK3's
+# macOS backend re-uploads the entire viewport to the view every frame, on the
+# main thread, with no vsync pacing, so the cost scales with window area and
+# fullscreen on a Retina display (~7.7M pixels a frame) visibly jitters while
+# scrolling. Upstream's own fix was to move to GTK4, which renders through GSK
+# on the GPU. There is no bottle for that yet, hence building it here.
+#
+# Kept out of install.sh deliberately: it compiles from source and pulls in gtk4,
+# which is minutes of work that most runs do not need. zsh/zshrc falls back to
+# the brew build wherever this has not been run, so skipping it costs only the
+# smooth scrolling.
+#
+# Idempotent: exits early if the right version is already installed. Safe to
+# re-run to pick up a new upstream release by bumping VER.
+set -euo pipefail
+
+export PATH="/opt/homebrew/bin:$PATH"
+
+VER=2026.07.18
+PREFIX="$HOME/.local/zathura-gtk4"
+
+if [[ -x "$PREFIX/bin/zathura" ]] \
+  && "$PREFIX/bin/zathura" --version 2>&1 | grep -q "zathura $VER"; then
+  printf 'zathura %s already built at %s\n' "$VER" "$PREFIX"
+  exit 0
+fi
+
+command -v brew >/dev/null 2>&1 || { printf 'build-zathura-gtk4: needs brew\n' >&2; exit 1; }
+
+printf '==> dependencies\n'
+# meson/ninja/pkg-config are listed alongside the libraries because a missing
+# build tool fails much later, and far less legibly, than a missing library.
+#
+# mupdf is named explicitly even though the Brewfile already pulls it in as a
+# dependency of zathura-pdf-mupdf: this script has to work on a machine that has
+# only just cloned the repo, and relying on someone else's dependency graph is
+# how a thing quietly stops being installed.
+brew install gtk4 xxhash meson ninja pkg-config mupdf
+
+BREW_PREFIX="$(brew --prefix)"
+
+SRC="$(mktemp -d)"
+trap 'rm -rf "$SRC"' EXIT
+
+printf '==> zathura %s\n' "$VER"
+cd "$SRC"
+curl -fLO "https://pwmt.org/projects/zathura/download/zathura-$VER.tar.xz"
+tar xf "zathura-$VER.tar.xz"
+cd "zathura-$VER"
+meson setup build --prefix="$PREFIX" --buildtype=release
+ninja -C build install
+
+printf '==> zathura-pdf-mupdf %s\n' "$VER"
+# The plugin ABI went 7 -> 9 in this release, so the tap's plugins cannot be
+# reused with this binary (it rejects them by name: "Could not find
+# 'zathura_plugin_8_9'"); this one is built against what was just installed.
+#
+# mupdf ships no pkg-config file and lives outside the default search paths, so
+# the compiler and linker both have to be told where it is. LDFLAGS matters as
+# much as CFLAGS here: with only CFLAGS set, configure finds the headers and
+# reports "Library mupdf found: YES", and then the link fails with "ld: library
+# 'mupdf' not found" -- and note these must be exported, not set per-command,
+# because ninja re-invokes the compiler in its own environment.
+cd "$SRC"
+curl -fL -o pdf-mupdf.tar.gz \
+  "https://github.com/pwmt/zathura-pdf-mupdf/archive/refs/tags/$VER.tar.gz"
+tar xzf pdf-mupdf.tar.gz
+cd "zathura-pdf-mupdf-$VER"
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+export CFLAGS="-I$BREW_PREFIX/opt/mupdf/include"
+export LDFLAGS="-L$BREW_PREFIX/opt/mupdf/lib"
+export LIBRARY_PATH="$BREW_PREFIX/opt/mupdf/lib"
+meson setup build --prefix="$PREFIX" --buildtype=release
+ninja -C build install
+
+printf '\n==> installed\n'
+# Run with the inherited plugin path dropped: an interactive shell exports the
+# brew plugin directories, and those are the wrong ABI for this binary.
+env -u ZATHURA_PLUGINS_PATH "$PREFIX/bin/zathura" --version
+printf '\nOpen a new shell to pick it up; zsh/zshrc prefers it automatically.\n'

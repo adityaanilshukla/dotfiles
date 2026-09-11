@@ -146,14 +146,59 @@ if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.
   source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
 
-# zathura finds no plugins on its own here: the Homebrew tap installs each one
-# into its own keg rather than a shared plugin directory, so the path has to be
-# spelled out. Point at brew's `opt` symlinks, NOT at Cellar. These two lines
-# used to name the version (2026.02.03) directly, which works right up until
-# `brew upgrade` moves the keg and zathura silently opens nothing -- there is no
-# error, the plugin just is not there. `opt/<formula>` always points at whatever
-# version is current.
-export ZATHURA_PLUGINS_PATH="$(brew --prefix)/opt/zathura-pdf-poppler:$(brew --prefix)/opt/zathura-pdf-mupdf"
+# Two zathuras can exist on a machine here, and which one is in front decides
+# which plugin directory is even loadable.
+#
+#   ~/.local/zathura-gtk4   built from source, 2026.07.18, GTK4
+#   /opt/homebrew/bin       the homebrew-zathura tap, 2026.02.09, GTK3
+#
+# The local build exists because GTK3's macOS backend re-uploads the whole
+# viewport to the view on every frame, on the main thread, with no vsync pacing.
+# That cost scales with window area, so fullscreen on a Retina display (~7.7M
+# pixels a frame) jitters while a small window does not. Upstream's own answer
+# was to move to GTK4 -- 2026.05.20 was the last GTK3 release -- and the tap has
+# not moved in six months, so the newer one has to be built by hand. See
+# BOOTSTRAP.md for the build.
+#
+# The two are NOT interchangeable as far as plugins go: the plugin ABI went 7 to
+# 9 in that release, so the GTK4 binary refuses the tap's plugins by name
+# ("Could not find 'zathura_plugin_8_9'") and vice versa. Hence one path or the
+# other, never a merged list.
+#
+# Falls back to the brew build so a machine that has not been through the
+# source build (ello, a fresh laptop) still opens PDFs.
+if [[ -x "$HOME/.local/zathura-gtk4/bin/zathura" ]]; then
+  export PATH="$HOME/.local/zathura-gtk4/bin:$PATH"
+  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+else
+# The tap installs each plugin into its own keg rather than a shared plugin
+# directory, so the path has to be spelled out. Point at brew's `opt` symlinks,
+# NOT at Cellar. This used to name the version (2026.02.03) directly, which
+# works right up until `brew upgrade` moves the keg and zathura silently opens
+# nothing -- there is no error, the plugin just is not there. `opt/<formula>`
+# always points at whatever version is current.
+#
+# Order is not cosmetic: both plugins claim PDF, and the first one on this path
+# wins -- the loser prints "filetype already registered" and is never used. So
+# this line, not any setting in zathurarc, decides which renderer draws every
+# PDF. mupdf goes first because poppler costs ~310ms a page here against mupdf's
+# ~10ms, measured on a real book at the 2x scale a Retina display asks for.
+#
+# What that buys, precisely: page-boundary hitches, zoom, first display, and the
+# Ctrl-r recolor toggle (which throws away every cached thumbnail in the
+# document and rebuilds them on a single render thread). It does NOT buy smooth
+# j/k scrolling within a page -- that path only re-blits an already-rendered
+# surface and never reaches the plugin at all. Worth saying because the swap was
+# originally made chasing exactly that symptom, and it did not fix it; the
+# jitter was GTK3's macOS backend re-uploading the whole viewport per frame.
+#
+# The cost of putting mupdf first: poppler is now dead weight rather than a
+# fallback. A plugin registers before it ever opens a file, so if mupdf drifts
+# out of step with its library (see Brewfile) it still claims PDF and then
+# refuses -- and nothing opens at all, rather than just epubs. `scripts/check-
+# zathura-plugins` is what catches that; the fix is the rebuild it prints.
+  export ZATHURA_PLUGINS_PATH="$(brew --prefix)/opt/zathura-pdf-mupdf:$(brew --prefix)/opt/zathura-pdf-poppler"
+fi
 
 # --------------------
 # Lazy-load conda. The stock eager `conda init` block that used to sit here ran

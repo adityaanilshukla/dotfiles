@@ -45,17 +45,36 @@ done
 # --- environment ---
 # Usually run from an interactive shell, but library execs it too and a GUI
 # launch inherits no environment, so resolve everything defensively.
+# Prefer the locally built GTK4 zathura over the brew one. Resolved by path
+# rather than left to `command -v`, because library execs this and a GUI launch
+# inherits no PATH at all -- the fallback would silently pick the older GTK3
+# build, which is the one that jitters at fullscreen. zsh/zshrc explains why
+# there are two.
+ZATHURA_GTK4="$HOME/.local/zathura-gtk4/bin/zathura"
+if [[ -z "${ZATHURA:-}" && -x "$ZATHURA_GTK4" ]]; then
+  ZATHURA="$ZATHURA_GTK4"
+fi
 ZATHURA="${ZATHURA:-$(command -v zathura || true)}"
 ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
 [[ -x "$ZATHURA" ]] || { printf 'zp: zathura not found; set $ZATHURA\n' >&2; exit 1; }
 
-# Only pay for the cellar lookup when the inherited value is missing or stale;
-# zshrc hardcodes the plugin versions, which go wrong after a brew upgrade.
-if [[ -z "${ZATHURA_PLUGINS_PATH:-}" || ! -d "${ZATHURA_PLUGINS_PATH%%:*}" ]]; then
+# The plugin path has to match the binary, not merely be present: the plugin ABI
+# went 7 to 9 between these two builds, so handing either one the other's
+# directory gets every plugin rejected and an empty window. An inherited value
+# is therefore not trustworthy on its own -- it is correct for whichever zathura
+# the shell expected, which is not necessarily the one resolved above.
+if [[ "$ZATHURA" == "$ZATHURA_GTK4" ]]; then
+  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+elif [[ -z "${ZATHURA_PLUGINS_PATH:-}" || ! -d "${ZATHURA_PLUGINS_PATH%%:*}" ]]; then
+  # Only pay for the cellar lookup when the inherited value is missing or stale;
+  # zshrc hardcodes the plugin versions, which go wrong after a brew upgrade.
   if command -v brew >/dev/null 2>&1; then
     poppler="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler 2>/dev/null)" -name 'libpdf-poppler.dylib' 2>/dev/null | head -n1)" 2>/dev/null)"
     mupdf="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf 2>/dev/null)" -name 'libpdf-mupdf.dylib' 2>/dev/null | head -n1)" 2>/dev/null)"
-    [[ -d "$poppler" && -d "$mupdf" ]] && export ZATHURA_PLUGINS_PATH="$poppler:$mupdf"
+    # mupdf first: both plugins claim PDF, the first one here wins, and poppler
+    # is slow enough on Retina to be felt at page boundaries, on zoom and on the
+    # recolor toggle. zsh/zshrc carries the measurements and the trade-off.
+    [[ -d "$poppler" && -d "$mupdf" ]] && export ZATHURA_PLUGINS_PATH="$mupdf:$poppler"
   fi
 fi
 
@@ -97,9 +116,12 @@ LOG="$LOG_DIR/last-launch.log"
 nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
   zp "$ZATHURA" "$TMPDATA" "$@" >"$LOG" 2>&1 &
 
-# One error appears on every healthy launch and means nothing: both plugins
-# register application/pdf and the second registration loses. Anything else on
-# an `error:` line is a real failure.
+# One error means nothing on the brew build: both of its plugins register
+# application/pdf and the second registration loses. The GTK4 build ships only
+# the mupdf plugin, so it never prints this -- the filter stays because either
+# binary can be the one that runs. Anything else on an `error:` line is real,
+# including the ABI complaint ("Could not find 'zathura_plugin_8_9'") that means
+# the plugin path and the binary have got out of step.
 launch_error() {
   grep '^error:' "$LOG" 2>/dev/null \
     | grep -v 'filetype already registered' \
