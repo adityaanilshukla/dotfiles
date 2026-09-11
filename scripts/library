@@ -91,7 +91,16 @@ ONLINE_ZATHURA="${ONLINE_ZATHURA:-$HOME/.local/bin/online-zathura}"
 # empty. Resolved here rather than inherited, because a GUI launch arrives with
 # no environment at all.
 if [[ "$ZATHURA" == "$ZATHURA_GTK4" ]]; then
-  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+  # NOT an export of the same path. The GTK4 build has this exact directory
+  # compiled in as its default, and zathura 2026.07.18 scans the env path IN
+  # ADDITION to that default rather than instead of it. Setting it therefore
+  # loads the one plugin twice: the first pass registers every filetype, the
+  # second finds them all taken and ends with "Could not register plugin",
+  # which library reads as a failed launch. The document had opened fine.
+  #
+  # Unset rather than merely not set, because an inherited value does the same
+  # damage and tmux panes older than this change still carry one.
+  unset ZATHURA_PLUGINS_PATH
 else
   PDF_POPPLER="$(dirname "$(find "$(brew --cellar zathura-pdf-poppler)" -name 'libpdf-poppler.dylib' | head -n1)")"
   PDF_MUPDF="$(dirname "$(find "$(brew --cellar zathura-pdf-mupdf)" -name 'libpdf-mupdf.dylib' | head -n1)")"

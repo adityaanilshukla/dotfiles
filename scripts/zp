@@ -64,7 +64,16 @@ ZATHURA="${ZATHURA:-/opt/homebrew/bin/zathura}"
 # is therefore not trustworthy on its own -- it is correct for whichever zathura
 # the shell expected, which is not necessarily the one resolved above.
 if [[ "$ZATHURA" == "$ZATHURA_GTK4" ]]; then
-  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+  # NOT an export of the same path. The GTK4 build has this exact directory
+  # compiled in as its default, and zathura 2026.07.18 scans the env path IN
+  # ADDITION to that default rather than instead of it. Setting it therefore
+  # loads the one plugin twice: the first pass registers every filetype, the
+  # second finds them all taken and ends with "Could not register plugin",
+  # which library reads as a failed launch. The document had opened fine.
+  #
+  # Unset rather than merely not set, because an inherited value does the same
+  # damage and tmux panes older than this change still carry one.
+  unset ZATHURA_PLUGINS_PATH
 elif [[ -z "${ZATHURA_PLUGINS_PATH:-}" || ! -d "${ZATHURA_PLUGINS_PATH%%:*}" ]]; then
   # Only pay for the cellar lookup when the inherited value is missing or stale;
   # zshrc hardcodes the plugin versions, which go wrong after a brew upgrade.

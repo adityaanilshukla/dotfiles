@@ -169,7 +169,16 @@ fi
 # source build (ello, a fresh laptop) still opens PDFs.
 if [[ -x "$HOME/.local/zathura-gtk4/bin/zathura" ]]; then
   export PATH="$HOME/.local/zathura-gtk4/bin:$PATH"
-  export ZATHURA_PLUGINS_PATH="$HOME/.local/zathura-gtk4/lib/zathura"
+  # NOT an export of the same path. The GTK4 build has this exact directory
+  # compiled in as its default, and zathura 2026.07.18 scans the env path IN
+  # ADDITION to that default rather than instead of it. Setting it therefore
+  # loads the one plugin twice: the first pass registers every filetype, the
+  # second finds them all taken and ends with "Could not register plugin",
+  # which library reads as a failed launch. The document had opened fine.
+  #
+  # Unset rather than merely not set, because an inherited value does the same
+  # damage and tmux panes older than this change still carry one.
+  unset ZATHURA_PLUGINS_PATH
 else
 # The tap installs each plugin into its own keg rather than a shared plugin
 # directory, so the path has to be spelled out. Point at brew's `opt` symlinks,
