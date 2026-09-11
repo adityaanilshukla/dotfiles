@@ -100,6 +100,30 @@ Karabiner needs a `conditions` block on every individual manipulator, so app
 scoping has to be repeated on all 40-odd mappings. `spec.json` keeps the
 readable version and `generate.py` produces the verbose one.
 
+## Hold-to-emit
+
+A mapping may fire a different key when the physical key is *held* rather than
+tapped, with `hold` and `hold_ms`:
+
+```json
+{ "from": "right_control", "optional": ["any"], "to": "right_control",
+  "hold": "f13", "hold_ms": 400 }
+```
+
+The plain `to` still runs on a tap, so the key keeps its ordinary meaning; only
+a deliberate hold means something else. Both fields are required together and
+`hold_ms` must be 100-2000, because the threshold is the whole design of such a
+rule: too low and an ordinary tap fires it, too high and the hold feels broken.
+
+This exists for Wispr Flow. Its push-to-talk listens on one keycode, and no
+single key reaches it from both keyboards -- Apple's `fn` is a private HID
+channel only the built-in keyboard can send, and a Glove80 layer key is
+resolved in firmware and sends the host nothing. `F13` is the shared target
+instead: neither keyboard has one, so Karabiner synthesises it from a key each
+keyboard does have. `macos/defaults.sh` sets `AppleFnUsageType` to 0 alongside
+this, or macOS spends a bare `fn` on the emoji picker first.
+
+
 ## What is mapped
 
 | Chord | Becomes | Where |
@@ -108,6 +132,8 @@ readable version and `generate.py` produces the verbose one.
 | `F7` (bare) | previous track | not in terminals |
 | `F7` (bare) | a real `F7` — Neovim's floating terminal | terminals only |
 | `fn+F7` / `fn+F8` | volume down / up | everywhere |
+| `right_control` (held 400ms) | `F13` — Wispr Flow push-to-talk | everywhere |
+| `fn` (held 400ms) | `F13` — Wispr Flow push-to-talk | everywhere |
 | `Ctrl+C/V/X/Z/A/B/I/F/G/S/P/T/W/N/R` | `Cmd+` same | not in terminals |
 | `Ctrl+Y` | `Cmd+Shift+Z`, redo | not in terminals |
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | zoom in / out / reset | not in terminals |

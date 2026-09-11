@@ -406,6 +406,39 @@
     },
 
     {
+      "description": "Wispr PTT: hold right_control or fn to emit F13",
+      "_note": [
+        "Wispr Flow's push-to-talk listens on ONE keycode, and no single key",
+        "reaches it from both keyboards. Apple's fn is a private HID channel",
+        "that only the built-in keyboard can send - Wispr's own docs say so -",
+        "and a Glove80 layer key is resolved inside the firmware and sends the",
+        "host nothing at all. So there is no key to share.",
+        "",
+        "F13 is the shared target instead: neither keyboard has one, and",
+        "Karabiner synthesises it from a key each keyboard DOES have. Wispr is",
+        "then bound to f13 alone and never has to know which keyboard spoke.",
+        "",
+        "hold, not tap. right_control keeps working as a modifier and fn keeps",
+        "working as fn, because `to` still fires on a tap; only a deliberate",
+        "hold becomes F13. 400ms is long enough that no ordinary chord reaches",
+        "it and short enough that push-to-talk does not feel late.",
+        "",
+        "Scoped everywhere on purpose. Dictation is wanted in a terminal as",
+        "much as anywhere else, and a held modifier types nothing, so there is",
+        "nothing for it to corrupt.",
+        "",
+        "macos/defaults.sh sets AppleFnUsageType to 0 alongside this. Without",
+        "it macOS claims a bare fn press for the emoji picker before anything",
+        "here can see it, and the fn half of this rule is inert."
+      ],
+      "scope": "everywhere",
+      "mappings": [
+        { "from": "right_control", "optional": ["any"], "to": "right_control", "hold": "f13", "hold_ms": 400 },
+        { "from": "fn",            "optional": ["any"], "to": "fn",            "hold": "f13", "hold_ms": 400 }
+      ]
+    },
+
+    {
       "description": "Ctrl+letter to Cmd+letter (not in terminals)",
       "scope": "gui",
       "mappings": [

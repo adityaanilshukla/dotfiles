@@ -119,6 +119,22 @@ defaults write -g com.apple.keyboard.fnState -bool true
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u \
   || echo "  !! activateSettings failed — Ctrl+Left/Right and the function-key row take effect at the next login."
 
+# A bare fn press belongs to Wispr Flow, not to macOS.
+#
+# 0 = "Do Nothing". karabiner/spec.json turns a HELD fn into F13 for Wispr
+# Flow's push-to-talk, but macOS gets the key first and, left at its default,
+# spends it on the emoji picker or the input-source switcher. The Karabiner
+# rule then never fires and dictation looks broken with nothing in any log to
+# say why.
+#
+# This affects fn pressed ALONE. fn used as a modifier is untouched, so the
+# fn+F7/F8 volume rules in spec.json keep working.
+#
+# The two halves are load-bearing together, the same way fnState above is: this
+# line without the Karabiner rule does nothing, and the rule without this line
+# is inert on the built-in keyboard.
+defaults write com.apple.HIToolbox AppleFnUsageType -int 0
+
 # Key repeat: faster, and in step with the display.
 #
 # Both values are in sixtieths of a second. The factory default, read off the

@@ -46,6 +46,59 @@ TO_CODE_TYPES = {
 }
 
 
+# A mapping may also fire a DIFFERENT key when the same physical key is held
+# rather than tapped, via `hold` and `hold_ms`. Karabiner calls this
+# to_if_held_down: the plain `to` still runs on a tap, so the key keeps its
+# ordinary meaning and only a deliberate hold means something else.
+#
+# `hold_ms` is required whenever `hold` is present rather than defaulting,
+# because the threshold is the whole design of such a rule: too low and an
+# ordinary tap fires it, too high and a hold feels broken. It should be a
+# decision in the spec, not a number hidden in this file.
+HOLD_MS_MIN = 100
+HOLD_MS_MAX = 2000
+
+
+def build_hold(mapping: dict, description: str) -> tuple[list | None, dict | None]:
+    """Expand a mapping's `hold`/`hold_ms` into to_if_held_down + parameters.
+
+    Returns (None, None) for the ordinary case where neither is present. Both
+    fields must appear together: `hold` without `hold_ms` has no threshold to
+    fire at, and `hold_ms` without `hold` configures a behaviour that was never
+    asked for, which reads as working and does nothing.
+    """
+    hold = mapping.get("hold")
+    hold_ms = mapping.get("hold_ms")
+
+    if hold is None and hold_ms is None:
+        return None, None
+    if hold is None or hold_ms is None:
+        sys.exit(
+            f"error: group {description!r} mapping from {mapping.get('from')!r} "
+            f"sets only one of hold/hold_ms; both are required together"
+        )
+    if not isinstance(hold, str) or not hold:
+        sys.exit(
+            f"error: group {description!r} mapping from {mapping.get('from')!r} "
+            f"has a non-string hold {hold!r}"
+        )
+    if not isinstance(hold_ms, int) or isinstance(hold_ms, bool):
+        sys.exit(
+            f"error: group {description!r} mapping from {mapping.get('from')!r} "
+            f"has a non-integer hold_ms {hold_ms!r}"
+        )
+    if not HOLD_MS_MIN <= hold_ms <= HOLD_MS_MAX:
+        sys.exit(
+            f"error: group {description!r} mapping from {mapping.get('from')!r} "
+            f"has hold_ms {hold_ms} outside {HOLD_MS_MIN}-{HOLD_MS_MAX}ms"
+        )
+
+    return (
+        [{"key_code": hold}],
+        {"basic.to_if_held_down_threshold_milliseconds": hold_ms},
+    )
+
+
 def build_conditions(spec: dict) -> dict:
     """Resolve spec.scopes into {name: conditions-list-or-None}.
 
@@ -177,6 +230,12 @@ def build(spec: dict) -> dict:
                 "from": from_block,
                 "to": [to_event],
             }
+
+            held, parameters = build_hold(m, group["description"])
+            if held is not None:
+                manipulator["to_if_held_down"] = held
+                manipulator["parameters"] = parameters
+
             if conditions is not None:
                 manipulator["conditions"] = conditions
 

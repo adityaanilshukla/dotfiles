@@ -589,6 +589,59 @@
       ]
     },
     {
+      "description": "dotfiles: Wispr PTT: hold right_control or fn to emit F13",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_control",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "right_control"
+            }
+          ],
+          "to_if_held_down": [
+            {
+              "key_code": "f13"
+            }
+          ],
+          "parameters": {
+            "basic.to_if_held_down_threshold_milliseconds": 400
+          }
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "fn",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "fn"
+            }
+          ],
+          "to_if_held_down": [
+            {
+              "key_code": "f13"
+            }
+          ],
+          "parameters": {
+            "basic.to_if_held_down_threshold_milliseconds": 400
+          }
+        }
+      ]
+    },
+    {
       "description": "dotfiles: Ctrl+letter to Cmd+letter (not in terminals)",
       "manipulators": [
         {

@@ -171,6 +171,9 @@ cask "microsoft-word"
 cask "zoho-cliq"
 cask "zoho-mail"
 cask "anki"
+cask "wispr-flow"                     # dictation; push-to-talk needs the F13
+                                      # rule in karabiner/spec.json and
+                                      # AppleFnUsageType in macos/defaults.sh
 
 # ----- Fonts -----
 cask "font-hack-nerd-font"            # alacritty + sketchybar text font
