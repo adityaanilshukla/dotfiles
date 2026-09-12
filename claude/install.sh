@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 #
-# Register the Claude Code hooks and permission rules in ~/.claude/settings.json.
+# Register the Claude Code hooks and permission rules in a profile's
+# settings.json. Takes the config directory as its only argument and defaults to
+# ~/.claude, the personal profile:
+#
+#     claude/install.sh                     # personal
+#     claude/install.sh ~/.claude-work      # work
+#
+# It takes an argument because settings are per-profile. A second Claude account
+# lives in its own CLAUDE_CONFIG_DIR (see scripts/claude-profile), and that
+# directory carries its own settings.json, so a work profile set up without this
+# would run with no sudo guard and no notifications -- the guard missing from
+# the work account specifically being the wrong way round.
 #
 # Two unrelated things live here because they share the same merge problem:
 # the notification hooks (banner + sound on Stop/Notification), and the sudo
@@ -22,7 +33,13 @@
 
 set -euo pipefail
 
-SETTINGS="${HOME}/.claude/settings.json"
+CONFIG_DIR="${1:-$HOME/.claude}"
+SETTINGS="${CONFIG_DIR}/settings.json"
+
+# The hook scripts themselves are deliberately NOT under $CONFIG_DIR. There is
+# one pair of them, symlinked into ~/.claude/hooks by 55-symlinks, and every
+# profile points at that pair by absolute path. Copying them per profile would
+# mean two places to keep in step and a work profile that quietly drifts.
 HOOK="${HOME}/.claude/hooks/notify.sh"
 NOSUDO="${HOME}/.claude/hooks/no-sudo.sh"
 
@@ -89,10 +106,10 @@ fi
 # Only back up when something actually changes, so re-running does not bury the
 # last genuinely different version under identical copies.
 if cmp -s "$SETTINGS" "$tmp"; then
-  echo "  Claude hooks and deny rules already registered."
+  echo "  Claude hooks and deny rules already registered in $SETTINGS."
   exit 0
 fi
 
 cp "$SETTINGS" "${SETTINGS}.bak"
 cat "$tmp" > "$SETTINGS"   # cat, not mv: keeps the original mode and ownership
-echo "  Claude hooks and sudo deny rules registered (backup: ${SETTINGS}.bak)"
+echo "  Claude hooks and sudo deny rules registered in $SETTINGS (backup: ${SETTINGS}.bak)"

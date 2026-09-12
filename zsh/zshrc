@@ -241,3 +241,34 @@ conda() {
 # to PATH at startup, but it still does on first use, and this must keep winning
 # then too.
 export PATH="$HOME/.local/bin:$PATH"
+
+# --------------------
+# Claude Code: two accounts, one Mac
+# --------------------
+# Personal and work are separate logins. They coexist because Claude Code names
+# its Keychain entry after CLAUDE_CONFIG_DIR -- unset reads `Claude
+# Code-credentials`, set reads `Claude Code-credentials-<sha256(dir)[0:8]>` --
+# so both tokens sit in the Keychain at once and neither expires the other. Log
+# into each once and switching is only ever this variable. scripts/claude-profile
+# carries the detail.
+#
+# Personal is the unset case deliberately, so anything that does NOT come
+# through this function -- a script, the VS Code extension, a cron job -- gets
+# the personal account rather than no account.
+#
+# The prompt only appears when the answer is not already knowable. Resuming a
+# session by id looks up which profile stores it, and --continue looks up which
+# profile has history for this directory, because being asked there means being
+# given the chance to answer wrong: session history is per-profile, so the wrong
+# pick is an empty picker and a relaunch. See scripts/claude-profile.
+claude() {
+  local dir
+  # No `local` on the same line as the assignment: that would swallow the exit
+  # status and a cancelled prompt would launch Claude anyway.
+  dir="$(claude-profile "$@")" || return 1
+  if [[ -n "$dir" ]]; then
+    CLAUDE_CONFIG_DIR="$dir" command claude "$@"
+  else
+    command claude "$@"
+  fi
+}
