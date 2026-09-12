@@ -88,12 +88,19 @@ brew "zathura"
 # versions" -> "could not open document"); poppler usually keeps linking, so it
 # breaks later and less obviously.
 #
-# mupdf now renders everything, PDFs included -- both plugins claim PDF and the
-# first entry in ZATHURA_PLUGINS_PATH wins, which zsh/zshrc sets to mupdf
-# because poppler is ~30x slower per page here, felt at page boundaries and on
-# zoom. That makes a drifted mupdf total rather than partial: it still
-# claims PDF, then refuses to open anything, and poppler cannot step in because
-# registration already happened. Nothing opening at all is the tell now.
+# Both of these are the FALLBACK renderer now. A machine that has been through
+# `scripts/build-zathura-gtk4` runs the GTK4 zathura out of ~/.local, which
+# carries its own mupdf plugin and never looks here; zsh/zshrc unsets
+# ZATHURA_PLUGINS_PATH entirely on that path. These two matter on a machine that
+# has not had that build -- ello, a fresh laptop -- where the GTK3 zathura from
+# the tap is what opens documents.
+#
+# On that fallback path both plugins claim PDF and the first entry in
+# ZATHURA_PLUGINS_PATH wins, which zsh/zshrc orders mupdf-first because poppler
+# is ~30x slower per page, felt at page boundaries and on zoom. That makes a
+# drifted mupdf total rather than partial there: it still claims PDF, then
+# refuses to open anything, and poppler cannot step in because registration
+# already happened. Nothing opening at all is the tell.
 # `scripts/check-zathura-plugins` names the drift; the fix is
 #   brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler
 #
