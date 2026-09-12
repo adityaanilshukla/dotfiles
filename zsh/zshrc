@@ -262,6 +262,18 @@ export PATH="$HOME/.local/bin:$PATH"
 # given the chance to answer wrong: session history is per-profile, so the wrong
 # pick is an empty picker and a relaunch. See scripts/claude-profile.
 claude() {
+  # Launch normally when the resolver is not installed. This is the state of a
+  # machine that has pulled this file -- ~/.zshrc is a symlink into the repo, so
+  # that happens the moment `git pull` finishes -- but has not yet run
+  # install.d/55-symlinks to put claude-profile on PATH. Without this branch the
+  # function would return 1 on a missing command and the machine would have no
+  # working `claude` at all until the installer was run, which is a bad trade
+  # for a feature whose whole job is to be optional.
+  if ! command -v claude-profile >/dev/null 2>&1; then
+    command claude "$@"
+    return
+  fi
+
   local dir
   # No `local` on the same line as the assignment: that would swallow the exit
   # status and a cancelled prompt would launch Claude anyway.
