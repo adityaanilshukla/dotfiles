@@ -13,9 +13,10 @@
 # would run with no sudo guard and no notifications -- the guard missing from
 # the work account specifically being the wrong way round.
 #
-# Two unrelated things live here because they share the same merge problem:
-# the notification hooks (banner + sound on Stop/Notification), and the sudo
-# guard (a PreToolUse hook plus matching deny rules).
+# Three unrelated things live here because they share the same merge problem:
+# the notification hooks (banner + sound on Stop/Notification), the sudo guard
+# (a PreToolUse hook plus matching deny rules), and pinning the terminal
+# renderer to the non-fullscreen one so scrollback keeps working.
 #
 # Its own module for the same reason karabiner is: settings.json cannot be
 # symlinked. Claude Code writes to it (theme changes, onboarding state, and
@@ -94,6 +95,38 @@ jq '
                    timeout: 5 } ] } ])
   | .permissions //= {}
   | .permissions.deny = (((.permissions.deny // []) - $denies) + $denies)
+
+  # Pin the renderer. Claude Code has two: the default one, which prints into
+  # the terminal, and a fullscreen one, which takes the alternate screen. On the
+  # alternate screen nothing reaches tmux scrollback, so Claude Code output
+  # cannot be scrolled back over at all -- not with C-Space copy-mode, not with
+  # prefix [, not with the mouse.
+  #
+  # This has now bitten twice. a1d2fb3 blamed tmux and set `alternate-screen
+  # off`, which was symptom-chasing and broke the screen restore in nvim;
+  # f9c4d61
+  # reverted that, having found the real cause was the `tui` setting inside
+  # Claude Code itself, and fixed it by turning fullscreen off.
+  #
+  # Why it came back anyway, and why pinning is the fix rather than a
+  # preference: with `tui` ABSENT the renderer is not a default, it is a remote
+  # rollout gate. From the 2.1.236 binary, reformatted:
+  #
+  #     switch (settings.tui ?? envTrial) {
+  #       case "fullscreen": return true
+  #       case "default":    return false
+  #     }
+  #     ...
+  #     return cachedGate ??= gate("tengu_pewter_br...")
+  #
+  # So turning fullscreen off by clearing the setting hands the decision back to
+  # the gate, and the gate can flip at any time with no local change. The only
+  # stable answer is to name the value.
+  #
+  # //= rather than =, so `/tui fullscreen` is still a choice that sticks: this
+  # fills the value in when nothing has an opinion, which is exactly the state
+  # the gate would otherwise decide. Run /tui default to come back.
+  | .tui //= "default"
 ' "$SETTINGS" > "$tmp"
 
 # Prove the result before overwriting. jq exiting 0 on a truncated write is
