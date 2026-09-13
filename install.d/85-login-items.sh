@@ -54,9 +54,21 @@ step "Login items"
 # be honoured, so it stays.
 #
 # It matters least where it was first used: Scroll Reverser and KeyClu are
-# menu-bar-only (LSUIElement), so there is no window to show either way. Wispr
-# Flow is not -- it has no LSUIElement key -- so it is the one that could
-# actually put something on screen at login.
+# menu-bar-only (LSUIElement), so there is no window to show either way.
+#
+# Wispr Flow looked like the exception, since it has no LSUIElement key and
+# lsappinfo calls it Foreground. Measured instead of assumed, it is not one:
+# running normally it holds no window at all -- `aerospace list-windows --all`
+# sees none while three other windows are listed -- because its interface is an
+# overlay rather than a window. So there is nothing for `hidden` to suppress
+# here either, and nothing to fix.
+#
+# Recorded because the obvious reading of the bundle is wrong, and the next
+# person to notice Foreground-with-no-LSUIElement should not go looking for a
+# launch mechanism that hides windows. 78e69bc is the relevant precedent on
+# that: launching apps from a LaunchAgent was retired on preference ("an empty
+# screen at login"), so reaching for one to solve a window that does not exist
+# would cost the repo a retired pattern and buy nothing.
 #
 # First run may raise an Automation prompt for System Events. That is the same
 # bargain as the Accessibility prompt above: better surfaced now than
