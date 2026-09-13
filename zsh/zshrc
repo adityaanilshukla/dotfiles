@@ -269,8 +269,24 @@ claude() {
   # function would return 1 on a missing command and the machine would have no
   # working `claude` at all until the installer was run, which is a bad trade
   # for a feature whose whole job is to be optional.
+  # ANTHROPIC_API_KEY is stripped for Claude Code and nothing else. ~/.secrets
+  # exports it for SDK and script work, and Claude Code does not authenticate
+  # with it -- it sits in the `rejected` list in ~/.claude.json, having been
+  # declined at the prompt -- but its mere PRESENCE still switches claude.ai
+  # connectors off: the eligibility check reads a set variable as "API-key
+  # precedence active" and never consults that rejection. Measured both ways in
+  # a throwaway session: with the variable it prints "connectors are disabled
+  # because ANTHROPIC_API_KEY ... takes precedence over your claude.ai login",
+  # without it the warning is gone.
+  #
+  # Scoped here rather than taken out of ~/.secrets, which everything else that
+  # actually needs the key still reads. `env` looks the command up on PATH and
+  # so cannot find this function, which makes it the recursion guard too --
+  # that is why `command` is gone from the lines below rather than doubled up.
+  local -a run=(env -u ANTHROPIC_API_KEY claude)
+
   if ! command -v claude-profile >/dev/null 2>&1; then
-    command claude "$@"
+    "${run[@]}" "$@"
     return
   fi
 
@@ -279,8 +295,8 @@ claude() {
   # status and a cancelled prompt would launch Claude anyway.
   dir="$(claude-profile "$@")" || return 1
   if [[ -n "$dir" ]]; then
-    CLAUDE_CONFIG_DIR="$dir" command claude "$@"
+    CLAUDE_CONFIG_DIR="$dir" "${run[@]}" "$@"
   else
-    command claude "$@"
+    "${run[@]}" "$@"
   fi
 }
