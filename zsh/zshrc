@@ -243,60 +243,27 @@ conda() {
 export PATH="$HOME/.local/bin:$PATH"
 
 # --------------------
-# Claude Code: two accounts, one Mac
+# Claude Code
 # --------------------
-# Personal and work are separate logins. They coexist because Claude Code names
-# its Keychain entry after CLAUDE_CONFIG_DIR -- unset reads `Claude
-# Code-credentials`, set reads `Claude Code-credentials-<sha256(dir)[0:8]>` --
-# so both tokens sit in the Keychain at once and neither expires the other. Log
-# into each once and switching is only ever this variable. scripts/claude-profile
-# carries the detail.
+# ANTHROPIC_API_KEY is stripped for Claude Code and nothing else. ~/.secrets
+# exports it for SDK and script work, and Claude Code does not authenticate with
+# it -- it sits in the `rejected` list in ~/.claude.json, having been declined at
+# the prompt -- but its mere PRESENCE still switches claude.ai connectors off:
+# the eligibility check reads a set variable as "API-key precedence active" and
+# never consults that rejection. Measured both ways in a throwaway session: with
+# the variable the session prints "connectors are disabled because
+# ANTHROPIC_API_KEY ... takes precedence over your claude.ai login", without it
+# the warning is gone.
 #
-# Personal is the unset case deliberately, so anything that does NOT come
-# through this function -- a script, the VS Code extension, a cron job -- gets
-# the personal account rather than no account.
+# Scoped here rather than taken out of ~/.secrets, which everything else that
+# actually needs the key still reads. `env` looks the command up on PATH and so
+# cannot find this function, which is what keeps this from recursing.
 #
-# The prompt only appears when the answer is not already knowable. Resuming a
-# session by id looks up which profile stores it, and --continue looks up which
-# profile has history for this directory, because being asked there means being
-# given the chance to answer wrong: session history is per-profile, so the wrong
-# pick is an empty picker and a relaunch. See scripts/claude-profile.
+# A second Claude account needs no code here. Claude Code reads
+# CLAUDE_CONFIG_DIR itself and keys its Keychain entry off it, so
+#     CLAUDE_CONFIG_DIR=~/.claude-work claude
+# is a complete answer. There was a wrapper here that prompted for the profile
+# at every launch; it got in the way far more than it helped.
 claude() {
-  # Launch normally when the resolver is not installed. This is the state of a
-  # machine that has pulled this file -- ~/.zshrc is a symlink into the repo, so
-  # that happens the moment `git pull` finishes -- but has not yet run
-  # install.d/55-symlinks to put claude-profile on PATH. Without this branch the
-  # function would return 1 on a missing command and the machine would have no
-  # working `claude` at all until the installer was run, which is a bad trade
-  # for a feature whose whole job is to be optional.
-  # ANTHROPIC_API_KEY is stripped for Claude Code and nothing else. ~/.secrets
-  # exports it for SDK and script work, and Claude Code does not authenticate
-  # with it -- it sits in the `rejected` list in ~/.claude.json, having been
-  # declined at the prompt -- but its mere PRESENCE still switches claude.ai
-  # connectors off: the eligibility check reads a set variable as "API-key
-  # precedence active" and never consults that rejection. Measured both ways in
-  # a throwaway session: with the variable it prints "connectors are disabled
-  # because ANTHROPIC_API_KEY ... takes precedence over your claude.ai login",
-  # without it the warning is gone.
-  #
-  # Scoped here rather than taken out of ~/.secrets, which everything else that
-  # actually needs the key still reads. `env` looks the command up on PATH and
-  # so cannot find this function, which makes it the recursion guard too --
-  # that is why `command` is gone from the lines below rather than doubled up.
-  local -a run=(env -u ANTHROPIC_API_KEY claude)
-
-  if ! command -v claude-profile >/dev/null 2>&1; then
-    "${run[@]}" "$@"
-    return
-  fi
-
-  local dir
-  # No `local` on the same line as the assignment: that would swallow the exit
-  # status and a cancelled prompt would launch Claude anyway.
-  dir="$(claude-profile "$@")" || return 1
-  if [[ -n "$dir" ]]; then
-    CLAUDE_CONFIG_DIR="$dir" "${run[@]}" "$@"
-  else
-    "${run[@]}" "$@"
-  fi
+  env -u ANTHROPIC_API_KEY claude "$@"
 }

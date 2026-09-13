@@ -31,11 +31,6 @@ files=(
   # by a human in a terminal. A guardrail against habit, not a sandbox -- see
   # the header of the script. Registered in settings.json by claude/install.sh.
   "claude/hooks/no-sudo.sh:$HOME/.claude/hooks/no-sudo.sh"
-
-  # Picks the Claude account a session runs under. Called by the `claude`
-  # wrapper function in zsh/zshrc, which is the only caller -- not in ~/Scripts,
-  # because running it from the alt-x launcher would do nothing visible.
-  "scripts/claude-profile:$HOME/.local/bin/claude-profile"
   "alacritty/alacritty.toml:$HOME/.config/alacritty/alacritty.toml"
   "zathura/zathurarc:$HOME/.config/zathura/zathurarc"
 
