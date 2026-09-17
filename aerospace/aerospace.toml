@@ -189,6 +189,22 @@ alt-v = 'split vertical'
 # afterwards stays floating.
 alt-shift-space = 'layout floating tiling'
 
+# Centre the focused window on its monitor. The natural partner to the toggle
+# above: floating a window is the easy half, and placing it afterwards is the
+# half AeroSpace does not do. `move` walks the tiling tree and takes a
+# direction, so on a floating window it has nothing to act on and the window
+# simply does not move -- there is no `center` subcommand in 0.21.3 either.
+#
+# scripts/center-window drives the Accessibility API instead, the same one
+# AeroSpace uses. Run from here it inherits AeroSpace's own Accessibility grant,
+# which is why this is a binding rather than something to type in a shell, where
+# the terminal would need its own grant.
+#
+# Absolute path, not the bare name: exec-and-forget does not run a login shell,
+# so ~/.local/bin is not on PATH. $HOME is not expanded in this file either,
+# hence spelling it out.
+alt-shift-m = 'exec-and-forget /Users/aditya/.local/bin/center-window'
+
 # i3's mod+space is the different one -- focus mode_toggle, moving focus between
 # the tiling and floating sets rather than moving the window. That has no
 # AeroSpace equivalent and stays unbound.

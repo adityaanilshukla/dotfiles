@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+#
+# Centre the focused window on its monitor.
+#
+# Exists because AeroSpace cannot do it. `aerospace move` takes a direction and
+# walks the tiling tree, so on a floating window it has nothing to act on and
+# the window does not budge -- which is exactly when centring is wanted, since a
+# tiled window is already placed. There is no `center` subcommand in 0.21.3.
+#
+# So the placement is done through the Accessibility API instead, the same one
+# AeroSpace itself drives. Requires whatever runs this to hold Accessibility
+# permission; from a keybinding that is AeroSpace, which already has it.
+#
+# Only the focused window is touched, and only its position -- never its size,
+# never another window, never a workspace. Run it while looking at the window.
+# A window on a hidden workspace is parked far off-screen by AeroSpace and
+# moving it there achieves nothing: the position is overwritten when the
+# workspace is shown again.
+set -euo pipefail
+
+command -v aerospace >/dev/null 2>&1 || { printf 'center-window: needs aerospace\n' >&2; exit 1; }
+
+pid="$(aerospace list-windows --focused --format '%{app-pid}' 2>/dev/null)"
+monitor="$(aerospace list-monitors --focused --format '%{monitor-name}' 2>/dev/null)"
+[[ -n "$pid" ]] || { printf 'center-window: no focused window\n' >&2; exit 1; }
+
+# The top gap is AeroSpace's, not the system's. On this setup the menu bar is
+# auto-hidden, so NSScreen reports visibleFrame == frame and knows nothing about
+# the 37px strip held open for sketchybar -- centring against the raw frame
+# would push the window up under the bar.
+#
+# Read from the config file rather than from `aerospace config --get
+# gaps.outer.top`, which answers "No value at key token 'gaps'" in 0.21.3.
+# The setting is per monitor and looks like:
+#
+#   outer.top = [{ monitor.'built-in Retina Display' = 5 }, { monitor.'DELL ...' = 37 }, 37]
+#
+# so take this monitor's entry, and fall back to the bare trailing default when
+# the monitor is not named. Falls back again to 0, which merely centres slightly
+# high rather than failing.
+CONF="$HOME/.config/aerospace/aerospace.toml"
+gap=0
+if [[ -r "$CONF" ]]; then
+  line="$(grep -m1 '^outer\.top' "$CONF" || true)"
+  if [[ -n "$line" ]]; then
+    # sed -E throughout: this runs against BSD sed, where \+ is a literal plus
+    # and every one of these matched nothing. It failed silently too, falling
+    # through to the 0 below and centring the window 37px high, up under
+    # sketchybar -- which looks like a centring bug rather than a parsing one.
+    gap="$(sed -nE "s/.*monitor\.'${monitor}' *= *([0-9]+).*/\1/p" <<<"$line")"
+    [[ -n "$gap" ]] || gap="$(sed -nE 's/.*, *([0-9]+) *\].*/\1/p' <<<"$line")"
+    [[ -n "$gap" ]] || gap=0
+  fi
+fi
+
+# Geometry and placement together, so the window is measured and moved without a
+# round trip in between that it could move during.
+#
+# Screen picked by which frame contains the window's centre, so this stays
+# correct if a second monitor is ever attached. NSScreen is bottom-left origin
+# with y up; the Accessibility API is top-left origin with y down, and its
+# origin is the TOP of the primary screen -- hence flipping against the primary
+# screen's height rather than against the window's own screen.
+osascript -l JavaScript - "$pid" "$gap" <<'JXA' 2>/dev/null
+ObjC.import("AppKit");
+function run(argv) {
+  var pid = parseInt(argv[0], 10), gap = parseInt(argv[1], 10);
+  var se = Application("System Events");
+  var proc = se.processes.whose({ unixId: pid })[0];
+  var win = proc.windows[0];
+  var pos = win.position(), size = win.size();
+  var cx = pos[0] + size[0] / 2, cy = pos[1] + size[1] / 2;
+
+  var screens = $.NSScreen.screens.js;
+  var primaryTop = screens[0].frame.origin.y + screens[0].frame.size.height;
+
+  var target = null;
+  for (var i = 0; i < screens.length; i++) {
+    var f = screens[i].frame;
+    // Same flip as below, so the containment test is done in AX coordinates.
+    var top = primaryTop - (f.origin.y + f.size.height);
+    if (cx >= f.origin.x && cx < f.origin.x + f.size.width &&
+        cy >= top && cy < top + f.size.height) { target = { x: f.origin.x, y: top, w: f.size.width, h: f.size.height }; break; }
+  }
+  if (target === null) { var m = screens[0].frame; target = { x: m.origin.x, y: primaryTop - (m.origin.y + m.size.height), w: m.size.width, h: m.size.height }; }
+
+  var usableTop = target.y + gap, usableH = target.h - gap;
+  var nx = Math.round(target.x + (target.w - size[0]) / 2);
+  var ny = Math.round(usableTop + (usableH - size[1]) / 2);
+  if (nx < target.x) nx = target.x;
+  if (ny < usableTop) ny = usableTop;
+
+  win.position = [nx, ny];
+  return [pos[0], pos[1], size[0], size[1], nx, ny].join(" ");
+}
+JXA

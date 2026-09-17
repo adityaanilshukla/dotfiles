@@ -64,6 +64,14 @@ files=(
   # Not in ~/Scripts — it answers a question, it is not a command to run.
   "scripts/check-zathura-plugins:$HOME/.local/bin/check-zathura-plugins"
 
+  # Centres the focused window. AeroSpace has no command for this and cannot
+  # move a floating window at all, which is exactly when it is wanted. Bound to
+  # alt-shift-m in aerospace.toml, which spells this path out literally because
+  # exec-and-forget gets no login shell and so no ~/.local/bin on PATH.
+  #
+  # Not in ~/Scripts: run from the alt-x launcher it would centre the launcher.
+  "scripts/center-window:$HOME/.local/bin/center-window"
+
   # notification dismisser, run by aerospace's alt-shift-x binding
   "scripts/dismiss-notifications:$HOME/Scripts/dismiss-notifications"
   "scripts/notification-center:$HOME/Scripts/notification-center"
