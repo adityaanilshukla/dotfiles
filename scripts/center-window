@@ -18,11 +18,42 @@
 # workspace is shown again.
 set -euo pipefail
 
+# Everything this prints is mirrored to a log, because the way it is normally
+# run throws output away. AeroSpace exec-and-forget keeps neither stdout nor
+# stderr, so a keypress that fails does so in complete silence and leaves
+# nothing to read afterwards -- which is exactly how the first version of this
+# presented: pressed, nothing moved, no error anywhere.
+#
+# tee rather than a plain redirect so a run by hand still prints to the terminal.
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/center-window.log"
+mkdir -p "$(dirname "$LOG")"
+exec > >(tee -a "$LOG") 2>&1
+printf -- '--- %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+
+# PATH is not hardened here on purpose: `aerospace list-exec-env-vars` shows
+# exec-and-forget already runs with /opt/homebrew/bin on PATH, so this resolves.
 command -v aerospace >/dev/null 2>&1 || { printf 'center-window: needs aerospace\n' >&2; exit 1; }
 
-pid="$(aerospace list-windows --focused --format '%{app-pid}' 2>/dev/null)"
+read -r pid layout <<<"$(aerospace list-windows --focused --format '%{app-pid} %{window-layout}' 2>/dev/null)"
 monitor="$(aerospace list-monitors --focused --format '%{monitor-name}' 2>/dev/null)"
-[[ -n "$pid" ]] || { printf 'center-window: no focused window\n' >&2; exit 1; }
+[[ -n "${pid:-}" ]] || { printf 'center-window: no focused window\n' >&2; exit 1; }
+
+# A tiled window cannot be centred: AeroSpace owns its position and puts it
+# straight back, so setting one is a silent no-op -- which is exactly how this
+# script first appeared to be broken. Float it instead of doing nothing.
+#
+# Doing that rather than refusing, because for the window this was written for
+# the two are the same request. scrcpy is aspect-locked: tiled, it is handed the
+# full width of its slot, clamps itself to a phone shape and sits against the
+# left edge of the space it was given. Nothing about it is movable until it
+# leaves the tiles, so "centre this" can only mean "float it and centre it".
+#
+# Reversible with the same alt-shift-space that would have floated it by hand.
+if [[ "${layout:-}" != "floating" ]]; then
+  aerospace layout floating || {
+    printf 'center-window: could not float the window\n' >&2; exit 1; }
+  printf 'center-window: was %s, floated it first\n' "${layout:-tiled}" >&2
+fi
 
 # The top gap is AeroSpace's, not the system's. On this setup the menu bar is
 # auto-hidden, so NSScreen reports visibleFrame == frame and knows nothing about
@@ -61,12 +92,20 @@ fi
 # with y up; the Accessibility API is top-left origin with y down, and its
 # origin is the TOP of the primary screen -- hence flipping against the primary
 # screen's height rather than against the window's own screen.
-osascript -l JavaScript - "$pid" "$gap" <<'JXA' 2>/dev/null
+# stderr deliberately NOT suppressed. It was, and that made a failure look
+# exactly like a success: the script exited 0, printed nothing, and the window
+# stayed where it was.
+osascript -l JavaScript - "$pid" "$gap" <<'JXA'
 ObjC.import("AppKit");
 function run(argv) {
   var pid = parseInt(argv[0], 10), gap = parseInt(argv[1], 10);
   var se = Application("System Events");
   var proc = se.processes.whose({ unixId: pid })[0];
+  // windows[0], not the AeroSpace-focused window. AeroSpace identifies windows
+  // by its own window-id, which has no mapping to an Accessibility window
+  // index, so for an app holding several windows this centres its frontmost
+  // one rather than necessarily the focused one. Correct for the single-window
+  // case this is used in; worth knowing before pressing it in a browser.
   var win = proc.windows[0];
   var pos = win.position(), size = win.size();
   var cx = pos[0] + size[0] / 2, cy = pos[1] + size[1] / 2;
