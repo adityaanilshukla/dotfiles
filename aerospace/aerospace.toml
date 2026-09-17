@@ -168,9 +168,30 @@ alt-v = 'split vertical'
 # i3's mod+a (focus parent) has no equivalent at all. AeroSpace does not expose
 # focus on containers, only on windows.
 
-# i3's mod+Shift+space. Its mod+space (focus mode_toggle, jump between the
-# tiling and floating sets) has no AeroSpace equivalent and is not bound.
-# alt-shift-space = 'layout floating tiling'
+# i3's mod+Shift+space: drop the focused window out of the tiles, or put it
+# back. AeroSpace spells the toggle `layout floating tiling` -- naming both
+# states, so the same chord goes each way.
+#
+# Left unbound for a long time and written here commented out. Binding it now
+# because there was no way to float a window at all: the only `layout floating`
+# in this file is the on-window-detected rule for the launcher at the bottom,
+# which is automatic and applies to one window title.
+#
+# alt-shift-space is safe to take. Nothing else in this file binds space, and
+# karabiner/spec.json does not touch spacebar on either keyboard, so the chord
+# arrives intact from both. On the Glove80 it is the Command-position key that
+# sends it: that group swaps Command and Option, which is what puts every
+# alt-binding in this file under the thumb there.
+#
+# One interaction worth knowing: the rule at the bottom of this file forces
+# every Alacritty window to `layout tiling`. That runs when a window is first
+# detected, not on every layout change, so floating an Alacritty window by hand
+# afterwards stays floating.
+alt-shift-space = 'layout floating tiling'
+
+# i3's mod+space is the different one -- focus mode_toggle, moving focus between
+# the tiling and floating sets rather than moving the window. That has no
+# AeroSpace equivalent and stays unbound.
 
 # join-with is the AeroSpace-native alternative to split and works the other way
 # round: the window already exists, and this pulls it under a shared parent with
