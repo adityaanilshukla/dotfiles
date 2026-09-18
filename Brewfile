@@ -173,10 +173,14 @@ cask "telegram"
 cask "whatsapp"                       # ranger's dn drops files into it
 cask "zoom"
 cask "microsoft-teams"
-cask "microsoft-outlook"
+cask "microsoft-outlook"              # the work mail; sketchybar's M counts its
+                                      # Dock badge -- see sketchybar/plugins/unread.sh
 cask "microsoft-word"
 cask "zoho-cliq"
-cask "zoho-mail"
+# zoho-mail is deliberately gone: the work mail migrated to Outlook, so a fresh
+# machine should not install it. Removed from here only -- the app stays on any
+# machine that already has it, since `brew bundle` never uninstalls anything.
+# Drop it by hand with `brew uninstall --cask zoho-mail` if it is not wanted.
 cask "anki"
 cask "wispr-flow"                     # dictation; push-to-talk needs the F13
                                       # rule in karabiner/spec.json and
