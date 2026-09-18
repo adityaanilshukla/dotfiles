@@ -53,13 +53,13 @@ source "$CONFIG_DIR/colors.sh"
 #   AppKit    NSDockTile.badgeLabel  -> LaunchServices -> lsappinfo StatusLabel
 #   Catalyst  UNUserNotificationCenter.setBadgeCount -> usernoted -> Dock
 #
-# Telegram and Zoho Mail are AppKit apps and take the first path. WhatsApp is a
+# Telegram and Outlook are AppKit apps and take the first path. WhatsApp is a
 # Catalyst app (UIDeviceFamily = (6), and usernoted logs it as isCatalyst: true)
 # and takes the second, so LaunchServices holds nothing for it at all -- not an
 # empty badge, no key whatsoever:
 #
 #   lsappinfo info -only StatusLabel <whatsapp>  ->  "StatusLabel"=[ NULL ]
-#   lsappinfo info -only StatusLabel <zoho>      ->  "StatusLabel"={ "label"="" }
+#   lsappinfo info -only StatusLabel <outlook>   ->  "StatusLabel"={ "label"="" }
 #
 # That difference is the whole test. An absent key means LaunchServices has no
 # opinion, so the count is asked of the Dock itself, which draws both kinds. An
@@ -71,11 +71,25 @@ source "$CONFIG_DIR/colors.sh"
 # Without the grant the app is shown as "?" rather than "0": not knowing and
 # knowing there is nothing are different answers and must not look the same.
 
+# The M was Zoho Mail until the work mail moved to Outlook. The item name stays
+# `unread.mail` rather than becoming `unread.outlook`, because sketchybarrc adds
+# the items by name and the letter on the bar is what identifies it -- renaming
+# would mean touching two files to say the same thing.
+#
+# Worth knowing what the M now counts: Outlook holds the work account AND two
+# personal ones, and its Dock badge is their sum. So a number here no longer
+# means work is waiting, only that some mailbox is. Outlook has no per-account
+# badge setting, and the one alternative -- asking Outlook itself, which does
+# expose `unread count` per mail folder over AppleScript -- costs an Automation
+# grant and an osascript round trip into Outlook every 15 seconds, against the
+# free lsappinfo read this uses now. Not worth it unless the combined number
+# turns out to actually mislead in practice.
+#
 # bundle id : item name : letter : name to match on the Dock item
 TARGETS=(
   "net.whatsapp.WhatsApp:unread.whatsapp:W:WhatsApp"
   "ru.keepcoder.Telegram:unread.telegram:T:Telegram"
-  "com.zoho.mail.desktop:unread.mail:M:Zoho Mail"
+  "com.microsoft.Outlook:unread.mail:M:Microsoft Outlook"
 )
 
 # Read the badge the Dock is drawing for an app, by name.
