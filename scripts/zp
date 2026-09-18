@@ -87,105 +87,33 @@ elif [[ -z "${ZATHURA_PLUGINS_PATH:-}" || ! -d "${ZATHURA_PLUGINS_PATH%%:*}" ]];
   fi
 fi
 
-# --- focus prep (AeroSpace, macOS only) ---
-# AeroSpace governs keyboard focus, so a newly opened window doesn't reliably
-# receive keystrokes. Snapshot the highest existing zathura window-id now;
-# window-ids increase monotonically, so anything larger afterwards is the
-# window we just opened. zathura has no bundle id here, hence the app-name
-# match. Skipped entirely where aerospace isn't installed.
-zathura_ids() {
-  aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
-    | awk -F'|' '$2 == "zathura" { print $1 }'
-}
-
-HAVE_AEROSPACE=0
-if command -v aerospace >/dev/null 2>&1; then
-  HAVE_AEROSPACE=1
-  before_max=$(zathura_ids | sort -n | tail -n1)
-  before_max=${before_max:-0}
+# --- shared launch plumbing -------------------------------------------------
+# Watching the log and handing the new window the keyboard is the same work in
+# library, and used to be copy-pasted into both -- where it had already
+# drifted. The sourced file explains what belongs in it and what does not.
+ZATHURA_LAUNCH_LIB="${ZATHURA_LAUNCH_LIB:-$HOME/.local/lib/zathura-launch.sh}"
+# shellcheck source=scripts/lib/zathura-launch.sh
+if ! source "$ZATHURA_LAUNCH_LIB" 2>/dev/null; then
+  printf 'zp: cannot load %s; re-run install.sh\n' "$ZATHURA_LAUNCH_LIB" >&2
+  exit 1
 fi
+
+# Snapshot BEFORE the launch, or there is nothing for the new window-id to be
+# larger than. Harmlessly 0 on a machine with no AeroSpace, where the watch
+# loop skips focusing anyway and only reports a failed open.
+before_max="$(zathura_max_id)"
+LOG="$(zathura_log_init)"
 
 # --- launch ---
 TMPDATA=$(mktemp -d "${TMPDIR:-/tmp}"/zp.XXXXXX) || exit 1
 
 # Detached, so the shell (or the alacritty window library runs in) is free
-# immediately and nohup keeps zathura alive when that terminal closes. The temp
-# dir is removed by the same wrapper once zathura exits. Arguments are passed
-# positionally so paths with spaces survive and the inner shell expands nothing
-# of its own.
-#
-# stderr is kept rather than discarded: zathura does not exit when it cannot
-# read a document, it leaves an empty window up and keeps running, so what it
-# writes here is the only sign anything failed. See the watch loop below.
-LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/library"
-mkdir -p "$LOG_DIR"
-LOG="$LOG_DIR/last-launch.log"
-: > "$LOG"
-
+# immediately, and nohup keeps zathura alive when that terminal closes. The
+# temp dir is removed by the same wrapper once zathura exits. Arguments are
+# passed positionally so paths with spaces survive and the inner shell expands
+# nothing of its own.
 nohup bash -c 'bin=$1; dir=$2; shift 2; "$bin" --data-dir "$dir" "$@"; rm -rf "$dir"' \
   zp "$ZATHURA" "$TMPDATA" "$@" >"$LOG" 2>&1 &
 
-# One error means nothing on the brew build: both of its plugins register
-# application/pdf and the second registration loses. The GTK4 build ships only
-# the mupdf plugin, so it never prints this -- the filter stays because either
-# binary can be the one that runs. Anything else on an `error:` line is real,
-# including the ABI complaint ("Could not find 'zathura_plugin_8_9'") that means
-# the plugin path and the binary have got out of step.
-launch_error() {
-  grep '^error:' "$LOG" 2>/dev/null \
-    | grep -v 'filetype already registered' \
-    | head -n1
-}
-
-# What to show once something has gone wrong. The line naming the cause is
-# often NOT the `error:` line: a mupdf version mismatch reports "cannot create
-# context: incompatible header (1.28.2) and library (1.28.3) versions" with no
-# prefix at all, and the `error:` line under it says only "could not open
-# document". So print everything zathura wrote apart from the routine noise.
-launch_detail() {
-  grep -v -e 'filetype already registered' \
-          -e 'Gtk-CRITICAL' \
-          -e 'ApplePersistence' \
-          "$LOG" 2>/dev/null | sed '/^[[:space:]]*$/d'
-}
-
-# --- watch, and focus ---
-# Runs even without AeroSpace, because reporting a failed open matters on any
-# machine; only the focus call is conditional. zathura creates its window
-# before it parses the document, so an error arrives after the window exists —
-# focus first, then keep watching for a further second.
-# Without AeroSpace there is nothing to focus and the loop's only job is to
-# catch an error, so start already "focused": that hands it to the grace-period
-# branch below and it gives up after a second instead of holding the shell
-# prompt for the full five.
-if (( HAVE_AEROSPACE )); then
-  focused=0
-else
-  focused=1
-fi
-settled=0
-for i in $(seq 1 50); do
-  sleep 0.1
-
-  if err=$(launch_error) && [[ -n "$err" ]]; then
-    printf '\nzp: zathura opened a window but could not read the document.\n' >&2
-    launch_detail | sed 's/^/  /' >&2
-    printf '\n' >&2
-    if command -v check-zathura-plugins >/dev/null 2>&1; then
-      check-zathura-plugins >&2 || true
-    fi
-    printf '\nfull output: %s\n' "$LOG" >&2
-    exit 1
-  fi
-
-  if (( HAVE_AEROSPACE )) && (( ! focused )); then
-    wid=$(zathura_ids | sort -n | tail -n1)
-    if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
-      aerospace focus --window-id "$wid"
-      focused=1
-      settled=$i
-    fi
-  elif (( focused )) && (( i - settled >= 10 )); then
-    break
-  fi
-done
+# No linger: this runs in your own shell, where the message simply stays up.
+zathura_watch zp "$LOG" "$before_max" || exit 1

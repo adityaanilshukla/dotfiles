@@ -58,6 +58,12 @@ files=(
   # nothing synced to Turso. Also what library's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
 
+  # Sourced by BOTH library and zp -- the launch-watching and window-focusing
+  # half of a zathura launch, which is identical in the two and used to be
+  # copy-pasted. Not in bin/ and not executable: it is a library, not a command.
+  # Both look for it at this exact path, so renaming the link breaks them.
+  "scripts/lib/zathura-launch.sh:$HOME/.local/lib/zathura-launch.sh"
+
   # Diagnostic for the one way zathura breaks on its own: its pdf plugins are
   # built from source against whatever mupdf/poppler was installed that day and
   # are never rebuilt on upgrade, so epubs stop opening while pdfs still work.

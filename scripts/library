@@ -169,101 +169,28 @@ if (( PRIVATE )); then
   exec "$ZP" "$BOOK"
 fi
 
-# List the AeroSpace window-ids of every open zathura window. zathura has no
-# app bundle id on macOS, so we match by app-name.
-zathura_ids() {
-  aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
-    | awk -F'|' '$2 == "zathura" { print $1 }'
-}
+# --- shared launch plumbing -------------------------------------------------
+# Watching the log and handing the new window the keyboard is the same work in
+# zp, and used to be copy-pasted into both -- where it had already drifted. The
+# sourced file explains what belongs in it and what deliberately does not.
+ZATHURA_LAUNCH_LIB="${ZATHURA_LAUNCH_LIB:-$HOME/.local/lib/zathura-launch.sh}"
+# shellcheck source=scripts/lib/zathura-launch.sh
+if ! source "$ZATHURA_LAUNCH_LIB" 2>/dev/null; then
+  printf 'library: cannot load %s; re-run install.sh\n' "$ZATHURA_LAUNCH_LIB" >&2
+  exit 1
+fi
 
-# Highest existing zathura window-id (0 if none). AeroSpace window-ids are
-# monotonically increasing, so the window we're about to open will have a
-# larger id than any already open — that's how we single it out.
-before_max=$(zathura_ids | sort -n | tail -n1)
-before_max=${before_max:-0}
+# Snapshot BEFORE the launch, or there is nothing for the new window-id to be
+# larger than.
+before_max="$(zathura_max_id)"
+LOG="$(zathura_log_init)"
 
 # --- launch ---
-# Route through online-zathura: it pulls reading state from Turso, execs
-# real zathura (via ZATHURA_BINARY), and pushes deltas back when you close
-# the window. nohup+& detaches the whole wrapper so alacritty can close.
-#
-# stderr goes to a log rather than /dev/null, because it is the ONLY evidence
-# that a launch went wrong. zathura does not exit when it cannot read a
-# document: it leaves an empty window sitting there and keeps running, so
-# there is no exit code, no missing window, and nothing for the focus loop
-# below to notice. Discarding stderr is what turned a plugin rebuild into a
-# debugging session — mupdf printed the exact diagnosis and it went nowhere.
-LOG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/library"
-mkdir -p "$LOG_DIR"
-LOG="$LOG_DIR/last-launch.log"
-: > "$LOG"
-
+# Route through online-zathura: it pulls reading state from Turso, execs real
+# zathura (via ZATHURA_BINARY), and pushes deltas back when you close the
+# window. nohup+& detaches the whole wrapper so alacritty can close.
 ZATHURA_BINARY="$ZATHURA" nohup "$ONLINE_ZATHURA" "$BOOK" >"$LOG" 2>&1 &
 
-# One error is printed on every healthy launch and means nothing: both plugins
-# register application/pdf and the second one loses. Anything else on an
-# `error:` line is a real failure. Empty output (or a non-zero pipeline, since
-# pipefail is on) means nothing has gone wrong yet.
-launch_error() {
-  grep '^error:' "$LOG" 2>/dev/null \
-    | grep -v 'filetype already registered' \
-    | head -n1
-}
-
-# What to show once something has gone wrong. The line naming the cause is
-# often NOT the `error:` line: a mupdf version mismatch reports "cannot create
-# context: incompatible header (1.28.2) and library (1.28.3) versions" with no
-# prefix at all, and the `error:` line under it says only "could not open
-# document". So print everything zathura wrote apart from the routine noise.
-launch_detail() {
-  grep -v -e 'filetype already registered' \
-          -e 'Gtk-CRITICAL' \
-          -e 'ApplePersistence' \
-          "$LOG" 2>/dev/null | sed '/^[[:space:]]*$/d'
-}
-
-# --- focus zathura under AeroSpace ---
-# AeroSpace (not macOS/AppleScript) governs keyboard focus, so an AppleScript
-# `activate` doesn't reliably hand keystrokes to the reader. Poll (up to ~5s)
-# for the newly-opened zathura window and focus it by window-id, so keypresses
-# land in zathura without a manual click. Doing this while alacritty is still
-# open (but now unfocused) means alacritty closing afterwards won't steal focus.
-#
-# The same loop watches the log, because the two outcomes arrive in a fixed
-# order: zathura creates its window first and only then parses the document,
-# so a failed open lands *after* the window exists. Breaking out as soon as
-# the window appears would step over the error every time. Focus it, then keep
-# watching for a further second before letting alacritty close.
-focused=0
-settled=0
-for i in $(seq 1 50); do
-  sleep 0.1
-
-  if err=$(launch_error) && [[ -n "$err" ]]; then
-    printf '\nlibrary: zathura opened a window but could not read the document.\n' >&2
-    launch_detail | sed 's/^/  /' >&2
-    printf '\n' >&2
-    # Names the usual cause: the pdf plugins are built from source against
-    # whatever mupdf/poppler was installed that day and are never rebuilt when
-    # those upgrade, which kills epub support while pdfs carry on.
-    if command -v check-zathura-plugins >/dev/null 2>&1; then
-      check-zathura-plugins >&2 || true
-    fi
-    printf '\nfull output: %s\n' "$LOG" >&2
-    # This window is about to close on its own, so the message has to be
-    # readable before it does.
-    sleep 8
-    exit 1
-  fi
-
-  if (( ! focused )); then
-    wid=$(zathura_ids | sort -n | tail -n1)
-    if [[ -n "$wid" && "$wid" -gt "$before_max" ]]; then
-      aerospace focus --window-id "$wid"
-      focused=1
-      settled=$i
-    fi
-  elif (( i - settled >= 10 )); then
-    break
-  fi
-done
+# Linger 8 seconds on an error. This runs in an alacritty window that closes on
+# its own the moment the script returns, so the message has to outlive it.
+zathura_watch library "$LOG" "$before_max" 8 || exit 1
