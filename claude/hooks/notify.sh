@@ -58,6 +58,23 @@ case "$event" in
     body="Done"
     ;;
   *)
+    # Drop the idle nag. Claude Code raises Notification for two unrelated
+    # things: a permission request, and the prompt having sat idle for about a
+    # minute. The second always follows a Stop that has already said the same
+    # thing, so it arrives as a second banner for one event -- the checkmark and
+    # then the bell, same session, both meaning "your turn".
+    #
+    # Filtered on the message rather than by unregistering the hook, because
+    # dropping Notification would take the permission request with it. That one
+    # is the opposite of redundant: no Stop precedes it, so without it a session
+    # sits blocked on a prompt and says nothing at all.
+    #
+    # Matching on a substring, not the whole string, so a reworded message is
+    # still caught. If the wording changes beyond recognition the banner simply
+    # comes back, which is the right way round for this to fail.
+    case "$message" in
+      *"waiting for your input"*) exit 0 ;;
+    esac
     title="🔔 ${label}"
     body="${message:-Needs your input}"
     ;;
