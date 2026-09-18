@@ -25,13 +25,55 @@ export PATH="/opt/homebrew/bin:$PATH"
 VER=2026.07.18
 PREFIX="$HOME/.local/zathura-gtk4"
 
+command -v brew >/dev/null 2>&1 || { printf 'build-zathura-gtk4: needs brew\n' >&2; exit 1; }
+
+# --- what actually needs building? ------------------------------------------
+# Two independent questions, because they go out of date for different reasons
+# and the answer used to be shared.
+#
+# The old guard asked only "is zathura the right version?" and exited 0 if so.
+# That is the wrong question for the failure that actually happens. zathura
+# does not break; MUPDF moves underneath the plugin. Homebrew upgrades mupdf,
+# the plugin still carries the version it was compiled against, mupdf refuses
+# the mismatch at document-open time --
+#
+#   cannot create context: incompatible header (1.28.3) and library (1.28.4) versions
+#
+# -- and re-running this script printed "already built" and exited, because
+# zathura's version had not changed. The reader stayed dead and the one command
+# that could fix it declined to.
+PLUGIN_DIR="$PREFIX/lib/zathura"
+PLUGIN="$PLUGIN_DIR/libpdf-mupdf.dylib"
+
+# The version the plugin was compiled against, recorded at build time. A marker
+# file rather than reading it back out of the binary: the plugin embeds two
+# bare version strings (mupdf's and its own 2026.07.18) and nothing in the
+# artifact says which is which, so extracting it is a guess. This is not.
+MARKER="$PLUGIN_DIR/.built-against-mupdf"
+
+mupdf_installed() { brew list --versions mupdf 2>/dev/null | awk '{print $2}'; }
+
+need_zathura=1
 if [[ -x "$PREFIX/bin/zathura" ]] \
   && "$PREFIX/bin/zathura" --version 2>&1 | grep -q "zathura $VER"; then
-  printf 'zathura %s already built at %s\n' "$VER" "$PREFIX"
-  exit 0
+  need_zathura=0
 fi
 
-command -v brew >/dev/null 2>&1 || { printf 'build-zathura-gtk4: needs brew\n' >&2; exit 1; }
+# No marker means the plugin predates this check, so its provenance is unknown
+# and the only safe answer is to rebuild it. That is also the correct answer for
+# the plugin that shipped before this guard existed, which was drifted.
+need_plugin=1
+MUPDF_NOW="$(mupdf_installed)"
+if [[ -e "$PLUGIN" && -r "$MARKER" && -n "$MUPDF_NOW" ]] \
+  && [[ "$(cat "$MARKER")" == "$MUPDF_NOW" ]]; then
+  need_plugin=0
+fi
+
+if (( ! need_zathura && ! need_plugin )); then
+  printf 'zathura %s already built at %s, plugin in step with mupdf %s\n' \
+    "$VER" "$PREFIX" "$MUPDF_NOW"
+  exit 0
+fi
 
 printf '==> dependencies\n'
 # meson/ninja/pkg-config are listed alongside the libraries because a missing
@@ -43,18 +85,28 @@ printf '==> dependencies\n'
 # how a thing quietly stops being installed.
 brew install gtk4 xxhash meson ninja pkg-config mupdf
 
+# Re-read it: on a machine that did not have mupdf a moment ago, the value
+# captured before this line was empty, and it is what gets written to the
+# marker below.
+MUPDF_NOW="$(mupdf_installed)"
+[[ -n "$MUPDF_NOW" ]] || { printf 'build-zathura-gtk4: mupdf not installed after brew install\n' >&2; exit 1; }
+
 BREW_PREFIX="$(brew --prefix)"
 
 SRC="$(mktemp -d)"
 trap 'rm -rf "$SRC"' EXIT
 
-printf '==> zathura %s\n' "$VER"
-cd "$SRC"
-curl -fLO "https://pwmt.org/projects/zathura/download/zathura-$VER.tar.xz"
-tar xf "zathura-$VER.tar.xz"
-cd "zathura-$VER"
-meson setup build --prefix="$PREFIX" --buildtype=release
-ninja -C build install
+if (( need_zathura )); then
+  printf '==> zathura %s\n' "$VER"
+  cd "$SRC"
+  curl -fLO "https://pwmt.org/projects/zathura/download/zathura-$VER.tar.xz"
+  tar xf "zathura-$VER.tar.xz"
+  cd "zathura-$VER"
+  meson setup build --prefix="$PREFIX" --buildtype=release
+  ninja -C build install
+else
+  printf '==> zathura %s already built, skipping\n' "$VER"
+fi
 
 printf '==> zathura-pdf-mupdf %s\n' "$VER"
 # The plugin ABI went 7 -> 9 in this release, so the tap's plugins cannot be
@@ -67,17 +119,26 @@ printf '==> zathura-pdf-mupdf %s\n' "$VER"
 # reports "Library mupdf found: YES", and then the link fails with "ld: library
 # 'mupdf' not found" -- and note these must be exported, not set per-command,
 # because ninja re-invokes the compiler in its own environment.
-cd "$SRC"
-curl -fL -o pdf-mupdf.tar.gz \
-  "https://github.com/pwmt/zathura-pdf-mupdf/archive/refs/tags/$VER.tar.gz"
-tar xzf pdf-mupdf.tar.gz
-cd "zathura-pdf-mupdf-$VER"
-export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
-export CFLAGS="-I$BREW_PREFIX/opt/mupdf/include"
-export LDFLAGS="-L$BREW_PREFIX/opt/mupdf/lib"
-export LIBRARY_PATH="$BREW_PREFIX/opt/mupdf/lib"
-meson setup build --prefix="$PREFIX" --buildtype=release
-ninja -C build install
+if (( need_plugin )); then
+  cd "$SRC"
+  curl -fL -o pdf-mupdf.tar.gz \
+    "https://github.com/pwmt/zathura-pdf-mupdf/archive/refs/tags/$VER.tar.gz"
+  tar xzf pdf-mupdf.tar.gz
+  cd "zathura-pdf-mupdf-$VER"
+  export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+  export CFLAGS="-I$BREW_PREFIX/opt/mupdf/include"
+  export LDFLAGS="-L$BREW_PREFIX/opt/mupdf/lib"
+  export LIBRARY_PATH="$BREW_PREFIX/opt/mupdf/lib"
+  meson setup build --prefix="$PREFIX" --buildtype=release
+  ninja -C build install
+
+  # Written only after a successful install, so a failed build cannot leave a
+  # marker claiming the plugin is in step with a mupdf it never saw.
+  printf '%s\n' "$MUPDF_NOW" > "$MARKER"
+  printf '    built against mupdf %s\n' "$MUPDF_NOW"
+else
+  printf '==> plugin already in step with mupdf %s, skipping\n' "$MUPDF_NOW"
+fi
 
 printf '\n==> installed\n'
 # Run with the inherited plugin path dropped: an interactive shell exports the

@@ -3,6 +3,20 @@
 # Reports zathura pdf plugins that were compiled against a different version of
 # mupdf/poppler than the one currently installed.
 #
+# THERE ARE TWO ZATHURAS ON THIS MACHINE and they have separate plugins:
+#
+#   ~/.local/zathura-gtk4  built from source by scripts/build-zathura-gtk4.
+#                          Has ONLY the mupdf plugin. This is the one library
+#                          and zp launch whenever it exists, so it is the one
+#                          whose drift actually stops you reading anything.
+#   Homebrew               the GTK3 fallback, with both plugins. Used only on a
+#                          machine that has not run the source build.
+#
+# This script used to check the Homebrew pair and nothing else, and that gap
+# is not hypothetical: it reported "DRIFT" on a plugin that was not in use and
+# said nothing about the one that was, while every document failed to open. Its
+# suggested fix, a brew reinstall, rebuilds the wrong artifact entirely.
+#
 # Why this needs checking at all: the homebrew-zathura tap ships no bottles, so
 # both plugins are compiled locally against whatever mupdf/poppler happened to
 # be installed that day. Upgrading mupdf or poppler later does not rebuild them,
@@ -84,18 +98,90 @@ print(next((x["pkg_version"] for x in d.get("runtime_dependencies", [])
   fi
 }
 
-printf 'zathura plugins:\n'
+# The source-built plugin is not a Homebrew package, so it has no
+# INSTALL_RECEIPT.json to read a built-against version out of. Nor can it be
+# read back from the binary: it embeds two bare version strings, mupdf's and
+# its own 2026.07.18, with nothing to say which is which. build-zathura-gtk4
+# therefore records what it compiled against in a marker file beside it.
+GTK4_PREFIX="${GTK4_PREFIX:-$HOME/.local/zathura-gtk4}"
+gtk4_drift=0
+
+check_gtk4() {
+  local plugin marker built installed
+  plugin="$GTK4_PREFIX/lib/zathura/libpdf-mupdf.dylib"
+  marker="$GTK4_PREFIX/lib/zathura/.built-against-mupdf"
+
+  # Nothing to say on a machine that never ran the source build.
+  [[ -x "$GTK4_PREFIX/bin/zathura" ]] || return 0
+
+  installed="$(basename "$(find "$CELLAR/mupdf" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort -V | tail -n1)" 2>/dev/null || true)"
+  installed="${installed%%_*}"
+
+  if [[ ! -e "$plugin" ]]; then
+    printf '  %-22s MISSING (nothing can open)\n' 'gtk4 pdf-mupdf'
+    gtk4_drift=1
+    return 0
+  fi
+
+  if [[ ! -r "$marker" ]]; then
+    # Built before the marker existed, so its provenance is genuinely unknown.
+    # Reported rather than assumed either way: this is the state the drifted
+    # plugin was in when it was silently passing.
+    printf '  %-22s UNKNOWN (predates the version record -- rebuild to be sure)\n' 'gtk4 pdf-mupdf'
+    gtk4_drift=1
+    return 0
+  fi
+
+  built="$(cat "$marker")"
+  built="${built%%_*}"
+
+  if [[ -z "$installed" ]]; then
+    printf '  %-22s cannot determine (mupdf not in the cellar)\n' 'gtk4 pdf-mupdf'
+  elif [[ "$built" == "$installed" ]]; then
+    printf '  %-22s ok      (mupdf %s)\n' 'gtk4 pdf-mupdf' "$installed"
+  else
+    printf '  %-22s DRIFT   (built against mupdf %s, installed %s)\n' \
+      'gtk4 pdf-mupdf' "$built" "$installed"
+    gtk4_drift=1
+  fi
+}
+
+if [[ -x "$GTK4_PREFIX/bin/zathura" ]]; then
+  printf 'source-built GTK4 zathura (the one library and zp launch):\n'
+  check_gtk4
+  printf '\nhomebrew zathura (fallback only):\n'
+else
+  printf 'zathura plugins:\n'
+fi
 check zathura-pdf-mupdf   mupdf
 check zathura-pdf-poppler poppler
+
+# Two remedies, and using the wrong one leaves the reader exactly as broken.
+# A brew reinstall cannot touch the source-built plugin, and this script used to
+# offer it as the only fix.
+if (( gtk4_drift )); then
+  cat <<'MSG'
+
+The source-built GTK4 plugin is the one that opens your documents. Rebuild it:
+
+  ~/dotfiles/scripts/build-zathura-gtk4
+
+It rebuilds the plugin alone when only mupdf has moved, and leaves zathura
+itself in place. A `brew reinstall` will NOT fix this one.
+MSG
+fi
 
 if (( drift )); then
   cat <<'MSG'
 
-Rebuild the drifted plugins against what is installed now:
+Rebuild the drifted homebrew plugins against what is installed now:
 
   brew reinstall --build-from-source zathura-pdf-mupdf zathura-pdf-poppler
 
 Takes a few seconds each; no configuration changes.
 MSG
+fi
+
+if (( drift || gtk4_drift )); then
   exit 1
 fi
