@@ -84,13 +84,29 @@ export PATH="/opt/homebrew/opt/trash-cli/bin:$PATH"
 # --------------------
 # Ranger helper
 # --------------------
+# Open ranger, and cd the SHELL to wherever you quit it. That is the whole
+# point of the function: a plain `ranger` leaves the shell where it started,
+# because a child process cannot change its parent's directory. --choosedir
+# has ranger write its final directory to a file, which is read back here.
+#
+# `local` on both: without it these two names are ordinary globals and every
+# terminal carries a stale $tempfile and $dir around for its whole life, ready
+# to collide with anything else that picks the same very ordinary names.
+#
+# The temp file is removed as soon as it has been read, not on the way out, so
+# quitting ranger any other way does not leave one behind.
 rw() {
-  tempfile="$(mktemp)"
+  local tempfile dir
+  tempfile="$(mktemp)" || return 1
   ranger --choosedir="$tempfile" "$@"
   if [ -f "$tempfile" ]; then
     dir="$(cat "$tempfile")"
     rm -f "$tempfile"
-    [ -d "$dir" ] && cd "$dir"
+    # cd can still fail on a directory that exists but cannot be entered, and
+    # silently carrying on would leave you somewhere you did not ask to be.
+    if [ -d "$dir" ]; then
+      cd "$dir" || return 1
+    fi
   fi
 }
 
