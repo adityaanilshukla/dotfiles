@@ -200,10 +200,15 @@ alt-shift-space = 'layout floating tiling'
 # which is why this is a binding rather than something to type in a shell, where
 # the terminal would need its own grant.
 #
-# Absolute path, not the bare name: exec-and-forget does not run a login shell,
-# so ~/.local/bin is not on PATH. $HOME is not expanded in this file either,
-# hence spelling it out.
-alt-shift-m = 'exec-and-forget /Users/aditya/.local/bin/center-window'
+# Full path, not the bare name: exec-and-forget does not run a login shell, so
+# ~/.local/bin is not on PATH even though /opt/homebrew/bin is (confirmed with
+# `aerospace list-exec-env-vars`).
+#
+# $HOME rather than a spelled-out /Users/... path. The command is handed to a
+# shell, so the variable expands -- the alt-shift-x and alt-shift-n bindings
+# below have relied on exactly that for a long time. Writing the username in
+# would have worked here and broken on any other machine.
+alt-shift-m = 'exec-and-forget $HOME/.local/bin/center-window'
 
 # i3's mod+space is the different one -- focus mode_toggle, moving focus between
 # the tiling and floating sets rather than moving the window. That has no
