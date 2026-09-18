@@ -47,6 +47,43 @@ item "Mint this machine's Turso token (zathura reading-state sync)"
 cmd "make -C \$HOME/Projects/online-zathura join"
 printf '\n'
 
+# --- the zathura reader itself ----------------------------------------------
+# The only CONDITIONAL item in this list, because unlike the rest its answer
+# changes per machine and over time. Three states, two of which need saying:
+#
+#   no GTK4 build   optional. library and zp fall back to the brew GTK3 build,
+#                   which opens everything and merely jitters when scrolling
+#                   fullscreen on a Retina display. Offered, not demanded.
+#   built, drifted  NOT optional. A plugin compiled against a different mupdf
+#                   than the one installed refuses to create a context, so
+#                   NOTHING opens -- and zathura answers by leaving an empty
+#                   window up rather than exiting, so it presents as "my reader
+#                   broke", not as a version skew. Homebrew upgrading mupdf is
+#                   all it takes, and nothing else announces it.
+#   built, in step  silence.
+#
+# This exists because the installer said nothing about either. The GTK4 build
+# is documented only in BOOTSTRAP.md, which is not what you are looking at
+# after a fresh install, and drift had no reporting path at all.
+GTK4_ZATHURA="$HOME/.local/zathura-gtk4/bin/zathura"
+CHECK_PLUGINS="$DOTFILES_DIR/scripts/check-zathura-plugins"
+
+if [[ ! -x "$GTK4_ZATHURA" ]]; then
+  item "Build the GTK4 zathura (optional, a few minutes of compiling)"
+  detail "The homebrew tap is stuck on the last GTK3 release, whose macOS"
+  detail "backend re-uploads the whole viewport every frame. Fullscreen on a"
+  detail "Retina display visibly jitters while scrolling. Skipping this costs"
+  detail "only that -- library and zp fall back to the brew build."
+  cmd "$DOTFILES_DIR/scripts/build-zathura-gtk4"
+  printf '\n'
+elif [[ -x "$CHECK_PLUGINS" ]] && ! "$CHECK_PLUGINS" >/dev/null 2>&1; then
+  item "Rebuild the zathura plugins -- they have drifted"
+  detail "A plugin built against a different mupdf than the one installed"
+  detail "refuses every document, and says so only in the launch log."
+  "$CHECK_PLUGINS" 2>&1 | sed 's/^/    /' || true
+  printf '\n'
+fi
+
 item "Tailscale: two steps, both needing a password"
 detail "The daemon runs as root, so it is not a per-user launch agent."
 detail "Without it, ssh/config hosts resolve by MagicDNS to nothing."
