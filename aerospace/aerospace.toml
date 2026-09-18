@@ -77,19 +77,29 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 # Per-monitor: built-in gets 5 (macOS already reserves ~24pt for the menubar
 # in the notch area), external monitors get the full 37pt.
 [gaps]
-# 37 on every monitor, deliberately not per-monitor. sketchybar is given no
-# `display=`, so it defaults to every display and its bar is 37 high everywhere;
-# on the MacBook that same 37 is what clears the notch.
+# Per monitor, and the two numbers are not arbitrary -- each is "how much more
+# is needed to clear the 37-high sketchybar", which differs because macOS has
+# already reserved some of it on one display and none on the other.
 #
-# This was a three-entry list until it was checked. The built-in entry was
-# written `monitor.'built-in Retina Display'` against a real name of `Built-in
-# Retina Display`, so it never matched once -- measured, not guessed: a tiled
-# window on the built-in sits at y=37, the fallback, not at the 5 it asked for.
-# Lucky, because 5 would have slid every window under the bar. It is removed
-# rather than case-corrected for exactly that reason, and saying so here so the
-# obvious "fix" is not attempted again. The DELL entry went too: it was 37, the
-# same as the fallback it sat in front of.
-outer.top = 37
+#   Built-in Retina Display   frame 1470x956, visibleFrame 1470x924
+#                             macOS withholds 32 for the notch, so 5 more
+#                             reaches 37 and windows start just under the bar.
+#   DELL S3423DWC             frame and visibleFrame identical
+#                             nothing withheld, so the whole 37 is needed here.
+#
+# AeroSpace lays out at visibleFrame top + this gap. That is why the laptop
+# number looks too small to be right and is not: 32 + 5 = 37 = 37 + 0.
+#
+# Do not "simplify" this to a single 37. That was tried, on a misreading of the
+# same measurement -- a tiled window on the laptop sits at 37, which 32+5 and
+# 0+37 both predict, and the wrong one was picked. It moved every window on the
+# built-in display down to 69 and left a 32px band of wallpaper between the bar
+# and the windows on every workspace.
+#
+# The lowercase `built-in` matches the real `Built-in Retina Display`: AeroSpace
+# compares these case-insensitively. Anything reading this file has to do the
+# same -- scripts/center-window does.
+outer.top = [{ monitor.'built-in Retina Display' = 5 }, { monitor.'DELL S3423DWC' = 37 }, 37]
 outer.bottom = 0
 outer.left = 0
 outer.right = 0

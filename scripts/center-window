@@ -74,17 +74,26 @@ gap=0
 if [[ -r "$CONF" ]]; then
   line="$(grep -m1 '^outer\.top' "$CONF" || true)"
   if [[ -n "$line" ]]; then
+    # Compared in lowercase because AeroSpace compares these case-insensitively.
+    # The config says `built-in Retina Display` and the monitor is really called
+    # `Built-in Retina Display`: AeroSpace matches that pair and uses 5, so
+    # anything reading this file has to agree or it silently takes the fallback
+    # 37 instead and places every window 32px out.
+    #
     # sed -E throughout: this runs against BSD sed, where \+ is a literal plus
     # and every one of these matched nothing. It failed silently too, falling
     # through to the 0 below and centring the window 37px high, up under
     # sketchybar -- which looks like a centring bug rather than a parsing one.
-    gap="$(sed -nE "s/.*monitor\.'${monitor}' *= *([0-9]+).*/\1/p" <<<"$line")"
-    [[ -n "$gap" ]] || gap="$(sed -nE 's/.*, *([0-9]+) *\].*/\1/p' <<<"$line")"
+    lc() { tr '[:upper:]' '[:lower:]'; }
+    monitor_lc="$(printf '%s' "$monitor" | lc)"
+    line_lc="$(printf '%s' "$line" | lc)"
+    gap="$(sed -nE "s/.*monitor\.'${monitor_lc}' *= *([0-9]+).*/\1/p" <<<"$line_lc")"
+    [[ -n "$gap" ]] || gap="$(sed -nE 's/.*, *([0-9]+) *\].*/\1/p' <<<"$line_lc")"
     # And the plain form, `outer.top = 37`, which the two patterns above both
     # miss -- they need a monitor clause or a closing bracket. Without this a
     # simplified config falls through to 0 and every window centres a bar-height
     # too high, which is the same silent failure the BSD sed bug caused.
-    [[ -n "$gap" ]] || gap="$(sed -nE 's/^outer\.top *= *([0-9]+) *$/\1/p' <<<"$line")"
+    [[ -n "$gap" ]] || gap="$(sed -nE 's/^outer\.top *= *([0-9]+) *$/\1/p' <<<"$line_lc")"
     [[ -n "$gap" ]] || gap=0
   fi
 fi
