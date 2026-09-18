@@ -80,6 +80,11 @@ if [[ -r "$CONF" ]]; then
     # sketchybar -- which looks like a centring bug rather than a parsing one.
     gap="$(sed -nE "s/.*monitor\.'${monitor}' *= *([0-9]+).*/\1/p" <<<"$line")"
     [[ -n "$gap" ]] || gap="$(sed -nE 's/.*, *([0-9]+) *\].*/\1/p' <<<"$line")"
+    # And the plain form, `outer.top = 37`, which the two patterns above both
+    # miss -- they need a monitor clause or a closing bracket. Without this a
+    # simplified config falls through to 0 and every window centres a bar-height
+    # too high, which is the same silent failure the BSD sed bug caused.
+    [[ -n "$gap" ]] || gap="$(sed -nE 's/^outer\.top *= *([0-9]+) *$/\1/p' <<<"$line")"
     [[ -n "$gap" ]] || gap=0
   fi
 fi
@@ -113,15 +118,28 @@ function run(argv) {
   var screens = $.NSScreen.screens.js;
   var primaryTop = screens[0].frame.origin.y + screens[0].frame.size.height;
 
+  // frame decides WHICH screen the window is on; visibleFrame decides where it
+  // may be placed on it. The two differ, and using frame for both is wrong in a
+  // way that only shows on one display: this MacBook reports frame 1470x956 and
+  // visibleFrame 1470x924, the 32px belonging to the notch, while the external
+  // DELL reports them identical. AeroSpace itself lays out against visibleFrame
+  // plus the gap -- a tiled window here sits at 32 + 37 = 69, which is what
+  // confirmed it. Centring against frame put everything 32px high on the laptop
+  // and was exactly right on the monitor, which is the kind of bug that gets
+  // called "works fine" for months.
+  function axRect(r) {
+    return { x: r.origin.x, y: primaryTop - (r.origin.y + r.size.height),
+             w: r.size.width, h: r.size.height };
+  }
+
   var target = null;
   for (var i = 0; i < screens.length; i++) {
-    var f = screens[i].frame;
-    // Same flip as below, so the containment test is done in AX coordinates.
-    var top = primaryTop - (f.origin.y + f.size.height);
-    if (cx >= f.origin.x && cx < f.origin.x + f.size.width &&
-        cy >= top && cy < top + f.size.height) { target = { x: f.origin.x, y: top, w: f.size.width, h: f.size.height }; break; }
+    var f = axRect(screens[i].frame);
+    if (cx >= f.x && cx < f.x + f.w && cy >= f.y && cy < f.y + f.h) {
+      target = axRect(screens[i].visibleFrame); break;
+    }
   }
-  if (target === null) { var m = screens[0].frame; target = { x: m.origin.x, y: primaryTop - (m.origin.y + m.size.height), w: m.size.width, h: m.size.height }; }
+  if (target === null) target = axRect(screens[0].visibleFrame);
 
   var usableTop = target.y + gap, usableH = target.h - gap;
   var nx = Math.round(target.x + (target.w - size[0]) / 2);

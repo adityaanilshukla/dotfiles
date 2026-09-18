@@ -77,7 +77,19 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 # Per-monitor: built-in gets 5 (macOS already reserves ~24pt for the menubar
 # in the notch area), external monitors get the full 37pt.
 [gaps]
-outer.top = [{ monitor.'built-in Retina Display' = 5 }, { monitor.'DELL S3423DWC' = 37 }, 37]
+# 37 on every monitor, deliberately not per-monitor. sketchybar is given no
+# `display=`, so it defaults to every display and its bar is 37 high everywhere;
+# on the MacBook that same 37 is what clears the notch.
+#
+# This was a three-entry list until it was checked. The built-in entry was
+# written `monitor.'built-in Retina Display'` against a real name of `Built-in
+# Retina Display`, so it never matched once -- measured, not guessed: a tiled
+# window on the built-in sits at y=37, the fallback, not at the 5 it asked for.
+# Lucky, because 5 would have slid every window under the bar. It is removed
+# rather than case-corrected for exactly that reason, and saying so here so the
+# obvious "fix" is not attempted again. The DELL entry went too: it was 37, the
+# same as the fallback it sat in front of.
+outer.top = 37
 outer.bottom = 0
 outer.left = 0
 outer.right = 0
