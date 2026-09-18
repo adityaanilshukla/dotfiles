@@ -55,18 +55,49 @@ zathura_log_init() {
   printf '%s\n' "$dir/last-launch.log"
 }
 
-# One `error:` line is printed on every healthy launch of the brew build and
-# means nothing: both of its plugins register application/pdf and the second
-# registration loses. The GTK4 build ships only mupdf and never prints it, but
-# the filter stays because either binary can be the one that runs.
+# Match zathura's VERDICTS, never mupdf's complaints.
 #
-# Anything else on an `error:` line is real -- including the ABI complaint
-# ("Could not find 'zathura_plugin_8_9'"), which means the plugin directory and
-# the binary have got out of step.
+# This used to treat every `error:` line as fatal apart from a known-harmless
+# one. That is the wrong shape, because mupdf reports problems with a
+# document's CONTENTS on `error:` lines too, and those are not launch failures:
+# an epub whose css names a font it does not ship prints
+#
+#   error: mupdf: format error: cannot locate font 'styles/...' specified by css
+#
+# once per missing glyph -- 224 times, in the launch that prompted this -- and
+# then renders the book perfectly with a fallback font. The launcher declared
+# the reader broken and told you to rebuild the plugin while the document was
+# open behind it.
+#
+# The same `format error:` prefix appears on a genuinely corrupt file, so it
+# cannot be filtered either. It carries no information about the outcome. What
+# does is zathura's own verdict, and there are exactly three, all measured by
+# running the binary rather than reasoned about:
+#
+#   corrupt / unreadable / missing file  error: could not open document
+#   unrecognised file type               error: Could not determine file type.
+#   no usable plugin (ABI drift)         error: Could not find 'zathura_plugin_8_9' ...
+#
+# The third is listed separately because it does NOT print the verdict line: a
+# binary that loads no plugin never gets as far as judging the document, so
+# matching only the first two would miss the exact failure this file exists to
+# catch.
+#
+# `Could not register plugin` is deliberately NOT here, and was not forgotten.
+# It is a symptom rather than a verdict: it fires on a real ABI break, where
+# `Could not find zathura_plugin_` fires alongside it, and equally on a
+# harmless duplicate directory scan. Matching it cost a false alarm and bought
+# nothing the other three do not already cover.
+#
+# A whitelist because the two lists grow differently. zathura has a handful of
+# verdicts and gains one a decade; mupdf's diagnostics about malformed
+# documents are open-ended, and every new one would be another false alarm.
 zathura_launch_error() {
-  grep '^error:' "$1" 2>/dev/null \
-    | grep -v 'filetype already registered' \
-    | head -n1
+  grep -E -m1 \
+    -e '^error: could not open document' \
+    -e '^error: Could not determine file type' \
+    -e "^error: Could not find 'zathura_plugin_" \
+    "$1" 2>/dev/null
 }
 
 # What to show once something HAS gone wrong. The line naming the cause is
