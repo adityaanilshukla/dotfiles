@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# Run shellcheck over the shell scripts about to be committed.
+#
+# Why this exists: drag-mac has ~800 lines of tests behind 428 lines of Python,
+# and the ~4,800 lines of shell that actually configure this machine had nothing
+# at all -- no tests, no linter, no gate. The shell is the half that symlinks
+# your configs and runs on a fresh machine, so it is the half where a silent
+# mistake costs the most.
+#
+# It lints the STAGED content, not the working tree. Those differ whenever a
+# file is half-staged, and linting the wrong one gives both false passes (the
+# fix is on disk but not in the commit) and false failures (the breakage is on
+# disk and deliberately left out of it).
+#
+# Bypass with `git commit --no-verify` when you need to. This is a seatbelt, not
+# a lock.
+set -euo pipefail
+
+# No pipefail-plus-head anywhere below: `head -n1` closing the pipe early makes
+# the writer exit 141 and would fail the hook on a perfectly good file. The
+# first-line reads use `sed -n 1p`, which drains its input.
+
+# --- shellcheck missing is not a reason to block a commit ------------------
+# On a fresh machine the repo is cloned before Homebrew has installed anything,
+# and refusing every commit until then would be worse than not checking.
+if ! command -v shellcheck >/dev/null 2>&1; then
+  printf 'pre-commit: shellcheck not installed, skipping the shell check.\n' >&2
+  printf '            brew install shellcheck\n' >&2
+  exit 0
+fi
+
+# --- which staged files are shell? -----------------------------------------
+# ACM = added/copied/modified. Deletions have nothing to lint.
+files=()
+while IFS= read -r -d '' f; do
+  # ranger/plugins is vendored upstream. Not ours to fix, and it fails.
+  case "$f" in ranger/plugins/*) continue ;; esac
+
+  # Mode 120000 is a symlink. `git show :link` prints its TARGET PATH as the
+  # blob content, which reads as a one-line shell script and produces nonsense.
+  [[ "$(git ls-files --stage -- "$f" | awk '{print $1}')" == "120000" ]] && continue
+
+  case "$f" in
+    *.sh) ;;
+    *)
+      # Everything else has to declare itself with a shebang shellcheck can
+      # read. zsh is deliberately NOT matched: shellcheck has no zsh support, so
+      # zsh/zshrc would only ever produce noise about a shell it cannot parse.
+      git show ":$f" 2>/dev/null | sed -n 1p \
+        | grep -qE '^#!.*[ /](bash|sh)$' || continue
+      ;;
+  esac
+  files+=("$f")
+done < <(git diff --cached --name-only -z --diff-filter=ACM)
+
+[[ ${#files[@]} -gt 0 ]] || exit 0
+
+# --- lint the staged blobs --------------------------------------------------
+# Written out under their real repo-relative paths inside a temp tree, so
+# the linter's output names the file you actually have to go and edit.
+# (A comment must not START with the word shellcheck: it is then read as a
+# directive, which is an error. This hook caught that in its own source.)
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+for f in "${files[@]}"; do
+  mkdir -p "$tmp/$(dirname "$f")"
+  git show ":$f" > "$tmp/$f"
+done
+
+# -S warning: errors and warnings block, notes and style suggestions do not.
+#   The whole repo is clean at this level today, so the gate starts green and
+#   anything it ever reports is genuinely new. Tightening it to `style` would
+#   have it firing on day one, which is how a gate gets disabled.
+# -e SC1091: "cannot follow sourced file". 48 of the repo's 65 findings are
+#   this one note, and every one is a file that exists and is sourced correctly
+#   -- shellcheck simply is not told where to look.
+status=0
+( cd "$tmp" && shellcheck -S warning -e SC1091 -f gcc -- "${files[@]}" ) || status=$?
+
+if [[ $status -ne 0 ]]; then
+  printf '\npre-commit: shellcheck rejected the staged changes.\n' >&2
+  printf '            Fix them, or commit with --no-verify to override.\n\n' >&2
+  exit 1
+fi
+
+exit 0
