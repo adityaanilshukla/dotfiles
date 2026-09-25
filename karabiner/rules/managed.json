@@ -1181,6 +1181,9 @@
             "modifiers": {
               "mandatory": [
                 "control"
+              ],
+              "optional": [
+                "shift"
               ]
             }
           },
