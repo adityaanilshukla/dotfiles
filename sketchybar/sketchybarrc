@@ -187,16 +187,22 @@ sketchybar --add item audio_sink right \
 #
 # One item per app, so the colour can name WHICH app is waiting -- a single
 # label is one colour for its whole length and could only ever say "something,
-# somewhere". The letter is the icon and the count is the label, so a quiet app
-# is just a dimmed letter with nothing after it.
+# somewhere". The app's glyph is the icon and the count is the label, so a quiet
+# app is just a dimmed glyph with nothing after it.
 #
-# Added mail -> telegram -> whatsapp because right-side items lay out
-# right-to-left, which puts them on screen as W T M.
+# Brand glyphs rather than the capital letters these started as: Telegram and
+# Teams both begin with T, and the glyph is the only thing naming which app is
+# waiting, since colour is spent entirely on state. See the UNREAD_ block in
+# icons.sh.
 #
-# Smaller and bolder than the rest of the bar on purpose: three letters sitting
-# together read as one group rather than as three more modules, and the tight
-# paddings keep the count attached to its own letter.
-for u in "unread.mail" "unread.telegram" "unread.whatsapp"; do
+# Added mail -> teams -> telegram -> whatsapp because right-side items lay out
+# right-to-left, which puts them on screen as whatsapp telegram teams mail --
+# the two personal chats, then work chat, then mail.
+#
+# Smaller and bolder than the rest of the bar on purpose: four glyphs sitting
+# together read as one group rather than as four more modules, and the tight
+# paddings keep the count attached to its own glyph.
+for u in "unread.mail" "unread.teams" "unread.telegram" "unread.whatsapp"; do
   sketchybar --add item "$u" right \
              --set "$u" \
                    icon.font="Hack Nerd Font:Bold:11.0" \
@@ -209,7 +215,7 @@ for u in "unread.mail" "unread.telegram" "unread.whatsapp"; do
                    padding_right=0
 done
 
-# Invisible driver for the three items above, same shape as
+# Invisible driver for the four items above, same shape as
 # aerospace_controller: one script call repaints the whole group.
 #
 # Never drawn, so updates=on -- see the when_shown trap above.

@@ -59,3 +59,23 @@ export COFFEE=$'\xef\x83\xb4'
 # Timer paused: nf-fa-play (U+F04B). Shows the action a `t play` will take
 # next, same convention as a media player's play/pause button.
 export PLAY=$'\xef\x81\x8b'
+
+# Unread markers, one per app the bar watches.
+#
+# Brand glyphs rather than the capital letters these replace. The glyph is the
+# only thing naming WHICH app is waiting -- colour is spent entirely on state
+# (waiting / quiet / not running / no permission) -- and Telegram and Teams both
+# start with T. Two identical Ts would have been unreadable at precisely the
+# moment the thing is meant to be read, and the next app added has the same odds
+# of colliding again.
+#
+# nf-fa-whatsapp (U+F232), nf-fa-telegram (U+F2C6),
+# nf-md-microsoft_teams (U+F02BB), nf-fa-envelope (U+F0E0).
+#
+# Checked present in Hack Nerd Font Regular AND Bold, not just Regular: the
+# unread group is the one part of the bar set in Bold, so a glyph shipped in
+# only one face would render as a box here and nowhere else.
+export UNREAD_WHATSAPP=$'\xef\x88\xb2'
+export UNREAD_TELEGRAM=$'\xef\x8b\x86'
+export UNREAD_TEAMS=$'\xf3\xb0\x8a\xbb'
+export UNREAD_MAIL=$'\xef\x83\xa0'

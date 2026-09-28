@@ -22,24 +22,24 @@ source "$CONFIG_DIR/colors.sh"
 # Every target is always shown, including zeros. An item that hides itself when
 # there is nothing to report is indistinguishable from one that has broken, and
 # this exists precisely so it can be trusted at a glance without opening the app
-# to check. A quiet app is a dimmed letter rather than a missing one: still
+# to check. A quiet app is a dimmed glyph rather than a missing one: still
 # present, still countable, visibly saying nothing is waiting.
 #
-# ----- Why three items and not one label -----
+# ----- Why one item per app and not one label -----
 #
 # A sketchybar label is one colour for its whole length, so a single item can
 # only ever say "something, somewhere, is waiting". Splitting into one item per
 # app is what lets the colour name WHICH app, which is the entire glance-value
-# of this thing. The script itself is an invisible fourth item that drives the
-# other three, the same shape aerospace_controller uses for the ten workspace
+# of this thing. The script itself is an invisible extra item that drives the
+# drawn ones, the same shape aerospace_controller uses for the ten workspace
 # items, and for the same reason: one script call, several drawn items.
 #
 # State is carried by colour and by whether a number is present at all:
 #
-#   count > 0     bright blue letter + the number
-#   running, 0    dimmed letter, no number
-#   not running   magenta letter, no number
-#   grant missing yellow letter + "?"
+#   count > 0     bright blue glyph + the number
+#   running, 0    dimmed glyph, no number
+#   not running   magenta glyph, no number
+#   grant missing yellow glyph + "?"
 #
 # Not-running keeps a loud colour rather than the dim one. It is not a quiet
 # state: Telegram quit means messages arrive nowhere and announce nothing, and
@@ -53,17 +53,21 @@ source "$CONFIG_DIR/colors.sh"
 #   AppKit    NSDockTile.badgeLabel  -> LaunchServices -> lsappinfo StatusLabel
 #   Catalyst  UNUserNotificationCenter.setBadgeCount -> usernoted -> Dock
 #
-# Telegram and Outlook are AppKit apps and take the first path. WhatsApp is a
-# Catalyst app (UIDeviceFamily = (6), and usernoted logs it as isCatalyst: true)
-# and takes the second, so LaunchServices holds nothing for it at all -- not an
-# empty badge, no key whatsoever:
+# Telegram, Teams and Outlook are AppKit apps and take the first path. WhatsApp
+# is a Catalyst app (UIDeviceFamily = (6), and usernoted logs it as isCatalyst:
+# true) and takes the second, so LaunchServices holds nothing for it at all --
+# not an empty badge, no key whatsoever:
 #
 #   lsappinfo info -only StatusLabel <whatsapp>  ->  "StatusLabel"=[ NULL ]
 #   lsappinfo info -only StatusLabel <outlook>   ->  "StatusLabel"={ "label"="" }
+#   lsappinfo info -only StatusLabel <teams>     ->  "StatusLabel"={ "label"=kCFNULL }
 #
-# That difference is the whole test. An absent key means LaunchServices has no
-# opinion, so the count is asked of the Dock itself, which draws both kinds. An
-# empty label means an app that does use LaunchServices is genuinely at zero.
+# That difference is the whole test, and it is a test for the ABSENT KEY, not
+# for the string NULL: Teams writes kCFNULL into a key that is present, and a
+# substring match reads that as "no LaunchServices entry" and goes to the Dock.
+# An absent key means LaunchServices has no opinion, so the count is asked of
+# the Dock itself, which draws both kinds. A present key -- empty or kCFNULL --
+# means an app that does use LaunchServices is genuinely at zero.
 #
 # The Dock is queried through the accessibility API, which needs sketchybar to
 # hold Accessibility permission. That is only spent on apps LaunchServices
@@ -73,7 +77,7 @@ source "$CONFIG_DIR/colors.sh"
 
 # The M was Zoho Mail until the work mail moved to Outlook. The item name stays
 # `unread.mail` rather than becoming `unread.outlook`, because sketchybarrc adds
-# the items by name and the letter on the bar is what identifies it -- renaming
+# the items by name and the glyph on the bar is what identifies it -- renaming
 # would mean touching two files to say the same thing.
 #
 # Worth knowing what the M now counts: Outlook holds the work account AND two
@@ -85,11 +89,17 @@ source "$CONFIG_DIR/colors.sh"
 # free lsappinfo read this uses now. Not worth it unless the combined number
 # turns out to actually mislead in practice.
 #
-# bundle id : item name : letter : name to match on the Dock item
+# Teams is com.microsoft.teams2, NOT com.microsoft.teams. The unsuffixed id
+# belongs to the retired classic client; the one shipping today registers the
+# `2`, and matching the old one finds nothing and reports Teams as permanently
+# quit.
+#
+# bundle id : item name : icon : name to match on the Dock item
 TARGETS=(
-  "net.whatsapp.WhatsApp:unread.whatsapp:W:WhatsApp"
-  "ru.keepcoder.Telegram:unread.telegram:T:Telegram"
-  "com.microsoft.Outlook:unread.mail:M:Microsoft Outlook"
+  "net.whatsapp.WhatsApp:unread.whatsapp:$UNREAD_WHATSAPP:WhatsApp"
+  "ru.keepcoder.Telegram:unread.telegram:$UNREAD_TELEGRAM:Telegram"
+  "com.microsoft.teams2:unread.teams:$UNREAD_TEAMS:Microsoft Teams"
+  "com.microsoft.Outlook:unread.mail:$UNREAD_MAIL:Microsoft Outlook"
 )
 
 # Read the badge the Dock is drawing for an app, by name.
@@ -137,7 +147,7 @@ dock_badge() {
 # Three separate calls would repaint the group in three steps and flicker.
 args=()
 
-# paint <item> <letter> <colour> [number]
+# paint <item> <icon> <colour> [number]
 paint() {
   args+=(--set "$1"
          icon="$2" icon.color="$3"
@@ -149,25 +159,37 @@ for entry in "${TARGETS[@]}"; do
   # contains a space, which `read` leaves alone once the earlier fields are
   # consumed. Peeling these off with ${x%%:*} / ${x#*:} took six lines and grew
   # a line every time a field was added.
-  IFS=: read -r bundle item letter dock_name <<< "$entry"
+  IFS=: read -r bundle item icon dock_name <<< "$entry"
 
   asn=$(lsappinfo find "bundleid=$bundle" 2>/dev/null | head -1)
   if [[ -z "$asn" ]]; then
     # Not running. For Telegram this means messages arrive with no trace at all,
     # so it is coloured as an alarm rather than dimmed like a quiet app.
-    paint "$item" "$letter" "$ALERT"
+    paint "$item" "$icon" "$ALERT"
     continue
   fi
 
-  # "StatusLabel"={ "label"="3" } when badged, "label"="" when not, and
-  # "StatusLabel"=[ NULL ] when this app does not use LaunchServices at all.
+  # THREE shapes, not two, and the third is why this is an exact match rather
+  # than a search for "NULL":
+  #
+  #   { "label"="3" }   badged, AppKit via LaunchServices
+  #   { "label"="" }    AppKit, genuinely nothing waiting
+  #   { "label"=kCFNULL }  AppKit, no badge set -- Teams answers this way
+  #   [ NULL ]          no LaunchServices entry at all: a Catalyst app, ask the
+  #                     Dock instead. WhatsApp is the one here.
+  #
+  # A substring test for NULL matches kCFNULL too, which sent Teams down the
+  # Dock path on every quiet tick -- an osascript round trip and an
+  # Accessibility dependency, both of which the LaunchServices read exists to
+  # avoid. It never showed as a fault: the Dock also reports no badge, so the
+  # answer came back correct and merely cost something.
   label=$(lsappinfo info -only StatusLabel "$asn" 2>/dev/null)
-  if [[ "${label#*NULL}" != "$label" ]]; then
+  if [[ "$label" == *"[ NULL ]"* ]]; then
     # Catalyst app. LaunchServices knows nothing; ask the Dock what it draws.
     count=$(dock_badge "$dock_name")
     if [[ "$count" == "DENIED" ]]; then
       # Grant sketchybar Accessibility in System Settings > Privacy & Security.
-      paint "$item" "$letter" "$WARNING" "?"
+      paint "$item" "$icon" "$WARNING" "?"
       continue
     fi
   else
@@ -175,13 +197,13 @@ for entry in "${TARGETS[@]}"; do
   fi
 
   if [[ -n "$count" ]]; then
-    paint "$item" "$letter" "$BLUE_BRIGHT" "$count"
+    paint "$item" "$icon" "$BLUE_BRIGHT" "$count"
   else
     # Running, nothing waiting. Dimmed rather than dropped: an app that silently
     # vanishes from the bar is indistinguishable from one that is broken, and
     # the whole point of this is to be trusted at a glance without opening
     # anything.
-    paint "$item" "$letter" "$DISABLED"
+    paint "$item" "$icon" "$DISABLED"
   fi
 done
 
