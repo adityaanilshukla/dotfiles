@@ -28,47 +28,9 @@ for svc in sketchybar syncthing; do
   fi
 done
 
-# --- mouse-jiggle ----------------------------------------------------------
-# Nudges the cursor a pixel and back every two minutes so this Mac reads as
-# present rather than idle. See scripts/mouse-jiggle for why it is a cursor
-# move and not caffeinate.
-#
-# This is a LaunchAgent, and 78e69bc retired that pattern on preference -- "an
-# empty screen at login". That objection was to agents LAUNCHING APPS, which
-# put windows on screen at login; it does not reach a background loop that
-# draws nothing. 90-retired-agents.sh is the mechanism for unwinding this one
-# if it is ever unwanted: add its label there rather than only deleting these
-# lines, or the machines that already have it carry on jiggling for weeks.
-#
-# The plist is symlinked rather than copied, same as every other config here,
-# so editing the repo edits the live agent. launchd still reads it only at
-# bootstrap, so a change to the plist needs the bootout/bootstrap pair below,
-# not just a pull.
-JIGGLE_LABEL="com.aditya.dotfiles.mouse-jiggle"
-JIGGLE_PLIST="$HOME/Library/LaunchAgents/${JIGGLE_LABEL}.plist"
-
-if ! command -v cliclick >/dev/null 2>&1; then
-  echo "  !! cliclick is not installed — the mouse jiggler will not run."
-  echo "     brew install cliclick"
-else
-  mkdir -p "$HOME/Library/LaunchAgents"
-  ln -sf "$DOTFILES_DIR/launchd/${JIGGLE_LABEL}.plist" "$JIGGLE_PLIST"
-
-  # Already loaded is the common case on a re-run, and bootstrapping a loaded
-  # agent is an error rather than a no-op, so this asks first.
-  if launchctl print "gui/$(id -u)/${JIGGLE_LABEL}" >/dev/null 2>&1; then
-    echo "Mouse jiggler already loaded."
-  else
-    echo "Loading the mouse jiggler..."
-    launchctl bootstrap "gui/$(id -u)" "$JIGGLE_PLIST" \
-      || echo "  couldn't load it — launchctl bootstrap gui/$(id -u) '$JIGGLE_PLIST'"
-  fi
-
-  # First run needs Accessibility, and without it cliclick still exits 0 while
-  # the system discards the event -- so the script tests the OUTCOME and says
-  # so in its log rather than assuming a clean exit means it worked.
-  echo "     first run needs Accessibility; check ~/.cache/mouse-jiggle.log"
-fi
+# The mouse jiggler used to live here. It moved to 82-mouse-jiggle.sh when it
+# became opt-in per machine: the enable path and the undo path together are
+# more than this file should be carrying on top of four unrelated services.
 
 # Tailscale is deliberately NOT in the loop above. Its daemon has to run as
 # root — it opens a utun interface and rewrites the system DNS resolvers for

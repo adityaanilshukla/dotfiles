@@ -168,6 +168,9 @@ brew "smudge/smudge/nightlight"       # night shift from the CLI
 # first: caffeinate stops the machine sleeping but leaves HIDIdleTime climbing,
 # and HIDIdleTime is the number Teams and Slack read to decide you are away.
 # Only a real or synthetic input event resets it.
+# Installed everywhere, used only where the jiggler is switched on: a Brewfile
+# has no per-machine mechanism, and 2MB on the machines that never call it is
+# cheaper than a second Brewfile. The switch itself is machines/<host>.conf.
 brew "cliclick"                       # scripts/mouse-jiggle moves the cursor with it
 
 # ----- Networking + sync -----
@@ -186,11 +189,11 @@ cask "microsoft-teams"
 cask "microsoft-outlook"              # the work mail; sketchybar's M counts its
                                       # Dock badge -- see sketchybar/plugins/unread.sh
 cask "microsoft-word"
-cask "zoho-cliq"
-# zoho-mail is deliberately gone: the work mail migrated to Outlook, so a fresh
-# machine should not install it. Removed from here only -- the app stays on any
-# machine that already has it, since `brew bundle` never uninstalls anything.
-# Drop it by hand with `brew uninstall --cask zoho-mail` if it is not wanted.
+# Both Zoho apps are deliberately gone: the work mail migrated to Outlook and
+# the chat is no longer used, so a fresh machine should not install either.
+# Removed from here only -- the apps stay on any machine that already has
+# them, since `brew bundle` never uninstalls anything. Drop them by hand:
+#   brew uninstall --cask zoho-cliq zoho-mail
 cask "anki"
 cask "wispr-flow"                     # dictation; push-to-talk needs the F13
                                       # rule in karabiner/spec.json and

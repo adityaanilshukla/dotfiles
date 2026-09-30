@@ -76,5 +76,36 @@ brew_shellenv() {
   fi
 }
 
+# --- Per-machine features -------------------------------------------------
+# Almost nothing in this repo differs between machines, and that is the point
+# of it. The exceptions get a file in machines/, named for the hostname. See
+# machines/README.md.
+#
+# LocalHostName rather than `hostname`, which on a Mac can come back as the
+# DHCP name or a .local FQDN depending on the network, and would silently miss
+# the config file on exactly the days the network is unusual.
+DOTFILES_MACHINE="${DOTFILES_MACHINE:-$(scutil --get LocalHostName 2>/dev/null || hostname -s)}"
+export DOTFILES_MACHINE
+DOTFILES_MACHINE_CONF="$DOTFILES_DIR/machines/${DOTFILES_MACHINE}.conf"
+export DOTFILES_MACHINE_CONF
+
+# feature_on <name>: is this optional feature enabled on this machine?
+#
+# Read with grep, never sourced. Sourcing would be shorter and would let a
+# config file run arbitrary code during an install, which is not a power a
+# list of on/off switches needs. It also keeps a typo in a config file from
+# aborting the installer under `set -e`.
+#
+# Absent file, absent line, or any value other than yes/on/true/1 all mean
+# off. Off is the safe default: a machine nobody has configured gets nothing
+# extra rather than everything.
+feature_on() {
+  [[ $# -eq 1 ]] || die "feature_on: takes exactly one feature name, got $#"
+  [[ -n "$1" ]]   || die "feature_on: feature name is empty"
+  [[ -r "$DOTFILES_MACHINE_CONF" ]] || return 1
+  grep -qiE "^[[:space:]]*$1[[:space:]]*=[[:space:]]*(yes|on|true|1)[[:space:]]*$" \
+    "$DOTFILES_MACHINE_CONF"
+}
+
 require_dotfiles_dir
 brew_shellenv
