@@ -75,13 +75,13 @@ source "$CONFIG_DIR/colors.sh"
 # Without the grant the app is shown as "?" rather than "0": not knowing and
 # knowing there is nothing are different answers and must not look the same.
 
-# The M was Zoho Mail until the work mail moved to Outlook. The item name stays
-# `unread.mail` rather than becoming `unread.outlook`, because sketchybarrc adds
-# the items by name and the glyph on the bar is what identifies it -- renaming
-# would mean touching two files to say the same thing.
+# The mail item was Zoho Mail until the work mail moved to Outlook. The name
+# stays `unread.mail` rather than becoming `unread.outlook`, because sketchybarrc
+# adds the items by name and the glyph on the bar is what identifies it --
+# renaming would mean touching two files to say the same thing.
 #
-# Worth knowing what the M now counts: Outlook holds the work account AND two
-# personal ones, and its Dock badge is their sum. So a number here no longer
+# Worth knowing what the envelope now counts: Outlook holds the work account
+# AND two personal ones, and its Dock badge is their sum. So a number here no longer
 # means work is waiting, only that some mailbox is. Outlook has no per-account
 # badge setting, and the one alternative -- asking Outlook itself, which does
 # expose `unread count` per mail folder over AppleScript -- costs an Automation

@@ -14,7 +14,7 @@ step "Login items"
 #
 # AeroSpace, Raycast and BetterDisplay are not here because they do not need to
 # be: each has its own start-at-login setting and registers itself the first
-# time it runs, which is what the `open -g -a` above is for.
+# time it runs, which is what the `open -g -a` in 80-services.sh is for.
 #
 # Scroll Reverser and KeyClu have no such setting. Checked rather than assumed:
 # Scroll Reverser 1.9 has no StartAtLogin key in com.pilotmoon.scroll-reverser
@@ -71,8 +71,9 @@ step "Login items"
 # would cost the repo a retired pattern and buy nothing.
 #
 # First run may raise an Automation prompt for System Events. That is the same
-# bargain as the Accessibility prompt above: better surfaced now than
-# discovered later when the machine quietly does not do what it should.
+# bargain as the Accessibility prompt 80-services.sh raises: better surfaced
+# now than discovered later when the machine quietly does not do what it
+# should.
 login_items="$(osascript -e 'tell application "System Events" to get the name of every login item' 2>/dev/null)"
 for app in "Scroll Reverser" "KeyClu" "Wispr Flow"; do
   if [[ ! -d "/Applications/${app}.app" ]]; then

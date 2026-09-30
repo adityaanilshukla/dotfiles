@@ -194,11 +194,8 @@ cask "microsoft-teams"
 cask "microsoft-outlook"              # the work mail; sketchybar's M counts its
                                       # Dock badge -- see sketchybar/plugins/unread.sh
 cask "microsoft-word"
-# Both Zoho apps are deliberately gone: the work mail migrated to Outlook and
-# the chat is no longer used, so a fresh machine should not install either.
-# Removed from here only -- the apps stay on any machine that already has
-# them, since `brew bundle` never uninstalls anything. Drop them by hand:
-#   brew uninstall --cask zoho-cliq zoho-mail
+# Both Zoho apps are deliberately absent: the work mail migrated to Outlook and
+# the chat is no longer used. Uninstalled everywhere on 2026-09-30.
 cask "anki"
 cask "wispr-flow"                     # dictation; push-to-talk needs the F13
                                       # rule in karabiner/spec.json and
