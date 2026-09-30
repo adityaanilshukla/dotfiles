@@ -12,7 +12,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from conftest import poll_until
 from test_launch import windows_for_pid
 
@@ -25,7 +24,7 @@ def test_wrapper_exists_and_is_executable():
 
 
 def test_wrapper_reports_usage_without_arguments():
-    result = subprocess.run([str(WRAPPER)], capture_output=True, text=True, timeout=30)
+    result = subprocess.run([str(WRAPPER)], capture_output=True, text=True, timeout=30, check=False)
     assert result.returncode == 2, f"expected usage exit 2, got {result.returncode}"
 
 
@@ -35,6 +34,7 @@ def test_wrapper_rejects_a_missing_file(tmp_path):
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     assert result.returncode == 1, f"expected bad-target exit 1, got {result.returncode}"
 
@@ -51,6 +51,7 @@ def test_wrapper_fails_loudly_when_the_venv_is_missing(tmp_path, sample_file):
         text=True,
         env=env,
         timeout=30,
+        check=False,
     )
 
     assert result.returncode == 127

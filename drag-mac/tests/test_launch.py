@@ -9,7 +9,6 @@ budget, the plan says stop and fall back to Yoink.
 from __future__ import annotations
 
 import pytest
-
 from conftest import poll_until
 
 pytestmark = pytest.mark.gui

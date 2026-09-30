@@ -270,7 +270,7 @@ def main() -> int:
 
     n_rules = len(json.loads(output)["rules"])
     n_maps = sum(len(g["mappings"]) for g in spec["groups"])
-    scopes = sorted((spec.get("scopes") or {}))
+    scopes = sorted(spec.get("scopes") or {})
 
     print(f"wrote {DEST}")
     print(f"  {n_rules} rules, {n_maps} mappings, scopes: {', '.join(scopes)}")

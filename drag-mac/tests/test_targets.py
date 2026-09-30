@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drag_mac import (  # noqa: E402
+from drag_mac import (
     EXIT_BAD_TARGET,
     EXIT_OK,
     EXIT_USAGE,
@@ -182,13 +182,17 @@ class TestRequire:
         every contract. require() must survive."""
         import subprocess
 
+        root = str(Path(__file__).resolve().parent.parent)
         code = (
-            "import sys; sys.path.insert(0, %r);"
+            f"import sys; sys.path.insert(0, {root!r});"
             "from drag_mac import require;"
-            "require(False, 'still enforced')" % str(Path(__file__).resolve().parent.parent)
+            "require(False, 'still enforced')"
         )
         result = subprocess.run(
-            [sys.executable, "-O", "-c", code], capture_output=True, text=True
+            [sys.executable, "-O", "-c", code],
+            capture_output=True,
+            text=True,
+            check=False,
         )
         assert result.returncode != 0, "require() was stripped under -O"
         assert "still enforced" in result.stderr

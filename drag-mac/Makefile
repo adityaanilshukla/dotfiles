@@ -30,8 +30,19 @@ test-gui:
 test:
 	@$(PYTEST) tests/ -v
 
-# Rule 10: warnings are errors.
+# Rule 10: warnings are errors, static analysis clean.
+#
+# PLAN.md has named ruff as the enforcement for rules 1, 4, 6, 8 and 10 since
+# it was written, and nothing ran it: `check` was pytest alone, and ruff found
+# 21 findings the first time it was pointed at this directory. A rule whose
+# enforcement is never invoked is a comment, so it runs here now.
+#
+# ruff comes from the Brewfile rather than the venv, which holds only what
+# drag_mac.py imports at runtime.
 check:
+	@command -v ruff >/dev/null 2>&1 \
+	  || { echo "ruff not installed -- brew install ruff"; exit 1; }
+	@ruff check .
 	@$(PYTEST) tests/ -q -W error
 
 clean:

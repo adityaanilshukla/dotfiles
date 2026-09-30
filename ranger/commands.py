@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from typing import ClassVar
 
 from ranger.api.commands import Command
 from ranger.core.loader import CommandLoader
@@ -41,7 +42,7 @@ class yank(Command):
     yank, which is silent and leaves you wondering whether it worked.
     """
 
-    modes = {
+    modes: ClassVar[dict[str, str]] = {
         "": "basename",
         "name": "basename",
         "name_without_extension": "basename_without_extension",
@@ -81,7 +82,7 @@ class yank(Command):
             p.communicate(input=text.encode())
 
         preview = text if len(text) <= 60 else text[:57] + "..."
-        self.fm.notify("yanked {}: {}".format(attr, preview))
+        self.fm.notify(f"yanked {attr}: {preview}")
 
     def tab(self, tabnum):
         return ["yank " + m for m in sorted(self.modes) if m]
@@ -142,10 +143,10 @@ class drag(Command):
                              start_new_session=is_darwin,
                              env=os.environ.copy() if is_darwin else _x_env())
         except OSError as exc:
-            self.fm.notify("drag: failed to launch ({})".format(exc), bad=True)
+            self.fm.notify(f"drag: failed to launch ({exc})", bad=True)
             return
 
-        self.fm.notify("dragging {} file(s)".format(len(paths)))
+        self.fm.notify(f"dragging {len(paths)} file(s)")
 
 
 class extract_here(Command):
@@ -161,7 +162,6 @@ class extract_here(Command):
         if not marked_files:
             return
 
-        one_file = marked_files[0]
         original_path = cwd.path
 
         self.fm.copy_buffer.clear()

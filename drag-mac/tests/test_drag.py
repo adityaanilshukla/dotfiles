@@ -14,8 +14,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drag_mac import (  # noqa: E402
+from drag_mac import (
     DragSourceView,
+    UsageError,
     build_dragging_items,
     drag_payload,
 )
@@ -52,7 +53,7 @@ class TestDragPayload:
         assert url.writableTypesForPasteboard_(None)
 
     def test_empty_selection_is_rejected(self):
-        with pytest.raises(Exception):
+        with pytest.raises(UsageError):
             drag_payload([])
 
     def test_non_list_is_a_type_error(self):
@@ -79,7 +80,7 @@ class TestBuildDraggingItems:
         assert len(set(origins)) == len(origins), f"items overlap exactly: {origins}"
 
     def test_empty_payload_is_rejected(self):
-        with pytest.raises(Exception):
+        with pytest.raises(UsageError):
             build_dragging_items([])
 
 
@@ -100,7 +101,7 @@ class TestDragSourceView:
         chat window would accept the drop. Always assert against the real
         AppKit constant, never a literal.
         """
-        from AppKit import NSDragOperationCopy, NSDraggingContextOutsideApplication
+        from AppKit import NSDraggingContextOutsideApplication, NSDragOperationCopy
 
         view = DragSourceView.alloc().initWithTargets_(two_files)
         mask = view.draggingSession_sourceOperationMaskForDraggingContext_(
@@ -122,9 +123,9 @@ class TestDragSourceView:
         """A None mask is silently fatal: the drag still lifts and tracks, so it
         looks healthy, but nothing can accept it."""
         from AppKit import (
-            NSDragOperationNone,
             NSDraggingContextOutsideApplication,
             NSDraggingContextWithinApplication,
+            NSDragOperationNone,
         )
 
         view = DragSourceView.alloc().initWithTargets_(two_files)

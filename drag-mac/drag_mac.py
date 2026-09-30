@@ -28,9 +28,9 @@ from AppKit import (
     NSApplicationActivationPolicyAccessory,
     NSBackingStoreBuffered,
     NSColor,
+    NSDraggingItem,
     NSDragOperationCopy,
     NSDragOperationNone,
-    NSDraggingItem,
     NSEvent,
     NSFloatingWindowLevel,
     NSFont,
@@ -44,7 +44,7 @@ from AppKit import (
     NSWindowStyleMaskTitled,
     NSWorkspace,
 )
-from Foundation import NSTimer, NSURL
+from Foundation import NSURL, NSTimer
 
 EXIT_OK = 0
 EXIT_BAD_TARGET = 1
@@ -201,7 +201,12 @@ class DragSourceView(
     """
 
     def initWithTargets_(self, targets):
-        self = objc.super(DragSourceView, self).initWithFrame_(
+        # Reassigning self is the PyObjC init contract, not a slip: the
+        # designated initialiser may return a DIFFERENT object than the one
+        # alloc handed out, and the returned one is the live instance. ruff's
+        # PLW0642 is written for ordinary Python methods and does not know
+        # this, so it is silenced here rather than repo-wide.
+        self = objc.super(DragSourceView, self).initWithFrame_(  # noqa: PLW0642
             NSMakeRect(0.0, 0.0, PANEL_WIDTH, PANEL_HEIGHT)
         )
         if self is None:
