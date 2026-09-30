@@ -1,0 +1,25 @@
+# Config for the two static analysers PLAN.md rule 10 asks for. There is no
+# build here: drag_mac.py is a single script run from a wrapper, not a package.
+# This file exists purely so `make check` has something to read.
+
+[tool.mypy]
+strict = true
+files = ["drag_mac.py"]
+
+# PyObjC ships no type stubs and no py.typed marker, so every AppKit name is
+# Any no matter what we do. Two consequences have to be granted explicitly
+# rather than papered over, because the alternative is turning strict off:
+#
+#   1. The three bridge modules are untyped imports. Granted below per module,
+#      NOT globally, so a genuine missing dependency still fails.
+#   2. DragSourceView subclasses NSView, which is therefore Any. strict mode
+#      forbids that by default. There is no way to write this program without
+#      subclassing an AppKit class.
+#
+# Everything else stays strict, which is what caught the eight unannotated
+# ObjC callbacks this config was added alongside.
+disallow_subclassing_any = false
+
+[[tool.mypy.overrides]]
+module = ["objc", "AppKit", "Foundation"]
+ignore_missing_imports = true

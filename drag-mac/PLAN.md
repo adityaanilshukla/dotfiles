@@ -74,16 +74,44 @@ The original targets embedded C. Rules 3, 8 and 9 are translated rather than dro
 
 | # | Original | Adapted | Enforced by |
 |---|---|---|---|
-| 1 | No goto, no recursion | No recursion, no `exec`/`eval`, no monkey-patching, no metaclasses. Straight-line control flow. | ruff, review |
+| 1 | No goto, no recursion | No recursion, no `exec`/`eval`, no monkey-patching, no metaclasses. Straight-line control flow. | review |
 | 2 | Loops need fixed bounds | Every poll or wait loop carries an explicit iteration cap and a deadline. The app itself has a hard watchdog auto-exit (default 120s) so an unused window can never linger forever. | review, test |
 | 3 | No heap allocation after init | Resolve and validate every path, and build every item provider, *before* the window is shown. No allocation inside drag callbacks. | review |
-| 4 | Functions fit one page | Functions at most 60 lines, one job each. Whole module under 250 lines. | ruff, review |
+| 4 | Functions fit one page | Functions at most 60 lines, one job each, **excepting straight-line assembly with no branching** (see note). Whole module under 250 lines, currently not met. | review |
 | 5 | Two or more assertions per function | Two or more contract checks per public function, via an explicit `require()` that raises. Never bare `assert`, which `python -O` strips. | review, one test per raise path |
-| 6 | Smallest data scope | No module-level mutable state except the documented strong-reference registry from Rule 9. Everything else passed explicitly. | ruff, review |
+| 6 | Smallest data scope | No module-level mutable state except the documented strong-reference registry from Rule 9. Everything else passed explicitly. | review |
 | 7 | Check every return value | Every PyObjC call that can return nil is checked before use. No bare `except`. | mypy, review |
-| 8 | Sparing preprocessor use | No dynamic imports, no import-time side effects, no non-stdlib decorators. | ruff |
+| 8 | Sparing preprocessor use | No dynamic imports, no import-time side effects, no non-stdlib decorators. | review |
 | 9 | One pointer dereference, no function pointers | Hold an explicit strong Python reference to every ObjC object outliving its creating scope (app, panel, view, drag items). Premature GC of a bridged object is the classic PyObjC crash. One documented registry, cleared only at terminate. | review, idle-survival test |
-| 10 | All warnings on, static analysis clean | `python -W error`, ruff clean, `mypy --strict` clean, pytest run with `-W error`. | `make check` |
+| 10 | All warnings on, static analysis clean | ruff clean, mypy strict clean, pytest run with `-W error`. | `make check`, and it really does run all three |
+
+### Note on rule 4
+
+`build_panel` is 64 lines and stays that way. The rule exists to stop functions
+you cannot hold in your head, and length is only a proxy for that. This one has
+no branches at all: allocate a panel, set its properties, add an icon, add a
+caption, place it. There is nothing to trace.
+
+Splitting it would also actively hurt. Three of its lines write to `_RETAIN`,
+the strong-reference registry rule 9 describes, and a missed retain is a crash
+that surfaces later at random rather than an error you can read. Keeping all
+three on one screen is worth more than four lines of compliance. So the rule
+carries the exception rather than the code carrying a workaround.
+
+The module limit is a different matter: `drag_mac.py` is over 400 lines and
+genuinely breaks it. The seams are visible, the test files already sit on them
+(pure logic, AppKit, lifecycle, wrapper), but splitting a PyObjC module is
+where accidental-GC bugs come from and the payoff is small. Recorded as
+outstanding rather than quietly dropped.
+
+### What enforcement actually means here
+
+The right-hand column above used to name tools that nothing ran. `make check`
+was pytest alone; ruff had never been run against this directory and found 21
+problems the first time it was. Rules 1, 6 and 8 still say "review" where they
+once said "ruff", because ruff's default rule set does not in fact check them.
+A rule listing a tool that is never invoked is worse than one admitting it is
+reviewed by eye.
 
 ## 5. Test strategy
 

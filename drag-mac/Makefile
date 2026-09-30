@@ -7,8 +7,13 @@ VENV   := $(HOME)/.local/share/drag-mac/venv
 PY     := $(VENV)/bin/python3
 PIP    := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
+MYPY   := $(VENV)/bin/mypy
 
-DEPS := pyobjc-framework-Cocoa pyobjc-framework-Quartz pytest
+# mypy is in the venv rather than from Homebrew, unlike ruff. It has to import
+# the pyobjc modules to see them as untyped-but-present; run from outside the
+# venv it reports them as missing instead, which is a different and wrong
+# answer.
+DEPS := pyobjc-framework-Cocoa pyobjc-framework-Quartz pytest mypy
 
 .PHONY: venv test test-unit test-gui check clean
 
@@ -37,12 +42,15 @@ test:
 # 21 findings the first time it was pointed at this directory. A rule whose
 # enforcement is never invoked is a comment, so it runs here now.
 #
-# ruff comes from the Brewfile rather than the venv, which holds only what
-# drag_mac.py imports at runtime.
+# Invoked as plain `mypy`, never `mypy --strict`: the strict flag on the
+# command line re-enables every strict setting and overrides the two
+# exemptions pyproject.toml grants for PyObjC having no stubs.
 check:
 	@command -v ruff >/dev/null 2>&1 \
 	  || { echo "ruff not installed -- brew install ruff"; exit 1; }
 	@ruff check .
+	@test -x $(MYPY) || { echo "mypy missing -- run: make venv"; exit 1; }
+	@$(MYPY)
 	@$(PYTEST) tests/ -q -W error
 
 clean:

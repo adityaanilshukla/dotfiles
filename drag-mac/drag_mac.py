@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import objc
 from AppKit import (
@@ -68,7 +69,7 @@ CLOSE_KEYS = ("\x1b",)
 
 # Rule 9: strong references to every bridged object that outlives its creating
 # scope. Never read for logic, only to keep objects alive. Cleared at terminate.
-_RETAIN: dict[str, object] = {}
+_RETAIN: dict[str, Any] = {}
 
 
 class UsageError(Exception):
@@ -183,7 +184,11 @@ def build_dragging_items(payload: list[tuple[NSURL, object]]) -> list[NSDragging
     return items
 
 
-class DragSourceView(
+# `protocols=` is PyObjC's own class-creation keyword, not Python's. mypy
+# reads it as an argument to object.__init_subclass__ and rejects it, and
+# cannot know better while NSView is Any. Ignored by code, at one line, so a
+# real signature error elsewhere still fails.
+class DragSourceView(  # type: ignore[call-arg]
     NSView, protocols=[objc.protocolNamed("NSDraggingSource")]
 ):
     """The panel's content view. Starts a drag on mouse-down and exits once a
@@ -200,7 +205,7 @@ class DragSourceView(
     one against the protocol for exactly that reason.
     """
 
-    def initWithTargets_(self, targets):
+    def initWithTargets_(self, targets: list[Path]) -> Any:
         # Reassigning self is the PyObjC init contract, not a slip: the
         # designated initialiser may return a DIFFERENT object than the one
         # alloc handed out, and the returned one is the live instance. ruff's
@@ -215,16 +220,18 @@ class DragSourceView(
         self._payload = drag_payload(self._targets)
         return self
 
-    def targets(self):
+    def targets(self) -> list[Path]:
         return self._targets
 
-    def mouseDown_(self, event):
+    def mouseDown_(self, event: Any) -> None:
         items = build_dragging_items(self._payload)
         session = self.beginDraggingSessionWithItems_event_source_(items, event, self)
         # Held only to keep the session alive for its own duration (rule 9).
         _RETAIN["session"] = session
 
-    def draggingSession_sourceOperationMaskForDraggingContext_(self, _session, _context):
+    def draggingSession_sourceOperationMaskForDraggingContext_(
+        self, _session: Any, _context: Any
+    ) -> int:
         """Always offer copy.
 
         This returned NSDragOperationNone for external drops for one revision,
@@ -237,9 +244,14 @@ class DragSourceView(
         tool has exactly one job, handing a copy of these files to whoever will
         take them, so there is no branch here to get backwards a second time.
         """
-        return NSDragOperationCopy
+        # int() rather than returning the bridged constant directly: every
+        # AppKit name is Any to mypy, and passing one straight out of a
+        # function declared -> int silently widens the return type.
+        return int(NSDragOperationCopy)
 
-    def draggingSession_endedAtPoint_operation_(self, _session, _point, operation):
+    def draggingSession_endedAtPoint_operation_(
+        self, _session: Any, _point: Any, operation: int
+    ) -> None:
         """Exit after a drop that landed, matching dragon-drop's -x.
 
         The selector is endedAtPoint:, not endedAt:. This was spelled
@@ -257,7 +269,7 @@ class DragSourceView(
             return
         finish(EXIT_OK)
 
-    def keyDown_(self, event):
+    def keyDown_(self, event: Any) -> None:
         """Keyboard dismissal, so finishing up never needs the mouse.
 
         Escape and q both close. q is here because reaching for Escape is not
@@ -270,12 +282,12 @@ class DragSourceView(
             return
         objc.super(DragSourceView, self).keyDown_(event)
 
-    def cancelOperation_(self, _sender):
+    def cancelOperation_(self, _sender: Any) -> None:
         """Escape also arrives here rather than through keyDown_ depending on
         how the window was focused."""
         finish(EXIT_OK)
 
-    def acceptsFirstResponder(self):
+    def acceptsFirstResponder(self) -> bool:
         return True
 
 
