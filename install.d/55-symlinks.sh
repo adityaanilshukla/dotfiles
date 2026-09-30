@@ -41,6 +41,14 @@ files=(
   # it offers. Keep that in mind before adding to it.
   "scripts/library:$HOME/Scripts/library"
 
+  # Nudges the cursor a pixel and back every four minutes so this Mac reads as
+  # present rather than idle. Run at login by launchd, not by hand -- the plist
+  # in launchd/ points at this exact path, so the link name is load-bearing.
+  #
+  # Not in ~/Scripts: the launcher lists what is in there, and this is a daemon
+  # you start once, not a command you pick from a menu.
+  "scripts/mouse-jiggle:$HOME/.local/bin/mouse-jiggle"
+
   # Night Shift toggle. A pass-through to the nightlight CLI from the Brewfile,
   # which exists so the launcher has a file to list; ~/Scripts is not something
   # a brew binary lands in.

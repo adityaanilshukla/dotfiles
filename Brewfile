@@ -160,6 +160,16 @@ cask "keyclu"                         # shortcut cheatsheet
 cask "scroll-reverser"                # separate scroll direction for mouse vs trackpad
 brew "smudge/smudge/nightlight"       # night shift from the CLI
 
+# Moves the cursor from the command line. scripts/mouse-jiggle nudges it one
+# pixel and back every four minutes so this Mac reads as present rather than
+# idle, run at login by launchd/com.aditya.dotfiles.mouse-jiggle.plist.
+#
+# Not interchangeable with caffeinate, which is the tool people reach for
+# first: caffeinate stops the machine sleeping but leaves HIDIdleTime climbing,
+# and HIDIdleTime is the number Teams and Slack read to decide you are away.
+# Only a real or synthetic input event resets it.
+brew "cliclick"                       # scripts/mouse-jiggle moves the cursor with it
+
 # ----- Networking + sync -----
 brew "syncthing"
 brew "tailscale"                      # joins the tailnet: brovo, kalu, buffyx, ello.

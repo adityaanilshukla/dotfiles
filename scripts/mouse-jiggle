@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#
+# Nudge the cursor one pixel right and back, every four minutes, forever.
+# Keeps this Mac counted as present rather than idle.
+#
+# Why a mouse move and not caffeinate: they solve different problems, and the
+# obvious one is the wrong one here. caffeinate stops the MACHINE sleeping but
+# never touches HIDIdleTime, the counter apps read to decide you have gone
+# away -- so Teams still flips to Away with caffeinate running. A synthetic
+# move resets that counter. Measured on this machine rather than assumed:
+# HIDIdleTime read 105s, one jiggle, then 0s.
+#
+# Run by launchd at login. See launchd/com.aditya.dotfiles.mouse-jiggle.plist
+# and the block that installs it in install.d/80-services.sh.
+#
+# NOT `set -e`, deliberately, and this is the one script in the repo that says
+# so. Everything here runs in an endless loop under launchd: a single failed
+# cliclick call killing the process would turn one transient error into a dead
+# jiggler, and errexit gives no way to tell a transient failure from a
+# permanent one. Failures are counted instead, so a blip is survived and a
+# genuine fault still ends the process with a reason in the log.
+set -uo pipefail
+
+CLICLICK="${CLICLICK:-/opt/homebrew/bin/cliclick}"
+INTERVAL="${MOUSE_JIGGLE_INTERVAL:-240}"
+
+# The agent has nowhere to write, so the script owns its own log. Only starts,
+# stops and faults are recorded -- never the individual jiggles, which at one
+# every four minutes would be 131,000 lines a year saying nothing.
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/mouse-jiggle.log"
+mkdir -p "$(dirname "$LOG")"
+exec >>"$LOG" 2>&1
+
+log() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+
+trap 'log "stopped (signal)"; exit 0' TERM INT
+
+[[ -x "$CLICLICK" ]] || { log "fatal: no cliclick at $CLICLICK -- brew install cliclick"; exit 1; }
+
+# Nanoseconds since the last real or synthetic input event. This is the number
+# that actually matters: it is what Teams, Slack and the screen saver read.
+idle_ns() {
+  ioreg -c IOHIDSystem 2>/dev/null \
+    | sed -n 's/.*"HIDIdleTime" = \([0-9]*\).*/\1/p' | head -1
+}
+
+# cliclick prints its own Accessibility warning to stderr and still exits 0, so
+# the text is the only reliable signal. Captured rather than let through, both
+# to test it and because otherwise it lands in the log on every cycle forever.
+jiggle() {
+  local err
+  err="$("$CLICLICK" m:+1,+0 2>&1 >/dev/null)" || return 1
+  sleep 1
+  err+="$("$CLICLICK" m:-1,+0 2>&1 >/dev/null)" || return 1
+  case "$err" in
+    *"Accessibility privileges not enabled"*) return 2 ;;
+  esac
+  [[ -z "$err" ]] || log "cliclick: $err"
+  return 0
+}
+
+# Exit 2 from jiggle() means the events are being posted and discarded. Its own
+# wording points at a System Preferences pane that has not existed for several
+# releases, so it is replaced rather than passed through.
+no_accessibility() {
+  log "fatal: cliclick has no Accessibility privileges, so the cursor will not move"
+  log "       System Settings > Privacy & Security > Accessibility > +"
+  log "       press cmd-shift-G, enter: $CLICLICK"
+  log "       then switch it on and: launchctl kickstart -k gui/\$(id -u)/com.aditya.dotfiles.mouse-jiggle"
+  log "       (the grant has to be cliclick's own -- a terminal you tested from"
+  log "        has its own, which is why this works by hand and not under launchd)"
+}
+
+log "starting (every ${INTERVAL}s via $CLICLICK)"
+
+# --- self-test -------------------------------------------------------------
+# cliclick exiting 0 is not proof of anything. Without Accessibility it can
+# post the event and have the system discard it, which looks identical from
+# here: exit 0, cursor unmoved, idle timer untouched. The grant also has to be
+# held by THIS process, not by the terminal one might have tested from, and
+# under launchd there is no terminal to inherit it from -- so the first run
+# after install is exactly where this fails, silently, forever.
+#
+# So the test is the outcome, not the exit code: did HIDIdleTime actually go
+# down?
+before="$(idle_ns)"
+jiggle; rc=$?
+if (( rc == 2 )); then
+  no_accessibility
+  exit 1
+elif (( rc != 0 )); then
+  log "fatal: cliclick could not move the cursor (exit $rc)"
+  exit 1
+fi
+after="$(idle_ns)"
+
+# Only meaningful when the machine was already idle for a few seconds. At login
+# the counter is near zero anyway, so a non-decrease proves nothing and must
+# not be reported as a fault.
+if [[ -n "$before" && -n "$after" ]] && (( before > 3000000000 )); then
+  if (( after >= before )); then
+    log "fatal: cursor moved but HIDIdleTime did not reset (${before}ns -> ${after}ns)"
+    log "       the events are being discarded: grant Accessibility to cliclick"
+    log "       in System Settings > Privacy & Security > Accessibility"
+    exit 1
+  fi
+  log "self-test ok: idle $((before / 1000000000))s -> $((after / 1000000000))s"
+else
+  log "self-test inconclusive: machine was not idle long enough to measure"
+fi
+
+# --- the loop --------------------------------------------------------------
+# Five consecutive failures rather than one, so a blip is survived, and rather
+# than never, so a permanent fault does not leave a process alive and looking
+# healthy while doing nothing. The plist deliberately does NOT set KeepAlive:
+# getting here means something is actually wrong, and relaunching into the same
+# fault every ten seconds would bury the reason under its own restart log.
+fails=0
+while true; do
+  sleep "$INTERVAL"
+  jiggle; rc=$?
+  if (( rc == 0 )); then
+    fails=0
+  elif (( rc == 2 )); then
+    # A grant revoked while running. No point counting to five: this will not
+    # come back on its own, and every further cycle is a no-op.
+    no_accessibility
+    exit 1
+  else
+    fails=$((fails + 1))
+    log "warning: jiggle failed ($fails in a row)"
+    if (( fails >= 5 )); then
+      log "fatal: 5 consecutive failures, giving up"
+      exit 1
+    fi
+  fi
+done

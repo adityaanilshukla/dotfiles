@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.aditya.dotfiles.mouse-jiggle</string>
+
+  <!-- bash -lc so $HOME resolves and Homebrew is on PATH: a LaunchAgent gets
+       neither. The path is written as $HOME rather than spelled out because
+       this file is tracked in a public repo and has to work on both machines. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>exec "$HOME/.local/bin/mouse-jiggle"</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- No KeepAlive on purpose. The script already survives transient failures
+       on its own and only exits when something is genuinely wrong, so
+       relaunching it into the same fault would spam the log and hide the
+       cause. It also means a plain `kill` stops it until the next login,
+       which is the behaviour you want from a thing like this. -->
+
+  <!-- No StandardOutPath/StandardErrorPath: launchd does not expand $HOME in
+       those, and a literal /Users/... would not survive the second machine.
+       The script writes its own log to ~/.cache/mouse-jiggle.log instead. -->
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
