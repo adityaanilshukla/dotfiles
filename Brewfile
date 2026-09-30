@@ -112,27 +112,28 @@ brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading stat
 brew "go"                             # builds online-zathura (see install.sh)
 
 # ----- Documents + media -----
-brew "pandoc"
+# pandoc and sphinx-doc were removed on 2026-09-30: 340MB between them, no
+# reference anywhere in the repo and nothing depending on them. weasyprint
+# already covers html-to-pdf, which was the only conversion actually in use.
 brew "weasyprint"                     # html to pdf
 brew "imagemagick"
 brew "mpv"                            # ranger rifle.conf video rule
-brew "sphinx-doc"
 
 # ----- Browsers -----
 cask "brave-browser"                  # aerospace alt-f / ctrl-shift-p, ranger PDF opener
 cask "firefox"
 
 # ----- Languages, build tooling, data -----
+# Removed on 2026-09-30, all unreferenced and undepended-on: mysql (296MB),
+# pyvim (a Python reimplementation of vim, alongside a real Neovim setup),
+# and pyqt -- which was 41MB itself and dragged 640MB of Qt behind it.
 cask "miniconda"                      # zshrc has a conda init block for this path
 brew "uv"                             # python package manager
 brew "pipx"
 brew "python-tk@3.14"
-brew "pyqt"
-brew "pyvim"
 brew "cmake"
 brew "meson"
 brew "pkgconf"
-brew "mysql"
 brew "bats-core"                      # bash test runner
 
 # ----- Local models -----
@@ -149,6 +150,10 @@ cask "claude-code"
 # is what lets that module poll every second. Optional: the plugin falls back to
 # system_profiler alone if this is missing, just with a laggier glyph.
 brew "switchaudio-osx"                # sketchybar audio-sink plugin fast path
+
+# claude/hooks/notify.sh posts its banner with this. It was installed by hand
+# and missing from here, so a fresh machine ran the hook and got nothing.
+brew "terminal-notifier"              # claude/hooks/notify.sh
 
 cask "betterdisplay"                  # sketchybar volume plugin + display scaling
 cask "raycast"                        # aerospace alt-d / alt-p bindings
