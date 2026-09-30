@@ -91,10 +91,17 @@ grants and a reboot; the script prints the checklist.
 ```
 spec.json           source of truth — edit this
 generate.py         spec.json -> rules/managed.json
-rules/managed.json  generated, committed so a fresh clone works
+rules/managed.json  generated, gitignored — install.sh builds it
 install.sh          generates, symlinks, merges into karabiner.json
 verify.sh           what is actually live right now
 ```
+
+`rules/managed.json` is not in git. It used to be, on the reasoning that a
+fresh clone needs it, which was never true: `install.sh` runs `generate.py`
+and dies if it produced nothing, before anything reads the file. Committing it
+bought nothing and cost a second mechanical diff beside every real change to
+`spec.json`. `generate.py --check` still compares the file on disk against the
+spec if you want that answer directly.
 
 Karabiner needs a `conditions` block on every individual manipulator, so app
 scoping has to be repeated on all 40-odd mappings. `spec.json` keeps the

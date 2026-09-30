@@ -3,3 +3,9 @@
 __pycache__/
 *.pyc
 *.backup
+
+# Generated from karabiner/spec.json by karabiner/generate.py, which
+# karabiner/install.sh runs before it reads the file -- so a fresh clone
+# builds its own and never needs a committed copy. Tracking it only produced
+# a second, larger, mechanical diff beside every real spec.json change.
+karabiner/rules/managed.json
