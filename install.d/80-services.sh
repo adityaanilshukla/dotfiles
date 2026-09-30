@@ -29,7 +29,7 @@ for svc in sketchybar syncthing; do
 done
 
 # --- mouse-jiggle ----------------------------------------------------------
-# Nudges the cursor a pixel and back every four minutes so this Mac reads as
+# Nudges the cursor a pixel and back every two minutes so this Mac reads as
 # present rather than idle. See scripts/mouse-jiggle for why it is a cursor
 # move and not caffeinate.
 #

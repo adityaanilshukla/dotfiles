@@ -41,7 +41,7 @@ files=(
   # it offers. Keep that in mind before adding to it.
   "scripts/library:$HOME/Scripts/library"
 
-  # Nudges the cursor a pixel and back every four minutes so this Mac reads as
+  # Nudges the cursor a pixel and back every two minutes so this Mac reads as
   # present rather than idle. Run at login by launchd, not by hand -- the plist
   # in launchd/ points at this exact path, so the link name is load-bearing.
   #

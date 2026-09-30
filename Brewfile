@@ -161,7 +161,7 @@ cask "scroll-reverser"                # separate scroll direction for mouse vs t
 brew "smudge/smudge/nightlight"       # night shift from the CLI
 
 # Moves the cursor from the command line. scripts/mouse-jiggle nudges it one
-# pixel and back every four minutes so this Mac reads as present rather than
+# pixel and back every two minutes so this Mac reads as present rather than
 # idle, run at login by launchd/com.aditya.dotfiles.mouse-jiggle.plist.
 #
 # Not interchangeable with caffeinate, which is the tool people reach for
