@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 #
-# Register the Claude Code hooks and permission rules in ~/.claude/settings.json.
+# Register the Claude Code hooks and permission rules in a profile's settings.json.
+#
+#     claude/install.sh [config-dir]        # default: ~/.claude
+#
+# Takes a profile because a second Claude Code account is a second CLAUDE_CONFIG_DIR,
+# and everything below is per-profile. A profile this never runs against has no sudo
+# guard and, worse, an unpinned renderer -- see the `tui` note further down, which is
+# the bug that made the second account unusable in tmux.
 #
 # Three unrelated things live here because they share the same merge problem:
 # the notification hooks (banner + sound on Stop/Notification), the sudo guard
@@ -23,7 +30,12 @@
 
 set -euo pipefail
 
-SETTINGS="${HOME}/.claude/settings.json"
+CONFIG_DIR="${1:-$HOME/.claude}"
+SETTINGS="${CONFIG_DIR}/settings.json"
+
+# The hooks stay at ~/.claude/hooks for every profile and are pointed at from each
+# settings.json by absolute path, rather than copied per profile and left to drift.
+# settings.json is the only per-profile file here.
 HOOK="${HOME}/.claude/hooks/notify.sh"
 NOSUDO="${HOME}/.claude/hooks/no-sudo.sh"
 

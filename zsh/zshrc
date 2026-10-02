@@ -274,12 +274,44 @@ export PATH="$HOME/.local/bin:$PATH"
 # Scoped here rather than taken out of ~/.secrets, which everything else that
 # actually needs the key still reads. `env` looks the command up on PATH and so
 # cannot find this function, which is what keeps this from recursing.
-#
-# A second Claude account needs no code here. Claude Code reads
-# CLAUDE_CONFIG_DIR itself and keys its Keychain entry off it, so
-#     CLAUDE_CONFIG_DIR=~/.claude-work claude
-# is a complete answer. There was a wrapper here that prompted for the profile
-# at every launch; it got in the way far more than it helped.
 claude() {
   env -u ANTHROPIC_API_KEY claude "$@"
+}
+
+# The work account, as a SEPARATE COMMAND rather than a question asked at launch.
+#
+# Two accounts coexist because Claude Code names its Keychain entry after the
+# config dir: unset reads `Claude Code-credentials`, set reads `Claude
+# Code-credentials-<sha256(dir)[0:8]>`. Both tokens sit in the Keychain at once
+# and neither expires the other, so logging in is a once-ever thing and
+# switching afterwards is only this variable. Two sessions can therefore run at
+# the same time, in different panes, on different accounts -- nothing is shared
+# between them but the hooks.
+#
+# 7f7fc5d did this with a prompt on every launch and 31eb550 ripped it out a day
+# later, because a prompt is a tax paid constantly for a choice made rarely. Two
+# names cost nothing and are also the reason this cannot repeat the OTHER defect
+# that wrapper had: it resolved the profile by running a picker that read a
+# keypress off /dev/tty, and anything interactive in a launch path is a thing
+# that can leave the terminal in a state the next program inherits. This sets a
+# variable and execs. There is nothing here to go wrong.
+#
+# Personal stays the UNSET case deliberately, so anything that does not come
+# through these functions -- a script, the VS Code extension, a cron job -- gets
+# the personal account rather than no account.
+claude-work() {
+  local dir="$HOME/.claude-work"
+  # Refusing to create the profile here is the point. A profile Claude Code
+  # makes for itself has no `tui` key, and an absent `tui` is not a default but
+  # a rollout gate that can serve the fullscreen renderer -- which draws on the
+  # alternate screen, where nothing reaches tmux scrollback. That is exactly
+  # what made this account unusable in tmux before. install.d/75-claude.sh
+  # creates it already pinned; this just declines to race it.
+  if [[ ! -d "$dir" ]]; then
+    print -u2 "claude-work: $dir is not set up on this machine."
+    print -u2 "  enable it:  add 'claude_work_profile = yes' to machines/$(scutil --get LocalHostName).conf"
+    print -u2 "  then run:   ~/dotfiles/install.d/75-claude.sh && claude-work   # log in once"
+    return 1
+  fi
+  env -u ANTHROPIC_API_KEY CLAUDE_CONFIG_DIR="$dir" claude "$@"
 }
