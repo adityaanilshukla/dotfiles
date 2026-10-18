@@ -62,6 +62,12 @@ files=(
   # sketchybar-backed countdown timer — see sketchybar/plugins/timer.sh
   "scripts/t:$HOME/.local/bin/t"
 
+  # Hand-scheduled review queue for LeetCode problems: `review 198 1 day`, then
+  # `review` prints what is due. State lives beside the solutions in the
+  # Syncthing tree, one append-only file per machine so the two cannot conflict.
+  # Not in ~/Scripts: it is a thing you type with arguments, not a menu entry.
+  "scripts/review:$HOME/.local/bin/review"
+
   # zathura, privately: open any document with no reading state stored and
   # nothing synced to Turso. Also what library's ctrl-o hands off to.
   "scripts/zp:$HOME/.local/bin/zp"
