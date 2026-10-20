@@ -140,6 +140,19 @@ brew "bats-core"                      # bash test runner
 brew "ollama"
 brew "llama.cpp"
 
+# Audio deps for the VoiceMode Claude Code plugin, which runs Whisper (STT) and
+# Kokoro (TTS) locally -- no cloud API. The plugin itself lives in ~/.claude and
+# is not tracked here, but it is dead without these two: ffmpeg does the capture
+# and resampling, portaudio is the device layer the Python bindings open the mic
+# through. Tracked because a fresh Mac has neither, and the failure is a plugin
+# that installs cleanly and then cannot hear anything.
+#
+# The model is pinned separately, outside this repo, in
+# ~/.voicemode/voicemode.env -- VOICEMODE_WHISPER_MODEL=base, ~500 MB resident,
+# which is the size that makes sense on 16 GB.
+brew "ffmpeg"
+brew "portaudio"
+
 # ----- Editors and dev apps -----
 cask "visual-studio-code"             # install.sh installs its extensions
 cask "claude-code"
