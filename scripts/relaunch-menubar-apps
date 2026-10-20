@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# Bring back the menu-bar helpers that a Homebrew upgrade killed.
+#
+# Upgrading a cask replaces the app bundle under a running process, which ends
+# the process; brew does not start it again. For an app with a window you notice
+# within seconds. For these three you do not notice at all -- they are
+# menu-bar-only or windowless -- so the first sign is a machine that has quietly
+# stopped behaving as configured.
+#
+# Found the hard way: `brew upgrade` replaced Scroll Reverser at 11:44 and
+# scrolling silently reverted to the system direction for the rest of the day.
+# Three days into an uptime, with the next login nowhere in sight, so the login
+# item that exists to start these apps could not help -- it only fires at login,
+# and no login was coming. That gap is the whole reason this script exists.
+#
+# install.d/85-login-items.sh owns getting these started at login; this owns
+# getting them back when something kills them mid-session. The app list is
+# deliberately the same one.
+set -euo pipefail
+
+APPS=(
+  "Scroll Reverser"   # scroll direction; silent when dead
+  "KeyClu"            # shortcut cheat sheet, menu-bar only
+  "Wispr Flow"        # dictation; karabiner/spec.json's F13 rule is inert without it
+)
+
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/relaunch-menubar-apps.log"
+mkdir -p "$(dirname "$LOG")"
+exec >>"$LOG" 2>&1
+
+log() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+
+# Why the anchored pgrep rather than `pgrep -x "$app"`: the executable inside
+# the bundle is not always the app's name, and a bare name can match a helper.
+# Anchoring on the bundle's own MacOS directory is exact, and it is the same
+# pattern the comms launcher used before it was retired.
+running() { pgrep -f "/Applications/${1}.app/Contents/MacOS/" >/dev/null 2>&1; }
+
+# WatchPaths can fire while the bundle is mid-replacement: brew removes the old
+# app before the new one lands, so a run triggered by the removal sees nothing
+# at the path. Waiting a few seconds turns that race into a no-op rather than a
+# missed relaunch. 10 tries at 2s covers a cask copy comfortably.
+wait_for_bundle() {
+  local app="$1" i
+  for ((i = 0; i < 10; i++)); do
+    [[ -d "/Applications/${app}.app" ]] && return 0
+    sleep 2
+  done
+  return 1
+}
+
+relaunched=()
+for app in "${APPS[@]}"; do
+  # Never installed on this machine is not a problem to report. Mid-upgrade is.
+  if [[ ! -d "/Applications/${app}.app" ]]; then
+    wait_for_bundle "$app" || continue
+  fi
+  running "$app" && continue
+  # -g so focus stays where it is, and -a by name so LaunchServices resolves
+  # the bundle it just re-registered. All three are menu-bar-only or windowless
+  # (see install.d/85-login-items.sh), so nothing appears on screen.
+  if open -g -a "$app" 2>/dev/null; then
+    relaunched+=("$app")
+  else
+    log "could not relaunch ${app}"
+  fi
+done
+
+# Quiet when there was nothing to do, which is almost every run: this fires on
+# any change to the three bundles, and most of those changes are not deaths.
+if (( ${#relaunched[@]} )); then
+  log "relaunched: ${relaunched[*]}"
+fi

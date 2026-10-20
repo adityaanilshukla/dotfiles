@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.aditya.dotfiles.relaunch-menubar-apps</string>
+
+  <!-- bash -lc so $HOME resolves and Homebrew is on PATH: a LaunchAgent gets
+       neither. Written as $HOME rather than spelled out because this file is
+       tracked in a public repo and has to work on both machines. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>exec "$HOME/.local/bin/relaunch-menubar-apps"</string>
+  </array>
+
+  <!-- The point of the job. launchd runs it whenever one of these bundles is
+       modified, which is exactly what a cask upgrade does: it removes the old
+       app and copies the new one in, ending the running process on the way.
+       Cheaper and quieter than polling - no timer, nothing runs until an app
+       on disk actually changes.
+
+       These are absolute and literal because launchd does not expand $HOME in
+       WatchPaths, and /Applications is the same on both machines anyway.
+
+       A path that does not exist is not an error: launchd also fires when a
+       watched path is created, so a machine without one of these apps starts
+       behaving correctly the moment it is installed. -->
+  <key>WatchPaths</key>
+  <array>
+    <string>/Applications/Scroll Reverser.app</string>
+    <string>/Applications/KeyClu.app</string>
+    <string>/Applications/Wispr Flow.app</string>
+  </array>
+
+  <!-- Also at login, so this is a second line of defence behind
+       install.d/85-login-items.sh rather than a replacement for it. The script
+       exits immediately when everything is already running, which at login is
+       the usual case. -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- No KeepAlive. This is a one-shot that exits in well under a second; a
+       KeepAlive on a job that exits cleanly is a restart loop. -->
+
+  <!-- No StandardOutPath/StandardErrorPath: launchd does not expand $HOME in
+       those, and a literal /Users/... would not survive the second machine.
+       The script writes its own log to ~/.cache/relaunch-menubar-apps.log. -->
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

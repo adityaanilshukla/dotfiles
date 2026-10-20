@@ -48,6 +48,7 @@ files=(
   # Not in ~/Scripts: the launcher lists what is in there, and this is a daemon
   # you start once, not a command you pick from a menu.
   "scripts/mouse-jiggle:$HOME/.local/bin/mouse-jiggle"
+  "scripts/relaunch-menubar-apps:$HOME/.local/bin/relaunch-menubar-apps"
 
   # Night Shift toggle. A pass-through to the nightlight CLI from the Brewfile,
   # which exists so the launcher has a file to list; ~/Scripts is not something

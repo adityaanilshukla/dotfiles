@@ -173,6 +173,44 @@ defaults write com.apple.HIToolbox AppleFnUsageType -int 0
 defaults write -g KeyRepeat -int 3
 defaults write -g InitialKeyRepeat -int 15
 
+# Scrolling goes the Windows way, on the trackpad and on any mouse.
+#
+# false is macOS "natural scrolling" OFF: two fingers down advances down the
+# document, and a wheel rolled toward you goes down the page. On is the factory
+# default and is the opposite of every other machine.
+#
+# Done with the system switch rather than with Scroll Reverser, which is
+# installed here and was doing this job on one machine. Three reasons, in order
+# of how much they bite:
+#
+#   1. It is per-device in Scroll Reverser and global here. Scroll Reverser
+#      keeps a table keyed on each device it has seen and reverses the ones it
+#      has an entry for, so a mouse plugged in for the first time arrives
+#      unconfigured and scrolls the other way until it is set by hand. With the
+#      system switch there is nothing to configure per device: a mouse that has
+#      never been attached is already correct.
+#   2. It cannot die. Scroll Reverser is a process, and a process that is not
+#      running reverses nothing -- which is how this was noticed, a cask
+#      upgrade having replaced the app mid-session (see
+#      scripts/relaunch-menubar-apps). The system switch is read by the window
+#      server and has nothing to kill.
+#   3. Scroll Reverser's own table does not survive its major versions. The
+#      upgrade from 1.9 to 2.0 replaced the flat ReverseMouse/ReverseTrackpad
+#      pair with a per-source dictionary and started it empty, silently losing
+#      whatever had been set.
+#
+# The second line is load-bearing, not tidying. Both layers reverse, so leaving
+# Scroll Reverser's master switch on would have them cancel out and land back
+# on macOS-native scrolling -- the exact symptom this is meant to fix, with two
+# settings to check instead of one. Off it stays, and the app is then only
+# earning its place if the two devices are ever wanted in OPPOSITE directions,
+# which is the one thing the system switch cannot do.
+#
+# Applies to apps as they start, so a logout is the clean way to see it
+# everywhere.
+defaults write -g com.apple.swipescrolldirection -bool false
+defaults write com.pilotmoon.scroll-reverser InvertScrollingOn -bool false
+
 # Dock: small, and out of the way without making you wait for it.
 #
 # Four keys, and only the first is the one people reach for. `autohide` alone
@@ -245,3 +283,5 @@ echo "  on every one of them except F7, which Neovim wants."
 echo "Key repeat is 20/sec — that one needs a logout before it applies."
 echo "So does the screen saver being set to Never, which is what stops this"
 echo "  machine idle-sleeping out from under a long session."
+echo "Scrolling is Windows-style on trackpad and mouse; apps pick it up as they"
+echo "  start, so a logout is the clean way to see it everywhere."
