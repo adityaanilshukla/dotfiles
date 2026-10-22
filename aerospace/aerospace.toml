@@ -73,6 +73,32 @@ exec-on-workspace-change = ['/bin/bash', '-c',
     'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
 ]
 
+# Workspace 1 belongs to the laptop's own screen; everything else to the
+# external.
+#
+# Only workspace 1 is named here, and the omission of 2-10 is the point rather
+# than laziness. An unassigned workspace stays on whatever monitor it is
+# already on, so with 1 pinned to the built-in the rest simply go on living on
+# the external -- which makes alt-2, alt-3 and the rest change the external
+# display, and alt-1 the way to look at the laptop screen. Pinning 2-10 to the
+# external as well would buy nothing and cost the undocked case: there would be
+# ten assignments pointing at a monitor that is not there.
+#
+# Undocked this needs no special handling. The built-in is the only monitor, so
+# it is the only thing 'built-in' can match and every unassigned workspace lands
+# there too.
+#
+# 'built-in' as a loose substring rather than the anchored
+# '^built-in retina display$' from the upstream example, because the pattern is
+# a case-insensitive regex and this file is shared by two MacBooks. Apple does
+# not report one name: a machine without a Retina panel says "Built-in
+# Display", and the anchored form would silently match nothing there and leave
+# workspace 1 wherever it happened to be -- a failure with no error attached to
+# it. The substring matches every spelling Apple uses and matches no external
+# monitor, which is the only ambiguity that would matter.
+[workspace-to-monitor-force-assignment]
+1 = 'built-in'
+
 # Reserve space at the top so tiled windows sit below the 37pt sketchybar.
 # Per-monitor: built-in gets 5 (macOS already reserves ~24pt for the menubar
 # in the notch area), external monitors get the full 37pt.
