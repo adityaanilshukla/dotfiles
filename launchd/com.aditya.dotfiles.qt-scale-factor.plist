@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.aditya.dotfiles.qt-scale-factor</string>
+
+  <!-- One job: make Qt apps honour a UI scale, because Anki 26.9.3 will not.
+       Its Tools > Preferences > "User interface size" box saves the value
+       correctly (uiScale lands in prefs21.db) and then does nothing with it:
+       the version sets QT_SCALE_FACTOR *after* constructing the Qt app, so Qt
+       has already sized every widget by the time the number arrives. Upstream
+       bug, not a local misconfiguration:
+
+         https://github.com/ankitects/anki/issues/5676
+
+       Setting the variable here means it is already in the environment when
+       Anki starts, which is the one thing the bug prevents Anki from doing for
+       itself. Anki's own late assignment then writes the same value and is
+       harmless.
+
+       No shell wrapper: launchctl takes the value directly, there is no logic
+       to host, and $HOME is not needed.
+
+       1.3 to match what the preference pane was set to. Change the number here
+       and re-run install.d/84-qt-scale-factor.sh; the preference pane itself is
+       inert in this version, so this file is the only knob that does anything.
+       Higher is bigger -- 1.6 is about right if a 32-inch panel still reads
+       small at 1.3. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/launchctl</string>
+    <string>setenv</string>
+    <string>QT_SCALE_FACTOR</string>
+    <string>1.3</string>
+  </array>
+
+  <!-- The whole point: set it at login, before anything is launched by hand.
+       Nothing here races Anki, because Anki is not a login item -- see
+       install.d/85-login-items.sh, which starts other things and not this one.
+       An app already running when this fires keeps its old scale until it is
+       restarted; at login there is nothing running yet. -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- No KeepAlive. launchctl setenv returns immediately, and a KeepAlive on a
+       job that exits cleanly is a restart loop. No WatchPaths either: the
+       variable is wanted for the whole session, not in response to a file. -->
+
+  <!-- Not scoped to Anki. QT_SCALE_FACTOR is read by every Qt application, so
+       any other Qt app launched after login is scaled too. Anki is the only one
+       installed here (Brewfile has no other Qt cask), and scoping to one app
+       would mean a wrapper bundle for something the Dock launches directly --
+       more machinery than the problem is worth.
+
+       Retire this once Anki 26.11 ships, which carries the upstream fix (PR
+       #5686, "apply the UI scale before creating the Qt app"). Retiring means
+       naming the label in install.d/90-retired-agents.sh, not just deleting
+       this file: a copy already in ~/Library/LaunchAgents stays loaded. -->
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
