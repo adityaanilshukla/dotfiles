@@ -229,6 +229,13 @@
       ]
     },
 
+    "not_outlook": {
+      "mode": "unless",
+      "bundle_identifiers": [
+        "^com\\.microsoft\\.Outlook$"
+      ]
+    },
+
     "vscode": {
       "mode": "if",
       "bundle_identifiers": [
@@ -503,7 +510,7 @@
 
     {
       "description": "Ctrl+Tab and Ctrl+PageUp/PageDown cycle tabs",
-      "scope": "gui",
+      "scope": ["gui", "not_outlook"],
       "mappings": [
         { "from": "tab", "mods": ["control"], "to": "right_arrow", "to_mods": ["left_command", "left_option"] },
         { "from": "tab", "mods": ["control", "shift"], "to": "left_arrow", "to_mods": ["left_command", "left_option"] },

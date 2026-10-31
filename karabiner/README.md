@@ -148,8 +148,8 @@ this, or macOS spends a bare `fn` on the emoji picker first.
 | `Ctrl+Backspace` / `Ctrl+Delete` | `Option+` same | not in terminals |
 | `Ctrl+Home` / `Ctrl+End` (`+Shift`) | `Cmd+Up` / `Cmd+Down` | not in terminals |
 | `Home` / `End` (`+Shift`) | `Ctrl+A` / `Ctrl+E`, line start / end | not in terminals or VS Code |
-| `Ctrl+Tab` / `Ctrl+Shift+Tab` | `Cmd+Option+Right/Left` | not in terminals |
-| `Ctrl+PageDown` / `Ctrl+PageUp` | same, next / previous tab | not in terminals |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | `Cmd+Option+Right/Left` | not in terminals or Outlook |
+| `Ctrl+PageDown` / `Ctrl+PageUp` | same, next / previous tab | not in terminals or Outlook |
 | `Ctrl+1`..`Ctrl+9` | `Cmd+1`..`Cmd+9` | not in terminals |
 | `Ctrl+L` / `Ctrl+D` | address bar / bookmark | browsers only |
 | `Ctrl+H` / `Ctrl+J` | history / downloads | browsers only |
@@ -163,6 +163,14 @@ app. `Ctrl+J` sends `Cmd+Shift+J`, which is where Chrome keeps Downloads.
 
 `Shift` in brackets means the mapping carries Shift through, so `Ctrl+Shift+Z`
 is redo and `Ctrl+Shift+T` reopens a closed tab without needing their own rules.
+
+Outlook is excluded from the tab-cycling rule because New Outlook for Mac uses
+`Ctrl+Tab` itself, to switch between profiles, and this rule was swallowing it --
+Outlook received `Cmd+Option+Right` and the profile never changed. Nothing is
+lost by letting it through: Outlook has no tab bar, so the remapped chord was
+doing nothing there anyway. The exclusion is its own `not_outlook` scope rather
+than an entry in `scopes.gui`, which eight rules share -- adding Outlook there
+would have taken `Ctrl+C` and `Ctrl+V` with it.
 
 Either Control key triggers these. The mappings used to require `left_control`,
 which meant they silently did nothing for anyone reaching for the right-hand
