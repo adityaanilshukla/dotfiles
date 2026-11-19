@@ -32,11 +32,17 @@ if command -v pipx >/dev/null 2>&1; then
   done
 fi
 
-# eslint_d is what the nvim JS/TS linting talks to; without it that setup is
-# configured and inert.
+# npm globals the nvim setup talks to. eslint_d is the JS/TS linter nvim-lint
+# calls; prettier is the formatter conform uses for everything web-shaped
+# (js, ts, json, yaml, markdown, html, css). Neither has a brew formula worth
+# using, so they are not in the Brewfile. Without them that half of the config
+# is present and inert -- and since conform now skips formatters it cannot
+# find, a missing prettier is silent rather than noisy.
 if command -v npm >/dev/null 2>&1; then
-  if ! npm ls -g --depth=0 2>/dev/null | grep -q "eslint_d@"; then
-    echo "Installing eslint_d..."
-    npm install -g eslint_d >/dev/null 2>&1 || echo "  npm install -g eslint_d failed"
-  fi
+  for pkg in eslint_d prettier; do
+    if ! npm ls -g --depth=0 2>/dev/null | grep -q "${pkg}@"; then
+      echo "Installing $pkg..."
+      npm install -g "$pkg" >/dev/null 2>&1 || echo "  npm install -g $pkg failed"
+    fi
+  done
 fi

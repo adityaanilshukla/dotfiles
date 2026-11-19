@@ -57,6 +57,18 @@ brew "shellcheck"                    # shell lint
 brew "yamllint"                      # yaml lint
 brew "golangci-lint"                 # go lint
 
+# conform.nvim formatters. These are named in nvim's plugin_config/conform.lua,
+# which now resolves each one per buffer and silently skips what is not
+# installed -- so a missing binary here is not an error any more, it is just a
+# filetype that quietly stops being formatted. Tracked so brew bundle restores
+# them rather than leaving that to be noticed months later.
+brew "black"                         # python format
+brew "isort"                         # python import sort
+brew "shfmt"                         # shell format
+brew "taplo"                         # toml format
+brew "clang-format"                  # c / c++ format
+brew "google-java-format"            # java format
+
 # ----- File manager + fuzzy tooling used by ranger and library -----
 brew "ranger"
 # Declared explicitly rather than relied on as ranger's transitive dep: the
