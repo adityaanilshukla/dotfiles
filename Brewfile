@@ -36,6 +36,8 @@ brew "zsh-autosuggestions"           # sourced by zshrc
 brew "zsh-syntax-highlighting"       # sourced by zshrc, must load last
 brew "bash"                          # newer than the bash macOS ships
 brew "fastfetch"                     # zshrc alias f
+brew "htop"                           # process viewer
+brew "wget"
 
 # ----- Editor -----
 # nvim itself is NOT a formula. bob manages the Neovim version and puts the
@@ -50,12 +52,16 @@ brew "pyright"                       # LSP: python
 brew "lua-language-server"           # LSP: lua
 brew "marksman"                      # LSP: markdown
 brew "ltex-ls-plus"                  # LSP: prose and grammar
+brew "bash-language-server"           # LSP: bash
+brew "typescript-language-server"     # LSP: js / ts
+brew "jdtls"                          # LSP: java
 brew "ruff"                          # python lint + format
 brew "stylua"                        # lua format
 brew "luacheck"                      # lua lint
 brew "shellcheck"                    # shell lint
 brew "yamllint"                      # yaml lint
 brew "golangci-lint"                 # go lint
+brew "checkstyle"                     # java lint
 
 # conform.nvim formatters. These are named in nvim's plugin_config/conform.lua,
 # which now resolves each one per buffer and silently skips what is not
@@ -81,7 +87,9 @@ brew "trash-cli"                      # ranger's dT binding (rc.conf); keg-only,
 brew "bat"                            # cat with highlighting
 brew "tree"
 brew "dysk"                           # disk usage
-brew "tldr"
+brew "tlrc"                           # the `tldr` command. Homebrew dropped the
+                                      # `tldr` formula; tlrc is the official
+                                      # client that replaced it
 
 # ----- Git -----
 brew "gh"                             # PRs from the terminal
@@ -124,9 +132,11 @@ brew "tursodatabase/tap/turso"        # online-zathura pulls/pushes reading stat
 brew "go"                             # builds online-zathura (see install.sh)
 
 # ----- Documents + media -----
-# pandoc and sphinx-doc were removed on 2026-09-30: 340MB between them, no
-# reference anywhere in the repo and nothing depending on them. weasyprint
-# already covers html-to-pdf, which was the only conversion actually in use.
+# sphinx-doc was removed on 2026-09-30 as unreferenced and has stayed gone.
+# pandoc went with it on the same grounds and then came back on 2026-11-17 --
+# not drift: the nvim repo's readme installs it alongside weasyprint and biber
+# for document conversion. Tracked here so the two repos stop disagreeing.
+brew "pandoc"                         # nvim readme installs it with weasyprint
 brew "weasyprint"                     # html to pdf
 brew "imagemagick"
 brew "mpv"                            # ranger rifle.conf video rule
@@ -134,6 +144,8 @@ brew "mpv"                            # ranger rifle.conf video rule
 # ----- Browsers -----
 cask "brave-browser"                  # aerospace alt-f / ctrl-shift-p, ranger PDF opener
 cask "firefox"
+cask "google-chrome"                  # the third browser; see also scripts/leetcode-cookie,
+                                      # which reads Firefox's jar specifically
 
 # ----- Languages, build tooling, data -----
 # Removed on 2026-09-30, all unreferenced and undepended-on: mysql (296MB),
@@ -147,6 +159,24 @@ brew "cmake"
 brew "meson"
 brew "pkgconf"
 brew "bats-core"                      # bash test runner
+brew "pnpm"                           # node package manager
+brew "python@3.11"
+brew "postgresql@17", link: true      # versioned formulae are keg-only by
+                                      # default; this one is linked, and
+                                      # saying so keeps `bundle check` quiet
+brew "opam"                           # ocaml package manager
+
+# ----- Cloud + infra CLIs -----
+brew "awscli"
+brew "flyctl"
+brew "opentofu"
+brew "powershell"
+# azure-cli is a cask here, not a formula, and the distinction matters. It was
+# installed as a formula until 2026-11-19; homebrew-core has since dropped that
+# formula and only the cask remains. An installed formula whose name no longer
+# resolves makes `brew bundle cleanup` abort outright, which is how this was
+# found -- so if az ever needs reinstalling, reach for the cask.
+cask "azure-cli"
 
 # ----- Local models -----
 brew "ollama"
@@ -168,6 +198,8 @@ brew "portaudio"
 # ----- Editors and dev apps -----
 cask "visual-studio-code"             # install.sh installs its extensions
 cask "claude-code"
+cask "obsidian"
+cask "orbstack"                       # docker + linux VMs
 
 # ----- Helpers the tracked configs invoke -----
 # The fast path in sketchybar's audio-sink plugin. `SwitchAudioSource -c` reads
@@ -203,6 +235,11 @@ brew "smudge/smudge/nightlight"       # night shift from the CLI
 # cheaper than a second Brewfile. The switch itself is machines/<host>.conf.
 brew "cliclick"                       # scripts/mouse-jiggle moves the cursor with it
 
+brew "scrcpy"                         # phone mirroring. The aspect-locked window
+                                      # scripts/center-window was written for,
+                                      # and documents at length.
+cask "android-platform-tools"         # adb, which scrcpy drives
+
 # ----- Networking + sync -----
 brew "syncthing"
 brew "tailscale"                      # joins the tailnet: brovo, kalu, buffyx, ello.
@@ -219,6 +256,8 @@ cask "microsoft-teams"
 cask "microsoft-outlook"              # the work mail; sketchybar's M counts its
                                       # Dock badge -- see sketchybar/plugins/unread.sh
 cask "microsoft-word"
+cask "microsoft-excel"
+cask "microsoft-powerpoint"
 # Both Zoho apps are deliberately absent: the work mail migrated to Outlook and
 # the chat is no longer used. Uninstalled everywhere on 2026-09-30.
 cask "anki"
@@ -229,5 +268,29 @@ cask "wispr-flow"                     # dictation; push-to-talk needs the F13
 # ----- Fonts -----
 cask "font-hack-nerd-font"            # alacritty + sketchybar text font
 
+# ----- Installed on request, with no consumer in these configs -----
+# Everything above earns its place: some file in this repo or the nvim one calls
+# it. These do not. They were each installed deliberately (on request, not as
+# somebody's dependency), nothing installed depends on them, and a grep across
+# both repos finds no reference. They are tracked so a rebuild is faithful to
+# the machine, not because anything here needs them -- which makes this the
+# list to prune first if any turn out to be leftovers.
+brew "dockutil"                       # scripted Dock changes
+brew "espeak-ng"                      # text-to-speech engine
+brew "gsl"                            # GNU Scientific Library
+brew "qalculate-qt"                   # calculator
+brew "qpdf"                           # pdf page + metadata surgery
+brew "sentencepiece"                  # tokenizer library
+brew "sevenzip"                       # 7z archives
+cask "keyboardcleantool"              # blocks every key so the keyboard can be wiped
+
+# Deliberately NOT tracked: gtk4 and graphene. They arrive as dependencies of
+# scripts/build-zathura-gtk4, which compiles zathura from source into
+# ~/.local/zathura-gtk4 and is optional by design (see BOOTSTRAP.md). Because
+# nothing here declares them, `brew bundle cleanup` lists both for removal --
+# taking them would leave the GTK4 zathura built but unable to start, and the
+# fallbacks in zshrc, scripts/zp and scripts/library would quietly go back to
+# the jittery GTK3 brew build. Do not let cleanup have them.
+#
 # Deliberately NOT tracked: qbittorrent. install.sh still de-quarantines it if
 # you install it by hand, since its cask build is ad-hoc signed.
