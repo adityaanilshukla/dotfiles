@@ -1,5 +1,5 @@
 # Background (around the page)
-set default-bg "#1e1e1e"
+set default-bg "#161718"
 
 set guioptions ""
 set window-title-basename true
@@ -8,10 +8,23 @@ set statusbar-v-padding 0
 
 # Page background and text
 set recolor "true"
-set recolor-lightcolor "#1e1e1e"   # page background
+set recolor-lightcolor "#161718"   # page background
 set recolor-darkcolor  "#dcdcdc"   # text color
 
 # No custom recolour binding: zathura's built-in ctrl-r already toggles it.
+
+# The font for the statusbar, the inputbar -- and the F link-hint numbers,
+# which have no setting of their own. page-widget.c's set_font_from_property()
+# parses this one string with pango and hands the family and size straight to
+# cairo, always at bold weight. So enlarging the hint numbers means enlarging
+# the bars too; they are the same setting and cannot be separated.
+#
+# "monospace" was the default here, and it is only a fontconfig alias: on this
+# machine it resolves to Andale Mono (fc-match monospace). The bars go through
+# pango and so honour that, but the hint numbers go through cairo's toy font
+# API, which may or may not consult fontconfig depending on how cairo was
+# built. Naming the real family removes the question, and matches alacritty.
+set font "Hack Nerd Font 14"
 
 # Statusbar, inputbar, etc.
 set statusbar-bg "#2a2a2a"
@@ -23,7 +36,29 @@ set inputbar-fg "#eeeeee"
 set notification-bg "#2a2a2a"
 set notification-fg "#eeeeee"
 
-# Highlighting (search results, links)
-set highlight-color "#444444"
-set highlight-active-color "#888888"
+# Highlighting: search results, and the link hints F brings up. All three
+# settings are shared between the two.
+#
+#   highlight-color         the box over each link / search hit
+#   highlight-active-color  the current search result
+#   highlight-fg            the hint NUMBER
+#
+# highlight-fg used to be unset, which left it at zathura's default of
+# rgba(0,0,0,0.5) -- 50% black, over an opaque #444444 box, over a near-black
+# page. That is why the numbers could not be seen at all.
+#
+# The alphas are deliberate. Each box is drawn exactly the size of the link
+# text, so an opaque fill hides the label you are trying to choose between.
+#
+# Colours are the palette's own tiers (sketchybar/colors.sh, alacritty.toml):
+# muted yellow for "a link", bright yellow for "type this", magenta -- the
+# alert tier -- for "the one you are on". The number is the brightest value in
+# the palette on purpose: page-widget.c pins the digits' baseline to the
+# bottom edge of the box, so a large number overflows upward onto the bare
+# page, and bright yellow is the one choice that stays legible on both the
+# box (~5:1) and the page (~16:1).
+set highlight-color        "rgba(255,214,177,0.40)"   # #ffd6b1  palette yellow
+set highlight-active-color "rgba(252,94,240,0.45)"    # #fc5ef0  palette magenta
+set highlight-fg           "rgba(245,255,167,1.0)"    # #f5ffa7  palette bright yellow
+
 set selection-clipboard clipboard
