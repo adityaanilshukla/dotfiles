@@ -47,18 +47,30 @@ set notification-fg "#eeeeee"
 # rgba(0,0,0,0.5) -- 50% black, over an opaque #444444 box, over a near-black
 # page. That is why the numbers could not be seen at all.
 #
-# The alphas are deliberate. Each box is drawn exactly the size of the link
-# text, so an opaque fill hides the label you are trying to choose between.
+# Why the box is dark, which is the whole trick. cairo_move_to is given
+# (rectangle.x1 + 1, rectangle.y2 - 1): the number's baseline is pinned to the
+# bottom-left corner of the link, which is exactly where the link's own first
+# word sits. recolor renders that word in recolor-darkcolor, i.e. light. So the
+# number is never drawn on the box alone -- it is drawn on the link's text,
+# seen through the box. A light box made that light-on-light and the numbers
+# were effectively invisible, which is what the first attempt here got wrong.
 #
-# Colours are the palette's own tiers (sketchybar/colors.sh, alacritty.toml):
-# muted yellow for "a link", bright yellow for "type this", magenta -- the
-# alert tier -- for "the one you are on". The number is the brightest value in
-# the palette on purpose: page-widget.c pins the digits' baseline to the
-# bottom edge of the box, so a large number overflows upward onto the bare
-# page, and bright yellow is the one choice that stays legible on both the
-# box (~5:1) and the page (~16:1).
-set highlight-color        "rgba(255,214,177,0.40)"   # #ffd6b1  palette yellow
-set highlight-active-color "rgba(252,94,240,0.45)"    # #fc5ef0  palette magenta
+# A dark number does not rescue it either: a large number overflows upward out
+# of the box onto the bare page, and dark-on-near-black is gone. Only a box
+# dark enough to mask the text underneath, carrying a bright number, is legible
+# in both places at once. Verified by reproducing this exact draw sequence
+# offscreen with cairo rather than by eye.
+#
+# 0.85 and not 1.0 because these settings are shared with search: fully opaque
+# leaves a search hit as a solid block with the matched word buried under it.
+# At 0.85 the number still reads and the word is still there behind it.
+#
+# Tiers are the palette's own (sketchybar/colors.sh, alacritty.toml). Deep blue
+# is what the bar already uses for the active workspace -- "the one you act on"
+# -- which is what a hint is. Magenta is the alert tier, kept lighter because
+# nothing is ever drawn on top of it.
+set highlight-color        "rgba(26,95,180,0.85)"     # #1a5fb4  palette blue-deep
+set highlight-active-color "rgba(252,94,240,0.55)"    # #fc5ef0  palette magenta
 set highlight-fg           "rgba(245,255,167,1.0)"    # #f5ffa7  palette bright yellow
 
 set selection-clipboard clipboard
