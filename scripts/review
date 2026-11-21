@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+"""Spaced-repetition queue for LeetCode problems. Usage:
+
+  review 198 1 day         schedule problem 198 for one day from now
+  review 198 7 days        ... or a week, or "1 month", or "3d" / "2w" / "1m"
+  review                   print what is due today or overdue
+  review all               print the whole queue, soonest first
+  review done 198          take 198 off the queue
+  review log               raw entries, newest first (for when it looks wrong)
+
+Intervals are always chosen by hand. There is no ladder and nothing is
+advanced automatically: rescheduling a problem is how you say you did it,
+and `done` is how you say you are finished with it. That is the whole model,
+and it is the one that survives being ignored for a fortnight.
+
+STATE AND SYNC
+
+The queue lives in the Syncthing-replicated Documents tree, next to the
+solutions, so both Macs and brovo see the same thing. It is split one file
+per machine, queue.<host>.jsonl, and a machine only ever writes its own.
+That is not tidiness. Syncthing does not merge; two machines appending to one
+shared file produces a *.sync-conflict-* copy and a silently forked queue.
+Per-host files cannot collide by construction, and reading takes the union.
+
+Every line is an append, never an edit, for the same reason. A reschedule is
+a new line and a `done` is a tombstone line; the entry with the newest `set`
+timestamp wins per problem. So the two machines converge on the same answer
+no matter which order Syncthing delivers the files in, and a stale machine
+coming back online cannot resurrect an old due date.
+
+The files grow by one short line per action, so a few thousand reviews is
+still well under a megabyte. If it ever matters, deleting them loses only
+history: the queue rebuilds from whatever lines remain.
+"""
+
+import json
+import os
+import platform
+import re
+import sys
+from datetime import date, datetime, timedelta
+from glob import glob
+from pathlib import Path
+
+HOME = Path(os.path.expanduser("~"))
+SOLUTIONS = HOME / "Documents/Notes/BUCK_TFUP/leetcode"
+QUEUE_DIR = HOME / "Documents/Notes/BUCK_TFUP/review"
+
+# Only the hostname, not the fqdn: macOS hands back "ello.local" on some
+# networks and bare "ello" on others, and the two would write to two files.
+HOST = platform.node().split(".")[0]
+
+# A month is 30 days. Calendar months would mean 28 to 31 day intervals
+# depending on when you happened to solve something, which is a difference
+# nobody revising can perceive and a whole class of edge cases to carry.
+UNITS = {"d": 1, "day": 1, "days": 1, "w": 7, "week": 7, "weeks": 7, "m": 30, "month": 30, "months": 30}
+
+
+def queue_file() -> Path:
+    QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+    return QUEUE_DIR / f"queue.{HOST}.jsonl"
+
+
+def read_all() -> list[dict]:
+    """Every line from every machine's file, oldest first.
+
+    A corrupt line is skipped rather than fatal: a half-written line from a
+    machine that lost power mid-append should cost you that one entry, not
+    the use of the tool.
+    """
+    entries = []
+    for path in sorted(QUEUE_DIR.glob("queue.*.jsonl")):
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    entries.sort(key=lambda e: e.get("set", ""))
+    return entries
+
+
+def current() -> dict[int, dict]:
+    """Fold the log down to the live queue: problem number -> entry.
+
+    Last write wins, and a `done` entry removes the problem. Because the sort
+    above is on the `set` timestamp and not on file order, this is the same
+    answer on every machine.
+    """
+    state: dict[int, dict] = {}
+    for e in read_all():
+        number = e.get("problem")
+        if not isinstance(number, int):
+            continue
+        if e.get("done"):
+            state.pop(number, None)
+        else:
+            state[number] = e
+    return state
+
+
+def append(entry: dict) -> None:
+    entry["set"] = datetime.now().isoformat(timespec="seconds")
+    entry["host"] = HOST
+    with queue_file().open("a") as fh:
+        fh.write(json.dumps(entry) + "\n")
+
+
+def title(number: int) -> str:
+    """The slug from the solution file, if it has been solved here.
+
+    Purely a convenience for reading the due list; a problem queued before it
+    has ever been opened simply shows no title.
+    """
+    for path in glob(str(SOLUTIONS / f"{number}.*.py")):
+        return Path(path).stem.split(".", 1)[1]
+    return ""
+
+
+def parse_interval(words: list[str]) -> int:
+    """"7 days", "7days", "7d" and "7" all mean the same thing."""
+    text = "".join(words).lower()
+    match = re.fullmatch(r"(\d+)\s*([a-z]*)", text)
+    if not match:
+        return -1
+    count, unit = int(match.group(1)), match.group(2)
+    if count < 1:
+        return -1
+    if not unit:
+        return count
+    return count * UNITS[unit] if unit in UNITS else -1
+
+
+def show(entries: list[tuple[int, dict]], empty: str) -> None:
+    if not entries:
+        print(empty)
+        return
+    today = date.today()
+    width = max(len(title(n)) for n, _ in entries) or 1
+    for number, entry in entries:
+        due = date.fromisoformat(entry["due"])
+        days = (due - today).days
+        if days < 0:
+            when = f"{-days} day{'s' if days != -1 else ''} overdue"
+        elif days == 0:
+            when = "due today"
+        else:
+            when = f"in {days} day{'s' if days != 1 else ''} ({due:%a %d %b})"
+        print(f"  {number:<5} {title(number):<{width}}  {when}")
+
+
+def main(argv: list[str]) -> int:
+    args = argv[1:]
+
+    if args and args[0] in ("-h", "--help", "help"):
+        print(__doc__.split("STATE AND SYNC")[0].strip())
+        return 0
+
+    # "review problem 198 7 days" reads better out loud than "review 198 7
+    # days", and both get typed, so accept the noise word rather than making
+    # the nicer phrasing an error.
+    if args and args[0] == "problem":
+        args = args[1:]
+
+    if not args or args[0] == "due":
+        today = date.today()
+        due = [(n, e) for n, e in current().items() if date.fromisoformat(e["due"]) <= today]
+        due.sort(key=lambda item: item[1]["due"])
+        show(due, "Nothing due.")
+        return 0
+
+    if args[0] in ("all", "list"):
+        everything = sorted(current().items(), key=lambda item: item[1]["due"])
+        show(everything, "Queue is empty.")
+        return 0
+
+    if args[0] == "log":
+        for e in reversed(read_all()):
+            mark = "done" if e.get("done") else e.get("due", "?")
+            print(f"  {e.get('set', '?')}  {e.get('host', '?'):<6} {e.get('problem', '?'):<5} {mark}")
+        return 0
+
+    if args[0] == "done":
+        if len(args) != 2 or not args[1].isdigit():
+            print("Usage: review done <problem>", file=sys.stderr)
+            return 1
+        number = int(args[1])
+        if number not in current():
+            print(f"{number} is not in the queue.")
+            return 0
+        append({"problem": number, "done": True})
+        print(f"{number} removed from the queue.")
+        return 0
+
+    # Anything else is a scheduling call: review <problem> <interval>
+    if not args[0].isdigit() or len(args) < 2:
+        print(__doc__.split("STATE AND SYNC")[0].strip(), file=sys.stderr)
+        return 1
+
+    number = int(args[0])
+    days = parse_interval(args[1:])
+    if days < 0:
+        print(f"Cannot read '{' '.join(args[1:])}' as an interval. Try: 1 day, 7 days, 1 month, 3d.", file=sys.stderr)
+        return 1
+
+    due = date.today() + timedelta(days=days)
+    append({"problem": number, "due": due.isoformat()})
+    name = title(number)
+    label = f"{number} {name}".strip()
+    print(f"{label}: due {due:%a %d %b} ({days} day{'s' if days != 1 else ''} from now)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

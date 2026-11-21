@@ -50,6 +50,9 @@ declare -A files=(
   # zathura, privately: open a one-off document with no reading state recorded.
   ["scripts/zp"]="$HOME/.local/bin/zp"
 
+  # spaced-repetition queue for LeetCode revisits, Syncthing-shared with the Macs.
+  ["scripts/review"]="$HOME/.local/bin/review"
+
   # standalone ~/Scripts utilities, formerly the separate Eazy-Scripts repo
   ["scripts/connect-bluetooth"]="$HOME/Scripts/connect-bluetooth"
   ["scripts/forget-bluetooth"]="$HOME/Scripts/forget-bluetooth"
