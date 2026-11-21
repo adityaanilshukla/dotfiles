@@ -126,12 +126,17 @@ alias normalmode='redshift -x && xrandr --output eDP-1 --brightness 1.0'
 
 # custom function that helps you quit ranger and moves you into the directory you closed ranger in
 rw() {
-  tempfile="$(mktemp)"
+  local tempfile dir
+  tempfile="$(mktemp)" || return 1
   ranger --choosedir="$tempfile" "$@"
   if [ -f "$tempfile" ]; then
     dir="$(cat "$tempfile")"
     rm -f "$tempfile"
-    [ -d "$dir" ] && cd "$dir"
+    # cd can still fail on a directory that exists but cannot be entered, and
+    # silently carrying on would leave you somewhere you did not ask to be.
+    if [ -d "$dir" ]; then
+      cd "$dir" || return 1
+    fi
   fi
 }
 
