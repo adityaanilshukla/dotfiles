@@ -45,7 +45,7 @@ status_tag() {
 
 ENTRIES=()
 for spec in "${BT_DEVICES[@]}"; do
-  IFS='|' read -r label name kind <<<"$spec"
+  IFS='|' read -r label name _ <<<"$spec"
   [[ -z "$label" || -z "$name" ]] && continue
   tag="$(status_tag "$name")"
   line="$(printf '%-14s %-22s [%s]' "$label" "$name" "$tag")"
