@@ -1,10 +1,26 @@
 # Background (around the page)
 set default-bg "#1e1e1e"
 
+set guioptions ""
+set window-title-basename true
+set statusbar-h-padding 0
+set statusbar-v-padding 0
+
 # Page background and text
 set recolor "true"
 set recolor-lightcolor "#1e1e1e"   # page background
 set recolor-darkcolor  "#dcdcdc"   # text color
+
+# No custom recolour binding: zathura's built-in ctrl-r already toggles it.
+
+# The font for the statusbar, the inputbar -- and the F link-hint numbers,
+# which have no setting of their own. zathura parses this one string and hands
+# the family and size straight to cairo at bold weight, so enlarging the hint
+# numbers means enlarging the bars too: they are the same setting and cannot be
+# separated. Naming a real family rather than the "monospace" fontconfig alias
+# keeps the hint numbers from depending on however cairo's toy font API happens
+# to resolve that alias. Hack Nerd Font matches the terminal (see alacritty).
+set font "Hack Nerd Font 14"
 
 # Statusbar, inputbar, etc.
 set statusbar-bg "#2a2a2a"
@@ -16,7 +32,28 @@ set inputbar-fg "#eeeeee"
 set notification-bg "#2a2a2a"
 set notification-fg "#eeeeee"
 
-# Highlighting (search results, links)
-set highlight-color "#444444"
-set highlight-active-color "#888888"
+# Highlighting: search results, and the link hints F brings up. All three
+# settings below are shared between the two.
+#
+#   highlight-color         the box over each link / search hit
+#   highlight-active-color  the current search result
+#   highlight-fg            the hint NUMBER
+#
+# highlight-fg used to be unset, which left it at zathura's default of
+# rgba(0,0,0,0.5) -- 50% black, over an opaque #444444 box, over a near-black
+# recoloured page. That is why the F hint numbers could not be seen at all.
+#
+# The box has to be dark and the number bright. zathura pins the number's
+# baseline to the link's bottom-left corner, i.e. on top of the link's own
+# first word, which recolor renders light. So a light box left the number
+# light-on-light and invisible; a dark number overflowing the box onto the
+# bare page vanished the other way. Only a dark-enough box carrying a bright
+# number is legible in both places at once.
+#
+# 0.85 rather than fully opaque because these are shared with search: a solid
+# box would bury the matched word. At 0.85 the number reads and the word stays.
+set highlight-color        "rgba(26,95,180,0.85)"     # #1a5fb4  blue
+set highlight-active-color "rgba(252,94,240,0.55)"    # #fc5ef0  magenta
+set highlight-fg           "rgba(245,255,167,1.0)"    # #f5ffa7  bright yellow
+
 set selection-clipboard clipboard
