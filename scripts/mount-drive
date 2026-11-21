@@ -95,7 +95,7 @@ for entry in "${ENTRIES[@]}"; do
 done
 [[ -z "$SELECTED" ]] && { notify "Selection did not match any entry."; exit 1; }
 
-IFS='|' read -r SRC UUID DEVPATH FSTYPE MP NAME _ <<<"$SELECTED"
+IFS='|' read -r SRC _ DEVPATH FSTYPE MP NAME _ <<<"$SELECTED"
 
 mount_via_udisks() {
   local out

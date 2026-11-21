@@ -20,7 +20,7 @@ done
 declare -A CFG_UUID_NAME=()
 declare -A CFG_LBL_NAME=()
 if [[ -f "$CONFIG_FILE" ]]; then
-  while IFS='|' read -r key mp name || [[ -n "${key:-}" ]]; do
+  while IFS='|' read -r key _ name || [[ -n "${key:-}" ]]; do
     [[ -z "${key:-}" || "$key" =~ ^[[:space:]]*# ]] && continue
     key="${key//[[:space:]]/}"
     [[ -z "$key" ]] && continue
@@ -94,7 +94,7 @@ for entry in "${ENTRIES[@]}"; do
 done
 [[ -z "$SELECTED" ]] && { notify "Selection did not match any entry."; exit 1; }
 
-IFS='|' read -r DISPATCH UUID DEVPATH MP _ <<<"$SELECTED"
+IFS='|' read -r DISPATCH _ DEVPATH MP _ <<<"$SELECTED"
 
 power_off_parent() {
   local parent_name parent_path out

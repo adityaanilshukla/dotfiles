@@ -13,7 +13,7 @@ active_port=$(pactl list sinks 2>/dev/null | awk -v s="$sink" '
 
 shopt -s nocasematch
 case "$sink$active_port" in
-    *bluez*|*headphone*|*headset*|*usb*headphone*)
+    *bluez*|*headphone*|*headset*)
         icon="󰋋" ;;                       # headphones
     *hdmi*|*displayport*|*dp_*|*iec958*)
         icon="󰽟" ;;                       # monitor / external digital speakers
